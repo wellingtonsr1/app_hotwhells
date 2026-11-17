@@ -156,6 +156,12 @@ public interface PhotoDao {
     @Query("UPDATE photo SET is_primary = 1 WHERE id = :photoId")
     public suspend fun markPrimary(photoId: String)
 
+    @Query("SELECT * FROM photo WHERE id = :id LIMIT 1")
+    public suspend fun findById(id: String): PhotoEntity?
+
+    @Query("SELECT COUNT(*) FROM photo WHERE exemplar_id = :exemplarId")
+    public suspend fun countByExemplar(exemplarId: String): Int
+
     @Query("DELETE FROM photo WHERE id = :photoId")
     public suspend fun delete(photoId: String)
 }

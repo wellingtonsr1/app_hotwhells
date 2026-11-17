@@ -42,9 +42,36 @@
     <string name="add_exemplar_save">Salvar exemplar</string>
     <string name="add_exemplar_no_variant">Abra esta tela a partir de uma variante para vincular o exemplar.</string>
 
-    <!--
-      Os rótulos da navegação (Coleção, Cadastrar, Desejos, Financeiro, Ajustes) entram
-      junto com a barra de navegação, na tarefa que a cria: string sem uso é lixo que o
-      lint acusa, e pior, envelhece sem ninguém notar.
-    -->
+    <!-- Autocomplete e sugestões (T049). -->
+    <string name="autocomplete_model_suggestion">Modelos existentes com nome semelhante:</string>
+
+    <!-- Fotografias e grade de fotos (T045, T046 - US2). -->
+    <string name="photo_grid_title">Fotografias</string>
+    <string name="photo_add">Adicionar foto</string>
+    <string name="photo_primary_badge">Principal</string>
+    <string name="photo_set_primary">Definir como principal</string>
+    <string name="photo_remove">Remover foto</string>
+    <string name="photo_angle_front">Frente</string>
+    <string name="photo_angle_back">Traseira</string>
+    <string name="photo_angle_left">Lateral esquerda</string>
+    <string name="photo_angle_right">Lateral direita</string>
+    <string name="photo_angle_top">Superior</string>
+    <string name="photo_angle_base">Base</string>
+    <string name="photo_angle_packaging">Embalagem</string>
+    <string name="photo_angle_detail">Detalhe</string>
+    <string name="photo_permission_denied">Permissão de câmera recusada. Você ainda pode usar o seletor de fotos da galeria.</string>
+
+    <!-- Cadastros incompletos (T048 - US2, FR-029). -->
+    <string name="incomplete_entries_title">Cadastros incompletos</string>
+    <string name="incomplete_entries_empty">Nenhum cadastro incompleto. Todos os modelos possuem dados suficientes.</string>
+    <string name="incomplete_badge">Incompleto</string>
+
+    <!-- Formulários detalhados de modelo e variante (T043, T044). -->
+    <string name="model_form_title">Cadastrar modelo</string>
+    <string name="variant_form_title">Cadastrar variante</string>
+    <string name="variant_wheels">Tipo de rodas (ex: 5SP, Real Riders)</string>
+    <string name="variant_base">Tipo de base (Metal ou Plástico)</string>
+    <string name="variant_decoration">Decoração / Grafismo</string>
+    <string name="variant_series">Série / Coleção</string>
+    <string name="variant_secondary_colors">Cores secundárias</string>
 </resources>

@@ -89,6 +89,11 @@ public fun CreateCatalogEntryScreen(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                ModelAutocomplete(
+                    query = state.model,
+                    availableModels = state.availableModels,
+                    onSelectModel = viewModel::onSelectModelSuggestion,
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
                         value = state.scale,
