@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ícone adaptativo — Hot Wheels Collector</title>
+<style>
+  body { margin:0; padding:22px 26px; background:#121212; color:#F4F1EE;
+         font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+  h1 { font-size:19px; font-weight:600; margin:0 0 3px; }
+  p.note { margin:0 0 18px; color:#9a9a9a; font-size:12.5px; }
+  h2 { font-size:13px; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
+       color:#8d8d8d; margin:0 0 10px; }
+  .grid { display:flex; gap:26px; align-items:flex-start; flex-wrap:wrap; }
+  figure { margin:0; text-align:center; }
+  figcaption { margin-top:8px; font-size:11.5px; color:#b9b9b9; line-height:1.45; }
+  .box { width:190px; height:190px; }
+  .launcher-row { display:flex; gap:16px; align-items:center; justify-content:center;
+                  padding:14px 16px; border-radius:12px; background:#f2f0ed; margin-bottom:8px; }
+  .launcher-row.on-dark { background:#1b1b1b; }
+  .l48 { width:48px; height:48px; }
+  .l72 { width:72px; height:72px; }
+  .l96 { width:96px; height:96px; }
+  .guides { fill:none; stroke:#fff; stroke-opacity:.8; stroke-dasharray:2 2; }
+</style>
+</head>
+<body>
+<h1>Ícone adaptativo — Hot Wheels Collector</h1>
+<p class="note">Vetores de <code>drawable/ic_launcher_foreground.xml</code> sobre <code>@color/ic_launcher_background</code> (#D3242B).</p>
+
+<svg width="0" height="0" aria-hidden="true"><defs>
+  <g id="car" transform="translate(0,-5)">
+    <path fill="#F4F1EE" d="M27.5,68 L27.5,60.6 C27.5,58.2 28.6,56.8 31.1,56.4 L44.8,54.9 L52.4,47.3 C53.5,46.2 54.9,45.7 56.5,45.7 L65.4,45.7 L73.4,54.9 L76.9,55.3 C79.5,55.7 80.9,57.3 80.9,59.9 L80.9,68 Z"/>
+    <path d="M33.2,62.2 L74.9,62.2" stroke="#F26B21" stroke-width="2.1" stroke-linecap="round" fill="none"/>
+    <path fill="#D3242B" d="M40.2,68 m-5.3,0 a5.3,5.3 0 1,0 10.6,0 a5.3,5.3 0 1,0 -10.6,0"/>
+    <path fill="#D3242B" d="M68.2,68 m-5.3,0 a5.3,5.3 0 1,0 10.6,0 a5.3,5.3 0 1,0 -10.6,0"/>
+  </g>
+  <g id="mono" transform="translate(0,-5)">
+    <path fill="#FFFFFF" d="M27.5,68 L27.5,60.6 C27.5,58.2 28.6,56.8 31.1,56.4 L44.8,54.9 L52.4,47.3 C53.5,46.2 54.9,45.7 56.5,45.7 L65.4,45.7 L73.4,54.9 L76.9,55.3 C79.5,55.7 80.9,57.3 80.9,59.9 L80.9,68 Z"/>
+    <path fill="#FFFFFF" d="M40.2,68 m-5.3,0 a5.3,5.3 0 1,0 10.6,0 a5.3,5.3 0 1,0 -10.6,0"/>
+    <path fill="#FFFFFF" d="M68.2,68 m-5.3,0 a5.3,5.3 0 1,0 10.6,0 a5.3,5.3 0 1,0 -10.6,0"/>
+  </g>
+  <clipPath id="maskCircle"><circle cx="54" cy="54" r="36"/></clipPath>
+  <clipPath id="maskSquircle"><rect x="18" y="18" width="72" height="72" rx="22"/></clipPath>
+</defs></svg>
+
+<h2>Tamanho real de launcher — máscara circular</h2>
+<div class="grid" style="margin-bottom:20px">
+  <figure>
+    <div class="launcher-row" style="flex-direction:column; gap:10px; display:flex">
+      <svg class="l48" viewBox="0 0 108 108"><g clip-path="url(#maskCircle)"><rect width="108" height="108" fill="#D3242B"/><use href="#car"/></g></svg>
+      <svg class="l72" viewBox="0 0 108 108"><g clip-path="url(#maskCircle)"><rect width="108" height="108" fill="#D3242B"/><use href="#car"/></g></svg>
+      <svg class="l96" viewBox="0 0 108 108"><g clip-path="url(#maskCircle)"><rect width="108" height="108" fill="#D3242B"/><use href="#car"/></g></svg>
+    </div>
+    <figcaption>48 · 72 · 96 px<br>fundo claro</figcaption>
+  </figure>
+
+  <figure>
+    <div class="launcher-row on-dark" style="flex-direction:column; gap:10px; display:flex">
+      <svg class="l48" viewBox="0 0 108 108"><g clip-path="url(#maskCircle)"><rect width="108" height="108" fill="#D3242B"/><use href="#car"/></g></svg>
+      <svg class="l72" viewBox="0 0 108 108"><g clip-path="url(#maskCircle)"><rect width="108" height="108" fill="#D3242B"/><use href="#car"/></g></svg>
+      <svg class="l96" viewBox="0 0 108 108"><g clip-path="url(#maskCircle)"><rect width="108" height="108" fill="#D3242B"/><use href="#car"/></g></svg>
+    </div>
+    <figcaption>48 · 72 · 96 px<br>fundo escuro</figcaption>
+  </figure>
+
+  <figure>
+    <svg class="box" viewBox="0 0 108 108"><g clip-path="url(#maskCircle)"><rect width="108" height="108" fill="#D3242B"/><use href="#car"/></g></svg>
+    <figcaption>Máscara circular (72dp)<br>nada cortado: folga em toda a borda</figcaption>
+  </figure>
+
+  <figure>
+    <svg class="box" viewBox="0 0 108 108"><g clip-path="url(#maskSquircle)"><rect width="108" height="108" fill="#D3242B"/><use href="#car"/></g></svg>
+    <figcaption>Máscara squircle (OEM)</figcaption>
+  </figure>
+
+  <figure>
+    <svg class="box" viewBox="0 0 108 108"><g clip-path="url(#maskCircle)"><rect width="108" height="108" fill="#3b3b3b"/><use href="#mono"/></g></svg>
+    <figcaption>Monochrome (Android 13+)<br>silhueta, cor aplicada pelo sistema</figcaption>
+  </figure>
+</div>
+
+<h2>Canvas completo e zona segura</h2>
+<div class="grid">
+  <figure>
+    <svg class="box" viewBox="0 0 108 108">
+      <rect width="108" height="108" fill="#D3242B"/>
+      <use href="#car"/>
+      <rect class="guides" x="18" y="18" width="72" height="72"/>
+      <circle class="guides" cx="54" cy="54" r="33"/>
+    </svg>
+    <figcaption>108dp; tracejado = área visível de 72dp<br>e círculo seguro de 66dp</figcaption>
+  </figure>
+  <div style="font-size:12px; color:#9a9a9a; max-width:420px; line-height:1.6">
+    <p style="margin:0 0 8px">O carro ocupa 53dp de largura e 22dp de altura. O grupo foi deslocado 5dp para cima para
+    ficar opticamente centrado; o ponto mais distante do centro fica a 28dp, dentro dos 33dp do círculo seguro.</p>
+    <p style="margin:0">As rodas são vazadas na cor do fundo, então continuam legíveis sob a máscara circular.
+    A faixa laranja tem 2dp e só aparece de 72px para cima: em 48px ela cai abaixo de 1 pixel e quem sustenta
+    a leitura nesse tamanho é a silhueta, não a cor.</p>
+  </div>
+</div>
+</body>
+</html>

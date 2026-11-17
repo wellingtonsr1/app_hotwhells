@@ -1,0 +1,77 @@
+package br.com.hotwheelscollector.domain.repository
+
+import br.com.hotwheelscollector.domain.error.DomainResult
+import br.com.hotwheelscollector.domain.model.Brand
+import br.com.hotwheelscollector.domain.model.CarModel
+import br.com.hotwheelscollector.domain.model.ColorItem
+import br.com.hotwheelscollector.domain.model.Manufacturer
+import br.com.hotwheelscollector.domain.model.RealVehicle
+import br.com.hotwheelscollector.domain.model.Series
+import br.com.hotwheelscollector.domain.model.Variant
+import br.com.hotwheelscollector.domain.model.VariantSummary
+import kotlinx.coroutines.flow.Flow
+
+/** Catálogo de fabricantes (FR-047). */
+public interface ManufacturerRepository {
+    public fun observeActive(): Flow<List<Manufacturer>>
+    public suspend fun findById(id: String): Manufacturer?
+    public suspend fun findByName(name: String): Manufacturer?
+    public suspend fun add(name: String, country: String?): DomainResult<Manufacturer>
+    public suspend fun rename(id: String, name: String): DomainResult<Unit>
+    public suspend fun archive(id: String): DomainResult<Unit>
+}
+
+public interface BrandRepository {
+    public fun observeByManufacturer(manufacturerId: String): Flow<List<Brand>>
+    public suspend fun add(manufacturerId: String, name: String): DomainResult<Brand>
+}
+
+public interface RealVehicleRepository {
+    public fun observeAll(): Flow<List<RealVehicle>>
+    public suspend fun add(make: String, model: String, year: Int?, country: String?): DomainResult<RealVehicle>
+}
+
+public interface ColorRepository {
+    public fun observeAll(): Flow<List<ColorItem>>
+    public suspend fun findOrCreate(name: String, hex: String? = null): DomainResult<ColorItem>
+}
+
+/** Modelo e escala (FR-033–FR-036). */
+public interface CarModelRepository {
+    public fun observeActive(): Flow<List<CarModel>>
+    public fun observeByManufacturer(manufacturerId: String): Flow<List<CarModel>>
+    public suspend fun findById(id: String): CarModel?
+
+    /** Mesmo nome e mesma escala do mesmo fabricante = mesmo modelo. */
+    public suspend fun findByIdentity(manufacturerId: String, name: String, scale: String): CarModel?
+
+    public suspend fun add(
+        manufacturerId: String,
+        name: String,
+        scale: String = "1:64",
+        brandId: String? = null,
+        realVehicleId: String? = null,
+    ): DomainResult<CarModel>
+    public suspend fun archive(id: String): DomainResult<Unit>
+}
+
+public interface SeriesRepository {
+    public fun observeByManufacturer(manufacturerId: String): Flow<List<Series>>
+    public suspend fun add(manufacturerId: String, name: String, parentId: String? = null): DomainResult<Series>
+}
+
+/**
+ * Variante: a unidade que o colecionador distingue (FR-039–FR-042).
+ * `create` recusa fingerprint repetido entre variantes ativas.
+ */
+public interface VariantRepository {
+    /** Lista de leitura: modelo, fabricante, cor, ano e contagem de exemplares. */
+    public fun observeSummaries(): Flow<List<VariantSummary>>
+
+    public fun observeByModel(modelId: String): Flow<List<Variant>>
+    public suspend fun findById(id: String): Variant?
+    public suspend fun findActiveByFingerprint(fingerprint: String): Variant?
+    public suspend fun create(variant: Variant): DomainResult<Variant>
+    public suspend fun archive(id: String): DomainResult<Unit>
+    public suspend fun mergeVariants(targetId: String, absorbedId: String): DomainResult<Unit>
+}

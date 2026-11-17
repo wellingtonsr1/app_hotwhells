@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Equivalente ao data_extraction_rules para Android 8 a 11 (API 26–30).
+  O domínio "file" precisa estar incluído para que a exclusão de images seja válida
+  (regra do FullBackupContent, exigida pelo lint).
+-->
+<full-backup-content>
+    <include domain="database" path="." />
+    <include domain="sharedpref" path="." />
+    <include domain="file" path="." />
+    <exclude domain="file" path="images" />
+</full-backup-content>

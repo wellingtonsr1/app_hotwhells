@@ -1,0 +1,152 @@
+package br.com.hotwheelscollector.domain.model
+
+import java.time.Instant
+
+/** Fabricante da miniatura (FR-047). `country` nulo = desconhecido, nunca sentinela. */
+public data class Manufacturer(
+    val id: String,
+    val name: String,
+    val country: String? = null,
+    val archivedAt: Instant? = null,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+) {
+    init {
+        require(name.isNotBlank()) { "Nome do fabricante é obrigatório." }
+        require(name.trim().length <= MAX_NAME_LENGTH) { "Nome do fabricante excede 120 caracteres." }
+    }
+}
+
+/** Marca impressa na miniatura (FR-014). */
+public data class Brand(
+    val id: String,
+    val manufacturerId: String,
+    val name: String,
+    val archivedAt: Instant? = null,
+)
+
+/** Veículo do mundo real que a miniatura representa (FR-014). */
+public data class RealVehicle(
+    val id: String,
+    val make: String,
+    val model: String,
+    val year: Int? = null,
+    val country: String? = null,
+)
+
+/** Cor do catálogo; `hex` é opcional porque o nome é o dado primário (FR-017). */
+public data class ColorItem(
+    val id: String,
+    val name: String,
+    val hex: String? = null,
+)
+
+/** Modelo: o carro em si, independente de pintura e série (Art. I.1–I.2). */
+public data class CarModel(
+    val id: String,
+    val manufacturerId: String,
+    val name: String,
+    val scale: String = DEFAULT_SCALE,
+    val brandId: String? = null,
+    val realVehicleId: String? = null,
+    val bodyType: String? = null,
+    val material: String? = null,
+    val countryOfManufacture: String? = null,
+    val notes: String? = null,
+    val archivedAt: Instant? = null,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+) {
+    init {
+        require(name.isNotBlank()) { "Nome do modelo é obrigatório." }
+        require(name.trim().length <= MAX_NAME_LENGTH) { "Nome do modelo excede 120 caracteres." }
+        require(SCALE_PATTERN.matches(scale)) { "Escala deve estar no formato 1:N." }
+    }
+}
+
+/** Série ou subcoleção declarada pelo fabricante (FR-048–FR-049). */
+public data class Series(
+    val id: String,
+    val manufacturerId: String,
+    val name: String,
+    val parentId: String? = null,
+    val kind: String? = null,
+    val year: Int? = null,
+    val archivedAt: Instant? = null,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+)
+
+/**
+ * Variante: a combinação que o colecionador distingue — cor, rodas, base, decoração.
+ * `fingerprint` é o hash estável que garante FR-039/FR-040 sem proibir variantes legítimas.
+ */
+public data class Variant(
+    val id: String,
+    val modelId: String,
+    val fingerprint: String,
+    val seriesId: String? = null,
+    val primaryColorId: String? = null,
+    val secondaryColorIds: List<String> = emptyList(),
+    val wheelsType: String? = null,
+    val baseType: String? = null,
+    val decoration: String? = null,
+    val releaseYear: Int? = null,
+    val collectionNumber: String? = null,
+    val seriesNumber: String? = null,
+    val edition: String? = null,
+    val manufacturerCode: String? = null,
+    val packagingType: String? = null,
+    val archivedAt: Instant? = null,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+) {
+    init {
+        require(fingerprint.isNotBlank()) { "Variante exige fingerprint." }
+    }
+}
+
+/** Exemplar: a unidade física que existe na estante (Art. I.1). */
+public data class Exemplar(
+    val id: String,
+    val variantId: String,
+    val internalCode: String,
+    val condition: Condition,
+    val status: ExemplarStatus = ExemplarStatus.OWNED,
+    val packagingCondition: PackagingCondition? = null,
+    val locationId: String? = null,
+    val notes: String? = null,
+    val rowVersion: Long = 0L,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+) {
+    init {
+        require(internalCode.isNotBlank()) { "Código interno é obrigatório." }
+        require(rowVersion >= 0L) { "row_version não pode ser negativo." }
+    }
+}
+
+/** Fotografia guardada em arquivo privado; o banco só conhece o caminho e o checksum (R.2). */
+public data class Photo(
+    val id: String,
+    val exemplarId: String,
+    val angle: PhotoAngle,
+    val path: String,
+    val checksum: String,
+    val isPrimary: Boolean = false,
+    val sortOrder: Int = 0,
+    val width: Int? = null,
+    val height: Int? = null,
+    val bytes: Long? = null,
+    val capturedAt: Instant? = null,
+) {
+    init {
+        require(path.isNotBlank()) { "Caminho da foto é obrigatório." }
+        require(checksum.isNotBlank()) { "Checksum da foto é obrigatório." }
+        require(sortOrder >= 0) { "Ordem da foto não pode ser negativa." }
+    }
+}
+
+internal const val MAX_NAME_LENGTH: Int = 120
+internal const val DEFAULT_SCALE: String = "1:64"
+internal val SCALE_PATTERN: Regex = Regex("""^1:[0-9]{1,3}$""")

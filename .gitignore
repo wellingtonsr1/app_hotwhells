@@ -1,0 +1,28 @@
+# Gradle / Android
+.gradle/
+build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Assinatura — nunca versionada (R.15, Art. III.2)
+*.jks
+*.keystore
+keystore.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Kotlin / logs
+*.log
+*.hprof
+out/
+
+# Ambiente
+.env
+.env.*

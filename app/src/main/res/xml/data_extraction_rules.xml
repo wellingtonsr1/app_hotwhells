@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android Auto Backup / transferência entre aparelhos (API 31+).
+  Inclui banco, preferências e arquivos; exclui apenas images, que passam da cota
+  de ~25 MB e só existem por completo no pacote manual (contracts/backup-package.md).
+  O include de "file" é obrigatório para que o exclude de images seja válido.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="database" path="." />
+        <include domain="sharedpref" path="." />
+        <include domain="file" path="." />
+        <exclude domain="file" path="images" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="database" path="." />
+        <include domain="sharedpref" path="." />
+        <include domain="file" path="." />
+        <exclude domain="file" path="images" />
+    </device-transfer>
+</data-extraction-rules>

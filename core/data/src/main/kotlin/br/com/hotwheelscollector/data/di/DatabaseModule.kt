@@ -1,0 +1,104 @@
+package br.com.hotwheelscollector.data.di
+
+import android.content.Context
+import androidx.room.Room
+import br.com.hotwheelscollector.data.db.AppDatabase
+import br.com.hotwheelscollector.data.repository.CarModelRepositoryImpl
+import br.com.hotwheelscollector.data.repository.ExemplarRepositoryImpl
+import br.com.hotwheelscollector.data.repository.HistoryRepositoryImpl
+import br.com.hotwheelscollector.data.repository.ManufacturerRepositoryImpl
+import br.com.hotwheelscollector.data.repository.LocationRepositoryImpl
+import br.com.hotwheelscollector.data.repository.VariantRepositoryImpl
+import br.com.hotwheelscollector.domain.repository.CarModelRepository
+import br.com.hotwheelscollector.domain.repository.ExemplarRepository
+import br.com.hotwheelscollector.domain.repository.HistoryRepository
+import br.com.hotwheelscollector.domain.repository.ManufacturerRepository
+import br.com.hotwheelscollector.domain.repository.LocationRepository
+import br.com.hotwheelscollector.domain.repository.VariantRepository
+import dagger.Binds
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import java.time.Clock
+import javax.inject.Singleton
+
+/**
+ * Banco único do app.
+ *
+ * `addCallback(AppDatabase.CALLBACK)` não é opcional: é o que liga as FKs e cria o
+ * índice único parcial de `variant.fingerprint` a cada abertura.
+ */
+@Module
+@InstallIn(SingletonComponent::class)
+public object DatabaseModule {
+
+    @Provides
+    @Singleton
+    public fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
+        Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
+            .addCallback(AppDatabase.CALLBACK)
+            .build()
+
+    /** Relógio injetável: os testes trocam por um fixo e o comportamento fica determinístico. */
+    @Provides
+    @Singleton
+    public fun provideClock(): Clock = Clock.systemDefaultZone()
+
+    @Provides
+    public fun provideExemplarDao(database: AppDatabase) = database.exemplarDao()
+
+    @Provides
+    public fun provideVariantDao(database: AppDatabase) = database.variantDao()
+
+    @Provides
+    public fun provideVariantSecondaryColorDao(database: AppDatabase) = database.variantSecondaryColorDao()
+
+    @Provides
+    public fun provideLocationDao(database: AppDatabase) = database.locationDao()
+
+    @Provides
+    public fun provideMovementDao(database: AppDatabase) = database.movementDao()
+
+    @Provides
+    public fun provideAcquisitionDao(database: AppDatabase) = database.acquisitionDao()
+
+    @Provides
+    public fun provideHistoryDao(database: AppDatabase) = database.historyDao()
+
+    @Provides
+    public fun provideCarModelDao(database: AppDatabase) = database.carModelDao()
+}
+
+/** Ligação interface de domínio → implementação de dados. */
+@Module
+@InstallIn(SingletonComponent::class)
+public abstract class RepositoryModule {
+
+    @Binds
+    @Singleton
+    public abstract fun bindExemplarRepository(impl: ExemplarRepositoryImpl): ExemplarRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindManufacturerRepository(
+        impl: ManufacturerRepositoryImpl,
+    ): ManufacturerRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindCarModelRepository(impl: CarModelRepositoryImpl): CarModelRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindVariantRepository(impl: VariantRepositoryImpl): VariantRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindLocationRepository(impl: LocationRepositoryImpl): LocationRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindHistoryRepository(impl: HistoryRepositoryImpl): HistoryRepository
+}
