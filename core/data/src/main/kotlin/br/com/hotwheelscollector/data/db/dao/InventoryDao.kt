@@ -42,6 +42,10 @@ public interface MovementDao {
     @Query("SELECT * FROM movement WHERE exemplar_id = :exemplarId ORDER BY at DESC")
     public fun observeByExemplar(exemplarId: String): Flow<List<MovementEntity>>
 
+    /** Vínculos que bloqueiam a exclusão do exemplar (FR-028). */
+    @Query("SELECT COUNT(*) FROM movement WHERE exemplar_id = :exemplarId")
+    public suspend fun countByExemplar(exemplarId: String): Int
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun insert(entity: MovementEntity)
 }
@@ -51,6 +55,10 @@ public interface AcquisitionDao {
 
     @Query("SELECT * FROM acquisition WHERE exemplar_id = :exemplarId LIMIT 1")
     public suspend fun findByExemplar(exemplarId: String): AcquisitionEntity?
+
+    /** Vínculos que bloqueiam a exclusão do exemplar (FR-028). */
+    @Query("SELECT COUNT(*) FROM acquisition WHERE exemplar_id = :exemplarId")
+    public suspend fun countByExemplar(exemplarId: String): Int
 
     /** Soma investida dos exemplares possuídos (FR-007, FR-077). Nada disso é coluna. */
     @Query(
@@ -81,6 +89,10 @@ public interface ValuationDao {
 
     @Query("SELECT * FROM valuation WHERE exemplar_id = :exemplarId ORDER BY date DESC, created_at DESC LIMIT 1")
     public suspend fun findLatest(exemplarId: String): ValuationEntity?
+
+    /** Vínculos que bloqueiam a exclusão do exemplar (FR-028). */
+    @Query("SELECT COUNT(*) FROM valuation WHERE exemplar_id = :exemplarId")
+    public suspend fun countByExemplar(exemplarId: String): Int
 
     @Query(
         """

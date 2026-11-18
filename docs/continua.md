@@ -1,35 +1,39 @@
 # Continuar em outra máquina
 
-Estado do projeto no fim de 2026-11-17 e o que fazer para retomar em outro ambiente.
-Este documento é operacional: a verdade sobre **cada tarefa** está em
+Estado do projeto em 2026-11-18. A verdade tarefa a tarefa está em
 [`specs/001-hot-wheels-collector/tasks.md`](../specs/001-hot-wheels-collector/tasks.md),
-nos blocos «Situação real — Fase 4 / US2» e «T131 — parcial».
+nos blocos «Evidências» de cada fase. Este documento é operacional.
 
-## 1. Antes de sair desta máquina
+## 1. O que está no repositório
 
-O trabalho **não está commitado**. `git status` mostra ~30 arquivos (25 modificados,
-4 novos, 1 removido) e o remoto é `origin` (`wellingtonsr1/app_hotwhells`). Sem commit e
-push, a outra máquina não tem nada disso.
+- Fases 1–5 verificadas: fundação (banco v1, migração, Hilt, navegação), US1 (cadastro
+  rápido de exemplar), US2 (cadastro em dois passos com fotos e incompletos) e US3
+  (painel).
+- Ciclo de vida do exemplar: lista por variante, edição, movimentação com histórico,
+  arquivamento e exclusão bloqueada por dependentes (FR-028, FR-091).
+- Nada além disso: busca/filtros, coleções, desejos, financeiro, relatórios/backup e
+  reconhecimento ainda não têm tela.
 
+## 2. Pré-requisitos
+
+| Componente | Versão usada |
+|---|---|
+| JDK | 17 (Temurin 17.0.21) — **Java 11 não compila** (`jvmTarget = 17`) |
+| Gradle | 8.11.1 (wrapper) |
+| Android SDK | `platforms;android-36`, `build-tools;36.0.0` — AGP 8.9.2 |
+| Emulador | API 36, x86_64, **perfil de celular** (Pixel 5) |
+
+Neste checkout a toolchain foi baixada para `.tools/` (gitignored) e `local.properties`
+aponta para ela:
+
+```bash
+export JAVA_HOME="$PWD/.tools/jdk-17"
+export ANDROID_HOME="$PWD/.tools/android-sdk"
+export ANDROID_AVD_HOME="$PWD/.tools/avd"
+export PATH="$ANDROID_HOME/platform-tools:$PATH"
 ```
-git status --short
-git add -A
-git commit -m "US2: cadastro em dois passos, fotos no exemplar e cadastros incompletos"
-git push
-```
 
-Nada aqui foi compilado. O commit registra o estado, não uma aprovação.
-
-## 2. Pré-requisitos na outra máquina
-
-| Componente | Versão usada | Observação |
-|---|---|---|
-| JDK | 17 (Temurin 17.0.21) | **Java 11 não compila**: `jvmTarget = 17` |
-| Gradle | 8.11.1 | vem do wrapper (`./gradlew`) |
-| Android SDK | `platforms;android-36`, `build-tools;36.0.0` | AGP 8.9.2; 8.7.x não aceita `compileSdk 36` |
-| Emulador | API 36, x86_64 | o debug inclui x86_64; o release filtra para ARM |
-
-Criar `local.properties` (não versionado):
+Em outra máquina, instale JDK 17 + Android SDK e crie `local.properties`:
 
 ```properties
 sdk.dir=/caminho/para/Android/Sdk
@@ -38,63 +42,56 @@ sdk.dir=/caminho/para/Android/Sdk
 ## 3. Ordem de verificação
 
 ```bash
-# a) tudo que roda em JVM — é aqui que o primeiro erro aparece
+# a) tudo que roda em JVM
 ./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest
 
-# b) APK + lint (lint reprova com qualquer achado)
-./gradlew :app:assembleDebug :app:lint
+# b) APK + lint (lint reprova com erro; avisos não bloqueiam)
+./gradlew :app:assembleDebug :app:lintDebug
 
 # c) fluxo real no emulador (API 36)
+.tools/android-sdk/emulator/emulator -avd hw_test -no-window -no-audio \
+  -gpu swiftshader_indirect -no-snapshot -accel on &
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-Se (a) falhar por KSP/Hilt, (b) nem roda — o erro de compilação vem antes.
+Resultado de referência em 2026-11-18: 87 unitários e 20 instrumentados, 0 falhas;
+lint com 0 erros e 7 avisos.
 
-## 4. Suspeitos do primeiro build, em ordem
+## 4. Decisões já tomadas (não reabrir sem motivo)
 
-1. **Hilt**: dois bindings novos em `core/data/.../di/DatabaseModule.kt`
-   (`ColorRepositoryImpl`, `SeriesRepositoryImpl`) e três ViewModels com dependências novas
-   (`VariantFormViewModel`, `IncompleteEntriesViewModel`, `CatalogViewModel`).
-   Sintoma: `MissingBinding` em tempo de compilação.
-2. **Room**: `CarModelDao.observeWithoutVariant()` com projeção `IncompleteModelRow`
-   (`NOT EXISTS` + aliases). Sintoma: erro do KSP apontando a query.
-3. **Interface de domínio**: `CarModelRepository` ganhou `observeWithoutVariant()`; há
-   **quatro** implementações (uma real e três fakes de teste). Um `override` esquecido
-   quebra a compilação dos testes.
-4. **Navegação**: rotas `catalog/variant/{modelId}` e `catalog/incomplete`; argumento
-   `modelId` declarado em `navArgument`.
-5. **`CatalogFlowTest`**: foi reescrito para modelo → variante → exemplar e nunca rodou.
+- **Fotos pertencem ao exemplar** (`photo.exemplar_id`, FR-020); por isso o formulário de
+  variante cria também o primeiro exemplar.
+- **Cadastro em dois passos**: `+ Mini` → modelo (`CreateCatalogEntryUseCase`) → variante +
+  primeiro exemplar + fotos.
+- **Exemplar arquivado sai do acervo e das contagens** (`status = 'OWNED'` nas consultas),
+  mas aquisição, fotos, movimentações e auditoria continuam no banco (Art. I.7).
+- **Exclusão física de exemplar** só sem dependentes; com qualquer vínculo o domínio
+  devolve `DomainError.Blocked` e a tela oferece arquivar.
+- **T048** lista modelo sem variante e variante sem cor/ano; complementar a variante exige
+  tela de edição que ainda não existe.
+- **T131 parcial**: rótulos estão em `strings.xml`; mensagens de snackbar dos ViewModels e
+  o texto do `PlaceholderScreen` continuam em Kotlin.
 
-## 5. Decisões já tomadas (não reabrir sem motivo)
+## 5. Próximos passos sugeridos
 
-- **Fotos pertencem ao exemplar** (`photo.exemplar_id`, FR-020). Por isso o formulário de
-  variante cria também o primeiro exemplar; sem isso a foto não tem dono válido.
-- **Cadastro em dois passos**: `+ Mini` → modelo (`CreateCatalogEntryUseCase`, devolve
-  `CarModel`) → variante + primeiro exemplar + fotos (`CreateVariantUseCase` +
-  `AddExemplarUseCase` + `PhotoRepository`).
-- **T048 com escopo reduzido**: lista apenas modelo sem variante. Variante sem cor/ano
-  exigiria tela de edição de variante, que não existe e ficou fora.
-- **`ModelFormScreen` removida** (era maquete com IDs falsos). Cadastro de **veículo real**
-  continua sem tela — parte de T043 que segue aberta.
-- **T131 parcial**: rótulos e o texto do cartão saíram do Kotlin; mensagens de snackbar dos
-  ViewModels e o texto do `PlaceholderScreen` ainda não.
+1. **Avaliação e aquisição (US8 parcial)**: editar a aquisição a partir do exemplar e
+   registrar avaliações (valor, data, fonte), com o rótulo «estimativa do colecionador».
+   Hoje o painel mostra «Estimado» sempre zerado.
+2. **US4**: busca FTS4 (a tabela já existe), filtros combináveis e visualizações.
+3. **Backup/exportação mínima (US10)**: a coleção vive num único SQLite no aparelho.
+4. **Variante**: exclusão/arquivamento com o mesmo padrão do exemplar e união/separação
+   (T143–T145).
+5. **Release**: assinatura (T136), acessibilidade (T130), strings restantes (T131),
+   matriz SC→teste (T150).
 
-## 6. Próximas tarefas sugeridas, em ordem
-
-1. Rodar a verificação do item 3 e marcar no `tasks.md` o que ficar verde
-   (T037–T039, T041–T042, T044–T047, T049).
-2. Refazer as capturas `docs/e2e-1..7-*.png` — elas são do fluxo antigo e hoje enganam.
-3. Testes que faltam: `CatalogViewModel`, `CreateCatalogEntryViewModel`,
-   `IncompleteEntriesViewModel`.
-4. Matriz SC→testes (T150) e `docs/operacao.md` (T137).
-5. Só depois: edição de variante (fecha o resto de FR-029) ou US3 (painel).
-
-## 7. Armadilhas de ambiente já encontradas
+## 6. Armadilhas de ambiente já encontradas
 
 - `MigrationTestHelper` **não executa callbacks** do `RoomDatabase`: o índice parcial de
-  `variant.fingerprint` é verificado abrindo o banco real, não pelo helper.
-- AGP serve saída antiga de `res/` com cache incremental: sintoma é ícone/recurso vazio
-  mesmo com o arquivo certo. Solução usada: `./gradlew --stop`, apagar `build/` e
-  `~/.gradle/caches/build-cache-1`, e rodar com `--no-build-cache`.
-- `./gradlew` sem `JAVA_HOME` apontando para 17 falha de forma confusa antes de qualquer
-  tarefa.
+  `variant.fingerprint` é verificado abrindo o banco real.
+- AGP serve saída antiga de `res/` com cache incremental: `./gradlew --stop`, apagar
+  `build/` e as caches de build resolve.
+- **AVD pequeno quebra testes**: com 320×640, `AddExemplarScreenTest` e dois
+  `DashboardScreenTest` falham por elemento fora da tela. Recrie o AVD com `-d pixel_5`;
+  não é regressão de código.
+- O `gradlew` do repositório estava versionado sem bit de execução; use `./gradlew` após
+  `chmod +x` (já corrigido no git).

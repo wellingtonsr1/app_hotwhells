@@ -8,7 +8,9 @@ import br.com.hotwheelscollector.domain.model.Exemplar
 import br.com.hotwheelscollector.domain.model.ExemplarStatus
 import br.com.hotwheelscollector.domain.model.Location
 import br.com.hotwheelscollector.domain.model.Movement
+import br.com.hotwheelscollector.domain.model.PackagingCondition
 import br.com.hotwheelscollector.domain.repository.AddExemplarOutcome
+import br.com.hotwheelscollector.domain.repository.ExemplarDependents
 import br.com.hotwheelscollector.domain.repository.ExemplarRepository
 import br.com.hotwheelscollector.domain.repository.LocationRepository
 import br.com.hotwheelscollector.domain.repository.NewExemplar
@@ -250,9 +252,11 @@ private class FakeAddExemplarRepository : ExemplarRepository {
         )
     }
 
-    override suspend fun updateCondition(
+    override suspend fun updateDetails(
         id: String,
         condition: Condition,
+        packagingCondition: PackagingCondition?,
+        notes: String?,
         expectedRowVersion: Long,
     ): DomainResult<Exemplar> = Result.failure(DomainError.NotFound)
 
@@ -260,6 +264,12 @@ private class FakeAddExemplarRepository : ExemplarRepository {
         Result.success(Unit)
 
     override suspend fun countByVariant(variantId: String): Int = existingCount
+
+    override suspend fun archive(id: String): DomainResult<Unit> = Result.success(Unit)
+
+    override suspend fun dependents(id: String): ExemplarDependents = ExemplarDependents()
+
+    override suspend fun delete(id: String): DomainResult<Unit> = Result.success(Unit)
 }
 
 private class FakeLocationRepository : LocationRepository {

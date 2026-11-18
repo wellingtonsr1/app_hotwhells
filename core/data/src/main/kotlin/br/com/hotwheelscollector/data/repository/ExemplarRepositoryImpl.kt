@@ -12,7 +12,10 @@ import br.com.hotwheelscollector.domain.error.DomainError
 import br.com.hotwheelscollector.domain.error.DomainResult
 import br.com.hotwheelscollector.domain.model.Condition
 import br.com.hotwheelscollector.domain.model.Exemplar
+import br.com.hotwheelscollector.domain.model.ExemplarStatus
+import br.com.hotwheelscollector.domain.model.PackagingCondition
 import br.com.hotwheelscollector.domain.repository.AddExemplarOutcome
+import br.com.hotwheelscollector.domain.repository.ExemplarDependents
 import br.com.hotwheelscollector.domain.repository.ExemplarRepository
 import br.com.hotwheelscollector.domain.repository.NewAcquisition
 import br.com.hotwheelscollector.domain.repository.NewExemplar
@@ -117,32 +120,67 @@ public class ExemplarRepositoryImpl @Inject constructor(
             )
         }
 
-    override suspend fun updateCondition(
+    override suspend fun updateDetails(
         id: String,
         condition: Condition,
+        packagingCondition: PackagingCondition?,
+        notes: String?,
         expectedRowVersion: Long,
-    ): DomainResult<Exemplar> {
-        val current = database.exemplarDao().findById(id) ?: return Result.failure(DomainError.NotFound)
-        val updated = database.exemplarDao().updateWithVersion(
-            id = id,
-            condition = condition.name,
-            packagingCondition = current.packagingCondition,
-            notes = current.notes,
-            updatedAt = Instant.now(clock).toEpochMilli(),
-            expectedVersion = expectedRowVersion,
-        )
-        if (updated == 0) return Result.failure(DomainError.StaleWrite)
+    ): DomainResult<Exemplar> = try {
+        val stored = transactionRunner.inTransaction {
+            val current = database.exemplarDao().findById(id)
+                ?: throw DomainError.NotFound
+            val now = Instant.now(clock)
+            val updated = database.exemplarDao().updateWithVersion(
+                id = id,
+                condition = condition.name,
+                packagingCondition = packagingCondition?.name,
+                notes = notes,
+                updatedAt = now.toEpochMilli(),
+                expectedVersion = expectedRowVersion,
+            )
+            if (updated == 0) throw DomainError.StaleWrite
 
-        auditLogWriter.record(
-            entityType = ENTITY_TYPE,
-            entityId = id,
-            field = "condition",
-            oldValue = current.condition,
-            newValue = condition.name,
-            source = "app",
-        )
-        val stored = database.exemplarDao().findById(id) ?: return Result.failure(DomainError.NotFound)
-        return Result.success(stored.toDomain())
+            // Só o campo que mudou entra na trilha: auditoria de edição não é snapshot.
+            if (current.condition != condition.name) {
+                auditLogWriter.record(
+                    entityType = ENTITY_TYPE,
+                    entityId = id,
+                    field = "condition",
+                    oldValue = current.condition,
+                    newValue = condition.name,
+                    source = "app",
+                    at = now,
+                )
+            }
+            val newPackaging = packagingCondition?.name
+            if (current.packagingCondition != newPackaging) {
+                auditLogWriter.record(
+                    entityType = ENTITY_TYPE,
+                    entityId = id,
+                    field = "packaging_condition",
+                    oldValue = current.packagingCondition,
+                    newValue = newPackaging,
+                    source = "app",
+                    at = now,
+                )
+            }
+            if (current.notes != notes) {
+                auditLogWriter.record(
+                    entityType = ENTITY_TYPE,
+                    entityId = id,
+                    field = "notes",
+                    oldValue = current.notes,
+                    newValue = notes,
+                    source = "app",
+                    at = now,
+                )
+            }
+            database.exemplarDao().findById(id) ?: throw DomainError.NotFound
+        }
+        Result.success(stored.toDomain())
+    } catch (error: Throwable) {
+        Result.failure(mapError(error))
     }
 
     override suspend fun move(id: String, toLocationId: String?, note: String?): DomainResult<Unit> = try {
@@ -178,6 +216,72 @@ public class ExemplarRepositoryImpl @Inject constructor(
 
     override suspend fun countByVariant(variantId: String): Int =
         database.exemplarDao().countByVariant(variantId)
+
+    override suspend fun archive(id: String): DomainResult<Unit> = try {
+        transactionRunner.inTransaction {
+            val current = database.exemplarDao().findById(id)
+                ?: throw DomainError.NotFound
+            if (current.status == ExemplarStatus.ARCHIVED.name) return@inTransaction
+
+            val now = Instant.now(clock)
+            database.exemplarDao().setStatus(id, ExemplarStatus.ARCHIVED.name, now.toEpochMilli())
+            auditLogWriter.record(
+                entityType = ENTITY_TYPE,
+                entityId = id,
+                field = "status",
+                oldValue = current.status,
+                newValue = ExemplarStatus.ARCHIVED.name,
+                source = "app",
+                at = now,
+            )
+        }
+        Result.success(Unit)
+    } catch (error: Throwable) {
+        Result.failure(mapError(error))
+    }
+
+    override suspend fun dependents(id: String): ExemplarDependents = ExemplarDependents(
+        photos = database.photoDao().countByExemplar(id),
+        acquisitions = database.acquisitionDao().countByExemplar(id),
+        valuations = database.valuationDao().countByExemplar(id),
+        movements = database.movementDao().countByExemplar(id),
+        negotiations = database.negotiationDao().countByExemplar(id),
+    )
+
+    override suspend fun delete(id: String): DomainResult<Unit> = try {
+        transactionRunner.inTransaction {
+            database.exemplarDao().findById(id) ?: throw DomainError.NotFound
+            val deps = dependents(id)
+            if (deps.hasAny) throw DomainError.Blocked(blockedMessage(deps))
+
+            database.exemplarDao().deleteById(id)
+            auditLogWriter.record(
+                entityType = ENTITY_TYPE,
+                entityId = id,
+                field = "deleted",
+                oldValue = "exemplar sem vínculos",
+                newValue = null,
+                source = "app",
+                at = Instant.now(clock),
+            )
+        }
+        Result.success(Unit)
+    } catch (error: Throwable) {
+        Result.failure(mapError(error))
+    }
+
+    /** Explica o bloqueio em pt-BR com os vínculos que existem (FR-028). */
+    private fun blockedMessage(deps: ExemplarDependents): String {
+        val parts = buildList {
+            if (deps.photos > 0) add("${deps.photos} foto(s)")
+            if (deps.acquisitions > 0) add("${deps.acquisitions} aquisição(ões)")
+            if (deps.valuations > 0) add("${deps.valuations} avaliação(ões)")
+            if (deps.movements > 0) add("${deps.movements} movimentação(ões)")
+            if (deps.negotiations > 0) add("${deps.negotiations} negociação(ões)")
+        }
+        return "Este exemplar tem ${parts.joinToString(", ")}. " +
+            "Vínculos impedem a exclusão — arquive em vez de excluir."
+    }
 
     /**
      * Código legível, sequencial na prática: `HW-000123`.

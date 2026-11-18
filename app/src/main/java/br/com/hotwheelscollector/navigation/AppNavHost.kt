@@ -41,6 +41,8 @@ import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.feature.catalog.AddExemplarScreen
 import br.com.hotwheelscollector.feature.catalog.CatalogScreen
 import br.com.hotwheelscollector.feature.catalog.CreateCatalogEntryScreen
+import br.com.hotwheelscollector.feature.catalog.ExemplarDetailScreen
+import br.com.hotwheelscollector.feature.catalog.ExemplarListScreen
 import br.com.hotwheelscollector.feature.catalog.IncompleteEntriesScreen
 import br.com.hotwheelscollector.feature.catalog.VariantFormScreen
 import br.com.hotwheelscollector.feature.dashboard.DashboardScreen
@@ -81,6 +83,17 @@ public sealed class Destination(public val route: String) {
      */
     public data object AddExemplar : Destination("exemplar/add/{${RouteArgs.VARIANT_ID}}") {
         public fun routeFor(variantId: String): String = "exemplar/add/$variantId"
+    }
+
+    /** Unidades físicas de uma variante: entrada da edição e da movimentação (FR-028). */
+    public data object ExemplarList :
+        Destination("catalog/variant/{${RouteArgs.VARIANT_ID}}/exemplars") {
+        public fun routeFor(variantId: String): String = "catalog/variant/$variantId/exemplars"
+    }
+
+    /** Detalhe do exemplar: condição, embalagem, localização, histórico e arquivamento. */
+    public data object ExemplarDetail : Destination("exemplar/{${RouteArgs.EXEMPLAR_ID}}") {
+        public fun routeFor(exemplarId: String): String = "exemplar/$exemplarId"
     }
     public data object Wishlist : Destination("wishlist")
     public data object Finance : Destination("finance")
@@ -164,6 +177,9 @@ public fun AppNavHost(
                     onVariantClick = { variantId ->
                         navController.navigate(Destination.AddExemplar.routeFor(variantId))
                     },
+                    onOpenExemplars = { variantId ->
+                        navController.navigate(Destination.ExemplarList.routeFor(variantId))
+                    },
                     onCreateEntry = { navController.navigate(Destination.CreateEntry.route) },
                     onOpenIncomplete = { navController.navigate(Destination.Incomplete.route) },
                 )
@@ -204,6 +220,27 @@ public fun AppNavHost(
             ) {
                 AddExemplarScreen(
                     onSaved = { navController.popBackStack() },
+                )
+            }
+            composable(
+                route = Destination.ExemplarList.route,
+                arguments = listOf(navArgument(RouteArgs.VARIANT_ID) { type = NavType.StringType }),
+            ) {
+                ExemplarListScreen(
+                    onAddExemplar = { variantId ->
+                        navController.navigate(Destination.AddExemplar.routeFor(variantId))
+                    },
+                    onOpenExemplar = { exemplarId ->
+                        navController.navigate(Destination.ExemplarDetail.routeFor(exemplarId))
+                    },
+                )
+            }
+            composable(
+                route = Destination.ExemplarDetail.route,
+                arguments = listOf(navArgument(RouteArgs.EXEMPLAR_ID) { type = NavType.StringType }),
+            ) {
+                ExemplarDetailScreen(
+                    onDone = { navController.popBackStack() },
                 )
             }
             composable(Destination.Wishlist.route) {

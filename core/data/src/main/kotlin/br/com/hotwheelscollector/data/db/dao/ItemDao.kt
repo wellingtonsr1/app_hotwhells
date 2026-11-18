@@ -43,7 +43,7 @@ public interface VariantDao {
                mf.name AS manufacturer_name,
                c.name AS color_name,
                v.release_year AS release_year,
-               (SELECT COUNT(*) FROM exemplar e WHERE e.variant_id = v.id) AS exemplar_count
+               (SELECT COUNT(*) FROM exemplar e WHERE e.variant_id = v.id AND e.status = 'OWNED') AS exemplar_count
         FROM variant v
         JOIN car_model m ON m.id = v.model_id
         JOIN manufacturer mf ON mf.id = m.manufacturer_id
@@ -123,7 +123,7 @@ public interface ExemplarDao {
     @Query("SELECT * FROM exemplar WHERE status = 'OWNED' ORDER BY created_at DESC")
     public fun observeOwned(): Flow<List<ExemplarEntity>>
 
-    @Query("SELECT * FROM exemplar WHERE variant_id = :variantId ORDER BY created_at")
+    @Query("SELECT * FROM exemplar WHERE variant_id = :variantId AND status = 'OWNED' ORDER BY created_at")
     public fun observeByVariant(variantId: String): Flow<List<ExemplarEntity>>
 
     @Query("SELECT * FROM exemplar WHERE id = :id")
@@ -132,7 +132,7 @@ public interface ExemplarDao {
     @Query("SELECT * FROM exemplar WHERE internal_code = :code LIMIT 1")
     public suspend fun findByInternalCode(code: String): ExemplarEntity?
 
-    @Query("SELECT COUNT(*) FROM exemplar WHERE variant_id = :variantId")
+    @Query("SELECT COUNT(*) FROM exemplar WHERE variant_id = :variantId AND status = 'OWNED'")
     public suspend fun countByVariant(variantId: String): Int
 
     @Query("SELECT COUNT(*) FROM exemplar")
@@ -170,6 +170,10 @@ public interface ExemplarDao {
 
     @Query("UPDATE exemplar SET status = :status, updated_at = :at WHERE id = :id")
     public suspend fun setStatus(id: String, status: String, at: Long)
+
+    /** Só chega aqui o exemplo sem nenhum vínculo: os demais são bloqueados antes (FR-028). */
+    @Query("DELETE FROM exemplar WHERE id = :id")
+    public suspend fun deleteById(id: String)
 
     /** União de variantes (FR-041): move os exemplares para a variante que fica. */
     @Query("UPDATE exemplar SET variant_id = :toVariantId, updated_at = :at WHERE variant_id = :fromVariantId")

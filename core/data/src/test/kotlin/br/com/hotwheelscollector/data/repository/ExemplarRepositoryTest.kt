@@ -11,9 +11,11 @@ import br.com.hotwheelscollector.data.db.entity.ManufacturerEntity
 import br.com.hotwheelscollector.data.db.entity.VariantEntity
 import br.com.hotwheelscollector.domain.error.DomainError
 import br.com.hotwheelscollector.domain.model.Condition
+import br.com.hotwheelscollector.domain.model.ExemplarStatus
 import br.com.hotwheelscollector.domain.model.IsoDate
 import br.com.hotwheelscollector.domain.model.LocationType
 import br.com.hotwheelscollector.domain.model.MoneyCents
+import br.com.hotwheelscollector.domain.model.PackagingCondition
 import br.com.hotwheelscollector.domain.repository.NewAcquisition
 import br.com.hotwheelscollector.domain.repository.NewExemplar
 import com.google.common.truth.Truth.assertThat
@@ -149,14 +151,116 @@ public class ExemplarRepositoryTest {
             NewExemplar(variantId = VARIANT_ID, condition = Condition.SEALED),
         ).getOrThrow()
 
-        val stale = repository.updateCondition(
+        val stale = repository.updateDetails(
             id = outcome.exemplar.id,
             condition = Condition.LOOSE,
+            packagingCondition = null,
+            notes = null,
             expectedRowVersion = 99L,
         )
 
         assertThat(stale.isFailure).isTrue()
         assertThat(stale.exceptionOrNull()).isEqualTo(DomainError.StaleWrite)
+    }
+
+    @Test
+    public fun `editar detalhes grava condicao embalagem e observacoes com auditoria`(): Unit = runBlocking {
+        seedCatalog()
+        val outcome = repository.add(
+            NewExemplar(variantId = VARIANT_ID, condition = Condition.SEALED),
+        ).getOrThrow()
+
+        val result = repository.updateDetails(
+            id = outcome.exemplar.id,
+            condition = Condition.LOOSE,
+            packagingCondition = PackagingCondition.OPENED,
+            notes = "Solto, sem caixa",
+            expectedRowVersion = outcome.exemplar.rowVersion,
+        )
+
+        assertThat(result.isSuccess).isTrue()
+        val updated = result.getOrThrow()
+        assertThat(updated.condition).isEqualTo(Condition.LOOSE)
+        assertThat(updated.packagingCondition).isEqualTo(PackagingCondition.OPENED)
+        assertThat(updated.notes).isEqualTo("Solto, sem caixa")
+        assertThat(updated.rowVersion).isEqualTo(outcome.exemplar.rowVersion + 1)
+
+        val audit = database.historyDao().observeFor("exemplar", updated.id).first().map { it.field }
+        assertThat(audit).containsAtLeast("condition", "packaging_condition", "notes")
+    }
+
+    @Test
+    public fun `arquivar retira do acervo e preserva vinculos e historico`(): Unit = runBlocking {
+        seedCatalog()
+        val outcome = repository.add(
+            NewExemplar(
+                variantId = VARIANT_ID,
+                condition = Condition.SEALED,
+                locationId = LOCATION_ID,
+                acquisition = NewAcquisition(
+                    date = IsoDate(LocalDate.of(2026, 11, 10)),
+                    price = MoneyCents(5900),
+                ),
+            ),
+        ).getOrThrow()
+        val exemplarId = outcome.exemplar.id
+
+        val archived = repository.archive(exemplarId)
+
+        assertThat(archived.isSuccess).isTrue()
+        assertThat(database.exemplarDao().findById(exemplarId)?.status)
+            .isEqualTo(ExemplarStatus.ARCHIVED.name)
+        // Nada é apagado: aquisição, movimentação e auditoria continuam no banco (Art. I.7).
+        assertThat(database.acquisitionDao().findByExemplar(exemplarId)).isNotNull()
+        assertThat(database.movementDao().observeByExemplar(exemplarId).first()).hasSize(1)
+        assertThat(database.historyDao().observeFor("exemplar", exemplarId).first().map { it.field })
+            .contains("status")
+
+        // Some do acervo e das contagens (FR-044).
+        assertThat(repository.observeOwned().first()).isEmpty()
+        assertThat(repository.countByVariant(VARIANT_ID)).isEqualTo(0)
+        assertThat(database.variantDao().observeSummaries().first().first().exemplarCount).isEqualTo(0)
+    }
+
+    @Test
+    public fun `exclusao e bloqueada quando existem vinculos`(): Unit = runBlocking {
+        seedCatalog()
+        val outcome = repository.add(
+            NewExemplar(
+                variantId = VARIANT_ID,
+                condition = Condition.SEALED,
+                acquisition = NewAcquisition(
+                    date = IsoDate(LocalDate.of(2026, 11, 10)),
+                    price = MoneyCents(5900),
+                ),
+            ),
+        ).getOrThrow()
+
+        val dependents = repository.dependents(outcome.exemplar.id)
+        val deleted = repository.delete(outcome.exemplar.id)
+
+        assertThat(dependents.hasAny).isTrue()
+        assertThat(dependents.acquisitions).isEqualTo(1)
+        assertThat(deleted.isFailure).isTrue()
+        assertThat(deleted.exceptionOrNull()).isInstanceOf(DomainError.Blocked::class.java)
+        assertThat((deleted.exceptionOrNull() as DomainError.Blocked).reason)
+            .contains("aquisição")
+        assertThat(database.exemplarDao().findById(outcome.exemplar.id)).isNotNull()
+    }
+
+    @Test
+    public fun `exclusao sem vinculos remove o exemplar`(): Unit = runBlocking {
+        seedCatalog()
+        val outcome = repository.add(
+            NewExemplar(variantId = VARIANT_ID, condition = Condition.SEALED),
+        ).getOrThrow()
+
+        assertThat(repository.dependents(outcome.exemplar.id).hasAny).isFalse()
+        val deleted = repository.delete(outcome.exemplar.id)
+
+        assertThat(deleted.isSuccess).isTrue()
+        assertThat(database.exemplarDao().findById(outcome.exemplar.id)).isNull()
+        assertThat(database.exemplarDao().countAll()).isEqualTo(0)
     }
 
     private suspend fun seedCatalog() {

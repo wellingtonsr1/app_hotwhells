@@ -41,6 +41,7 @@ import br.com.hotwheelscollector.ui.theme.HotWheelsTheme
 @Composable
 public fun CatalogScreen(
     onVariantClick: (variantId: String) -> Unit,
+    onOpenExemplars: (variantId: String) -> Unit,
     onCreateEntry: () -> Unit,
     onOpenIncomplete: () -> Unit,
     modifier: Modifier = Modifier,
@@ -50,6 +51,7 @@ public fun CatalogScreen(
     CatalogContent(
         state = state,
         onVariantClick = onVariantClick,
+        onOpenExemplars = onOpenExemplars,
         onCreateEntry = onCreateEntry,
         onOpenIncomplete = onOpenIncomplete,
         modifier = modifier,
@@ -60,6 +62,7 @@ public fun CatalogScreen(
 internal fun CatalogContent(
     state: CatalogUiState,
     onVariantClick: (String) -> Unit,
+    onOpenExemplars: (String) -> Unit,
     onCreateEntry: () -> Unit,
     onOpenIncomplete: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -114,7 +117,11 @@ internal fun CatalogContent(
                     ),
                 ) {
                     items(state.variants, key = { it.variantId }) { variant ->
-                        VariantCard(variant = variant, onClick = { onVariantClick(variant.variantId) })
+                        VariantCard(
+                            variant = variant,
+                            onClick = { onVariantClick(variant.variantId) },
+                            onOpenExemplars = { onOpenExemplars(variant.variantId) },
+                        )
                     }
                 }
             }
@@ -123,19 +130,36 @@ internal fun CatalogContent(
 }
 
 @Composable
-private fun VariantCard(variant: VariantSummary, onClick: () -> Unit) {
+private fun VariantCard(
+    variant: VariantSummary,
+    onClick: () -> Unit,
+    onOpenExemplars: () -> Unit,
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Text(text = variant.modelName, style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = variantSubtitle(variant),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = variant.modelName, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = variantSubtitle(variant),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            // O cartão continua abrindo o cadastro rápido; este atalho leva às unidades
+            // já existentes, onde ficam edição, movimentação e arquivamento (FR-028).
+            TextButton(onClick = onOpenExemplars) {
+                Text(stringResource(R.string.catalog_open_exemplars))
+            }
         }
     }
 }
@@ -200,6 +224,7 @@ private fun CatalogPreview() {
                 loading = false,
             ),
             onVariantClick = {},
+            onOpenExemplars = {},
             onCreateEntry = {},
             onOpenIncomplete = {},
         )

@@ -73,6 +73,10 @@ public interface NegotiationDao {
     @Query("SELECT * FROM negotiation WHERE id = :id")
     public suspend fun findById(id: String): NegotiationEntity?
 
+    /** Vínculos que bloqueiam a exclusão do exemplar (FR-028). */
+    @Query("SELECT COUNT(*) FROM negotiation WHERE exemplar_id = :exemplarId")
+    public suspend fun countByExemplar(exemplarId: String): Int
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun insert(entity: NegotiationEntity)
 

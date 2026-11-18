@@ -25,13 +25,50 @@ public interface ExemplarRepository {
     public fun observeByVariant(variantId: String): Flow<List<Exemplar>>
     public suspend fun findById(id: String): Exemplar?
     public suspend fun add(draft: NewExemplar): DomainResult<AddExemplarOutcome>
-    public suspend fun updateCondition(
+
+    /**
+     * Edição dos campos do exemplar (FR-036). A versão esperada impede que uma tela
+     * sobrescreva a escrita de outra (Art. I.12).
+     */
+    public suspend fun updateDetails(
         id: String,
         condition: Condition,
+        packagingCondition: PackagingCondition?,
+        notes: String?,
         expectedRowVersion: Long,
     ): DomainResult<Exemplar>
     public suspend fun move(id: String, toLocationId: String?, note: String? = null): DomainResult<Unit>
     public suspend fun countByVariant(variantId: String): Int
+
+    /** Arquiva o exemplar: sai do acervo e das contagens, mas nada é apagado (Art. I.7). */
+    public suspend fun archive(id: String): DomainResult<Unit>
+
+    /** Vínculos que impedem a exclusão física; a tela usa isso para explicar o bloqueio. */
+    public suspend fun dependents(id: String): ExemplarDependents
+
+    /**
+     * Exclusão física, permitida **somente** quando não há vínculos (FR-028, Art. I.6).
+     * Com qualquer dependente, devolve [br.com.hotwheelscollector.domain.error.DomainError.Blocked]
+     * e a alternativa é [archive].
+     */
+    public suspend fun delete(id: String): DomainResult<Unit>
+}
+
+/**
+ * Dependentes do exemplar, contados nas tabelas com FK `RESTRICT` (Art. I.6).
+ *
+ * A trilha de auditoria não entra na conta: ela é appende-only e continua válida mesmo
+ * depois de uma exclusão permitida, porque registra o que aconteceu, não o que existe.
+ */
+public data class ExemplarDependents(
+    val photos: Int = 0,
+    val acquisitions: Int = 0,
+    val valuations: Int = 0,
+    val movements: Int = 0,
+    val negotiations: Int = 0,
+) {
+    public val total: Int get() = photos + acquisitions + valuations + movements + negotiations
+    public val hasAny: Boolean get() = total > 0
 }
 
 /**

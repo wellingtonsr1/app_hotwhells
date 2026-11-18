@@ -30,6 +30,14 @@ A simulação do app completo (maquete animada, não gravação de tela) está e
 - Para os testes instrumentados: emulador ou aparelho com **API 36** (o debug inclui
   x86_64; o release filtra para ARM).
 
+Neste checkout a toolchain usada na verificação foi instalada em `.tools/` (fora do git):
+
+```bash
+export JAVA_HOME="$PWD/.tools/jdk-17"
+export ANDROID_HOME="$PWD/.tools/android-sdk"
+export ANDROID_AVD_HOME="$PWD/.tools/avd"
+```
+
 ## Comandos
 
 ```bash
@@ -50,12 +58,18 @@ O lint reprova o build com qualquer achado; o relatório fica em
 
 ## Estado atual
 
-- **Fases 1–3** (fundação e US1) verificadas: banco v1, migração testada, cadastro
-  rápido de exemplar validado em emulador.
-- **Fase 4 (US2)** implementada — cadastro em dois passos (modelo → variante + primeiro
-  exemplar + fotos) e lista de cadastros incompletos — com **verificação pendente**.
-  O estado tarefa a tarefa está no bloco «Situação real — Fase 4» do `tasks.md`.
-- **Fases 5–15** não iniciadas.
+- **Fases 1–5** verificadas no emulador (API 36): banco v1, US1 (cadastro rápido de
+  exemplar), US2 (cadastro em dois passos, fotos e lista de incompletos) e US3 (painel).
+- **Ciclo de vida do exemplar**: lista por variante, edição de condição/embalagem/
+  observações, movimentação com histórico e arquivamento. Exclusão física só sem vínculos,
+  com bloqueio explicado e arquivamento como alternativa (FR-028, FR-091).
+- **Fases 6–15** não iniciadas, com uma exceção pontual: a movimentação de T103 (US9) já
+  é entregue dentro do detalhe do exemplar.
+- Verificação de 2026-11-18: **87 testes unitários** e **20 instrumentados**, 0 falhas;
+  lint com 0 erros e 7 avisos pré-existentes. Detalhes em `tasks.md`.
+
+Os números do painel usam `acquisition` e `valuation`. Editar a aquisição e registrar
+avaliações é o próximo passo — hoje o valor estimado aparece sempre zerado.
 
 Nenhum dado sai do aparelho: sem conta, sem telemetria, sem permissão ampla de
 armazenamento (importação e backup usam Storage Access Framework).

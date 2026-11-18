@@ -816,8 +816,8 @@ estado viram `@StringRes` no ViewModel ou códigos de erro resolvidos na tela.
 **Purpose**: fechar as lacunas que a análise cruzada apontou como violação de princípio constitucional. Não renumeram tarefas existentes.
 
 - [ ] T140 Implementar `AppLogger` com log estruturado (nível, timestamp UTC, identificador de correlação por operação, sem dado sensível) integrado ao handler global de erros e exportável no diagnóstico (Art. V.7) em `core/data/src/main/kotlin/br/com/hotwheelscollector/data/logging/AppLogger.kt`
-- [ ] T141 [US2] Implementar exclusão e arquivamento de exemplar/variante com confirmação que descreve o efeito, bloqueio quando há dependentes (`ON DELETE RESTRICT`) e oferta de arquivamento como alternativa (FR-028, Art. I.6) em `app/src/main/java/br/com/hotwheelscollector/feature/catalog/DeleteOrArchiveSheet.kt`
-- [ ] T142 [P] [US2] Teste de bloqueio de exclusão com dependentes e de arquivamento preservando histórico (Art. I.6) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/DeletionGuardTest.kt`
+- [X] T141 [US2] Exclusão e arquivamento **de exemplar** com confirmação que descreve o efeito, bloqueio quando há dependentes (`ON DELETE RESTRICT`) e oferta de arquivamento como alternativa (FR-028, Art. I.6) em `app/src/main/java/br/com/hotwheelscollector/feature/catalog/DeleteOrArchiveSheet.kt` — a parte de **variante** continua pendente.
+- [X] T142 [P] [US2] Teste de bloqueio de exclusão com dependentes e de arquivamento preservando histórico (Art. I.6) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/ExemplarRepositoryTest.kt` e `app/src/androidTest/java/br/com/hotwheelscollector/feature/catalog/DeleteOrArchiveSheetTest.kt`
 - [ ] T143 [US2] Implementar `MergeVariantsUseCase`: mover todos os exemplares, itens de coleção e desejos para a variante de destino, recalcular `fingerprint`, registrar `history_entry` e arquivar a origem sem apagar nada (FR-041) em `core/domain/src/main/kotlin/br/com/hotwheelscollector/domain/usecase/MergeVariantsUseCase.kt`
 - [ ] T144 [US2] Implementar `SplitVariantUseCase`: criar nova variante a partir dos exemplares selecionados preservando aquisição, avaliações, fotos e movimentações (FR-042) em `core/domain/src/main/kotlin/br/com/hotwheelscollector/domain/usecase/SplitVariantUseCase.kt`
 - [ ] T145 [P] [US2] Teste de domínio de união e separação de variantes com múltiplos exemplares e históricos (Art. I.3, V.3) em `core/domain/src/test/kotlin/br/com/hotwheelscollector/domain/usecase/VariantMergeSplitTest.kt`
@@ -829,6 +829,40 @@ estado viram `@StringRes` no ViewModel ou códigos de erro resolvidos na tela.
 - [ ] T151 Testar importação de 1.000 linhas com pré-visualização completa e relatório de erro por linha dentro do tempo aceitável (SC-006) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/importexport/ImportScaleTest.kt`
 - [ ] T152 Testar geração de PDF de 1.000 exemplares em menos de 10 segundos, com totais iguais aos do painel (SC-007) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/importexport/PdfPerformanceTest.kt`
 - [ ] T153 Testar restauração completa de 1.000 exemplares e 2.000 fotos em menos de 5 minutos, com vínculos de imagem preservados (SC-013) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/storage/RestorePerformanceTest.kt`
+
+### Evidências — ciclo de vida do exemplar (T141/T142, 2026-11-18)
+
+Entrega: lista de exemplares por variante, edição de condição/embalagem/observações,
+movimentação com histórico e arquivamento. A exclusão física só é oferecida quando
+`ExemplarDependents` está vazio; com foto, aquisição, avaliação, movimentação ou negociação,
+o domínio devolve `DomainError.Blocked` e a tela oferece arquivar (FR-028, Art. I.6–I.7).
+
+| Verificação | Comando | Resultado |
+| --- | --- | --- |
+| Unitários | `:core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest` | 87 testes, 0 falhas |
+| Instrumentados | `:app:connectedDebugAndroidTest` (emulador API 36, Pixel 5) | 20 testes, 0 falhas |
+| Lint | `:app:lintDebug` | 0 erros, 7 avisos (todos pré-existentes) |
+| APK | `:app:assembleDebug` | `app-debug.apk` instalado e `MainActivity` iniciada |
+
+Testes novos: 4 em `ExemplarRepositoryTest` (edição com auditoria, escrita desatualizada,
+arquivamento preservando vínculos e zerando contagens, exclusão bloqueada e exclusão sem
+vínculos) e 2 em `DeleteOrArchiveSheetTest` (bloqueio com vínculos e confirmação explícita).
+
+Decisões registradas:
+
+- `archive` grava `status = ARCHIVED`; listas, contagem da variante e painel passam a
+  considerar apenas `status = 'OWNED'` (FR-044).
+- A auditoria é gravada só para o campo que mudou; o arquivamento registra `status`.
+- A **movimentação com histórico** de T103 (US9) foi entregue dentro de
+  `ExemplarDetailScreen`, não em `MoveExemplarSheet.kt`; o restante da US9 (árvore de
+  localizações, inventário, exclusão de local) continua aberto.
+- T141 permanece apenas com a parte de **variante** pendente: excluir/arquivar variante
+  exige decidir o destino dos exemplares e ainda não tem tela.
+
+Ambiente: a verificação rodou com JDK 17 e Android SDK locais em `.tools/` (gitignored),
+`local.properties` apontando para eles. O AVD `hw_test` precisa ser um perfil de celular
+(Pixel 5); com 320×640 três testes instrumentados existentes falham por elemento fora da
+tela, sem relação com o código.
 
 ---
 

@@ -144,4 +144,62 @@
     <string name="dashboard_collections">Progresso das coleções</string>
     <string name="dashboard_collections_empty">Nenhuma coleção ativa.</string>
     <string name="dashboard_collection_progress">%1$d de %2$d itens</string>
+
+    <!-- Exemplares da variante, edição, movimentação e arquivamento (FR-028, FR-091). -->
+    <string name="catalog_open_exemplars">Ver exemplares</string>
+    <string name="exemplars_title">Exemplares</string>
+    <string name="exemplars_add">+ Exemplar</string>
+    <string name="exemplars_empty_title">Nenhum exemplar ativo</string>
+    <string name="exemplars_empty_hint">Toque em + Exemplar para registrar a primeira unidade desta variante.</string>
+    <string name="exemplar_not_found">Exemplar não encontrado. Ele pode ter sido arquivado.</string>
+    <string name="exemplar_archived_badge">Arquivado — fora do acervo</string>
+    <string name="exemplar_condition">Condição</string>
+    <string name="exemplar_packaging">Embalagem</string>
+    <string name="exemplar_notes">Observações</string>
+    <string name="exemplar_save">Salvar alterações</string>
+    <string name="exemplar_location">Localização atual</string>
+    <string name="exemplar_move_target">Mover para</string>
+    <string name="exemplar_move">Mover</string>
+    <string name="exemplar_move_note">Observação da movimentação (opcional)</string>
+    <string name="exemplar_history_title">Histórico de movimentação</string>
+    <string name="exemplar_history_empty">Nenhuma movimentação registrada.</string>
+    <string name="exemplar_history_entry">%1$s → %2$s</string>
+    <string name="exemplar_archive">Arquivar exemplar</string>
+    <string name="exemplar_delete">Excluir definitivamente</string>
+    <string name="exemplar_dependents_title">Exclusão bloqueada</string>
+    <string name="exemplar_dependents_message">Este exemplar tem %1$s. Para não perder registro, a exclusão fica bloqueada — arquive o exemplar.</string>
+    <plurals name="exemplar_dep_photos">
+        <item quantity="one">%1$d foto</item>
+        <item quantity="other">%1$d fotos</item>
+    </plurals>
+    <plurals name="exemplar_dep_acquisitions">
+        <item quantity="one">%1$d aquisição</item>
+        <item quantity="other">%1$d aquisições</item>
+    </plurals>
+    <plurals name="exemplar_dep_valuations">
+        <item quantity="one">%1$d avaliação</item>
+        <item quantity="other">%1$d avaliações</item>
+    </plurals>
+    <plurals name="exemplar_dep_movements">
+        <item quantity="one">%1$d movimentação</item>
+        <item quantity="other">%1$d movimentações</item>
+    </plurals>
+    <plurals name="exemplar_dep_negotiations">
+        <item quantity="one">%1$d negociação</item>
+        <item quantity="other">%1$d negociações</item>
+    </plurals>
+    <string name="exemplar_archive_title">Arquivar exemplar?</string>
+    <string name="exemplar_archive_message">Ele sai do acervo e das contagens. Fotos, aquisição, avaliações e histórico continuam guardados.</string>
+    <string name="exemplar_archive_confirm">Arquivar</string>
+    <string name="exemplar_delete_title">Excluir definitivamente?</string>
+    <string name="exemplar_delete_message">Esta ação não pode ser desfeita e só é permitida quando o exemplar não tem vínculos.</string>
+    <string name="exemplar_delete_confirm">Excluir</string>
+    <string name="exemplar_delete_blocked_hint">Exclusão bloqueada: este exemplar tem vínculos. Use arquivar para retirá-lo do acervo sem perder o histórico.</string>
+    <string name="common_cancel">Cancelar</string>
+    <string name="common_close">Fechar</string>
+    <string name="packaging_sealed">Lacrada</string>
+    <string name="packaging_opened">Aberta</string>
+    <string name="packaging_damaged">Danificada</string>
+    <string name="packaging_none">Sem embalagem</string>
+    <string name="packaging_unknown">Não informada</string>
 </resources>

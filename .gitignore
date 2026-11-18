@@ -28,3 +28,6 @@ out/
 # Ambiente
 .env
 .env.*
+
+# Toolchain local (JDK/Android SDK baixados para compilar neste ambiente)
+.tools/
