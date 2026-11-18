@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -17,37 +18,48 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.hotwheelscollector.R
-import br.com.hotwheelscollector.domain.model.Photo
-import br.com.hotwheelscollector.domain.model.PhotoAngle
+import br.com.hotwheelscollector.domain.model.Condition
+import kotlinx.coroutines.launch
 
 /**
- * Tela de cadastro detalhado de variante com fotos e rascunho persistido (T044 - US2, FR-014, FR-020, FR-040).
+ * Cadastro completo de variante (T044 - US2, FR-014, FR-020, FR-040).
+ *
+ * Junto com a variante nasce o primeiro exemplar, que é quem recebe as fotos: no schema
+ * `photo` referencia `exemplar`, e uma foto não pode existir solta na variante. O
+ * `modelId` vem da tela anterior — a tela não inventa identificador.
  */
 @Composable
 public fun VariantFormScreen(
     modelId: String,
     onVariantSaved: (variantId: String) -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: VariantFormViewModel = hiltViewModel(),
 ) {
-    var primaryColor by remember { mutableStateOf("") }
-    var secondaryColors by remember { mutableStateOf("") }
-    var wheelsType by remember { mutableStateOf("") }
-    var baseType by remember { mutableStateOf("") }
-    var decoration by remember { mutableStateOf("") }
-    var releaseYear by remember { mutableStateOf("") }
-    var seriesName by remember { mutableStateOf("") }
-    var manufacturerCode by remember { mutableStateOf("") }
-    val photos = remember { mutableStateOf(listOf<Photo>()) }
+    val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val permissionDeniedMessage = stringResource(R.string.photo_permission_denied)
+
+    LaunchedEffect(state.message) {
+        state.message?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.onMessageShown()
+        }
+    }
+    LaunchedEffect(state.savedVariantId) {
+        state.savedVariantId?.let(onVariantSaved)
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -65,18 +77,23 @@ public fun VariantFormScreen(
                 text = stringResource(R.string.variant_form_title),
                 style = MaterialTheme.typography.headlineSmall,
             )
+            Text(
+                text = stringResource(R.string.variant_form_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
-                    value = primaryColor,
-                    onValueChange = { primaryColor = it },
+                    value = state.primaryColor,
+                    onValueChange = viewModel::onPrimaryColorChange,
                     label = { Text(stringResource(R.string.create_entry_color)) },
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                 )
                 OutlinedTextField(
-                    value = releaseYear,
-                    onValueChange = { releaseYear = it },
+                    value = state.releaseYearText,
+                    onValueChange = viewModel::onReleaseYearChange,
                     label = { Text(stringResource(R.string.create_entry_year)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
@@ -85,78 +102,95 @@ public fun VariantFormScreen(
             }
 
             OutlinedTextField(
-                value = secondaryColors,
-                onValueChange = { secondaryColors = it },
+                value = state.secondaryColors,
+                onValueChange = viewModel::onSecondaryColorsChange,
                 label = { Text(stringResource(R.string.variant_secondary_colors)) },
-                placeholder = { Text("Separadas por vírgula") },
+                placeholder = { Text(stringResource(R.string.variant_secondary_colors_hint)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
 
             OutlinedTextField(
-                value = wheelsType,
-                onValueChange = { wheelsType = it },
+                value = state.wheelsType,
+                onValueChange = viewModel::onWheelsTypeChange,
                 label = { Text(stringResource(R.string.variant_wheels)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
 
             OutlinedTextField(
-                value = baseType,
-                onValueChange = { baseType = it },
+                value = state.baseType,
+                onValueChange = viewModel::onBaseTypeChange,
                 label = { Text(stringResource(R.string.variant_base)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
 
             OutlinedTextField(
-                value = decoration,
-                onValueChange = { decoration = it },
+                value = state.decoration,
+                onValueChange = viewModel::onDecorationChange,
                 label = { Text(stringResource(R.string.variant_decoration)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            OutlinedTextField(
-                value = seriesName,
-                onValueChange = { seriesName = it },
-                label = { Text(stringResource(R.string.variant_series)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = state.seriesName,
+                    onValueChange = viewModel::onSeriesChange,
+                    label = { Text(stringResource(R.string.variant_series)) },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                )
+                OutlinedTextField(
+                    value = state.manufacturerCode,
+                    onValueChange = viewModel::onManufacturerCodeChange,
+                    label = { Text(stringResource(R.string.create_entry_code)) },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                )
+            }
 
-            OutlinedTextField(
-                value = manufacturerCode,
-                onValueChange = { manufacturerCode = it },
-                label = { Text(stringResource(R.string.create_entry_code)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+            Text(
+                text = stringResource(R.string.variant_condition),
+                style = MaterialTheme.typography.labelLarge,
             )
-
-            // Grade de fotos categorizada por ângulo (T046)
-            PhotoGrid(
-                photos = photos.value,
-                onAddPhotoBytes = { bytes, angle ->
-                    // Em produção, salvo no PhotoRepository
-                },
-                onSetPrimary = { photoId ->
-                    photos.value = photos.value.map {
-                        it.copy(isPrimary = it.id == photoId)
+            Condition.entries.chunked(3).forEach { rowConditions ->
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    rowConditions.forEach { condition ->
+                        FilterChip(
+                            selected = state.condition == condition,
+                            onClick = { viewModel.onConditionChange(condition) },
+                            label = { Text(stringResource(condition.labelRes())) },
+                        )
                     }
+                }
+            }
+
+            PhotoGrid(
+                photos = state.photos.map { pending ->
+                    PhotoTile(
+                        id = pending.id,
+                        angle = pending.angle,
+                        isPrimary = pending.isPrimary,
+                        source = pending.bytes,
+                        pending = true,
+                    )
                 },
-                onRemovePhoto = { photoId ->
-                    photos.value = photos.value.filter { it.id != photoId }
-                },
+                onAddPhotoBytes = viewModel::onAddPhoto,
+                onSetPrimary = viewModel::onSetPrimary,
+                onRemovePhoto = viewModel::onRemovePhoto,
                 onPermissionDenied = {
-                    // Trata recusa da câmera
+                    scope.launch { snackbarHostState.showSnackbar(permissionDeniedMessage) }
                 },
             )
 
             Button(
-                onClick = { onVariantSaved("variant-saved-id") },
+                onClick = { viewModel.onSave(modelId) },
+                enabled = !state.saving,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Salvar variante")
+                Text(stringResource(R.string.variant_form_save))
             }
         }
     }

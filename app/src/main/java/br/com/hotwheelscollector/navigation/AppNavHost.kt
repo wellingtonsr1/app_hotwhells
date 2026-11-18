@@ -18,6 +18,8 @@ import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.feature.catalog.AddExemplarScreen
 import br.com.hotwheelscollector.feature.catalog.CatalogScreen
 import br.com.hotwheelscollector.feature.catalog.CreateCatalogEntryScreen
+import br.com.hotwheelscollector.feature.catalog.IncompleteEntriesScreen
+import br.com.hotwheelscollector.feature.catalog.VariantFormScreen
 
 /**
  * Rotas do aplicativo.
@@ -31,8 +33,19 @@ public sealed class Destination(public val route: String) {
     public data object Dashboard : Destination("dashboard")
     public data object Capture : Destination("capture")
 
-    /** Cadastro mínimo de miniatura: fabricante, modelo e variante. */
+    /** Primeiro passo da miniatura: fabricante, modelo e escala. */
     public data object CreateEntry : Destination("catalog/create")
+
+    /**
+     * Cadastro completo a partir de um modelo já resolvido: variante, primeiro exemplar
+     * e fotos. As fotos pertencem ao exemplar, por isso ele nasce nesta mesma tela.
+     */
+    public data object VariantForm : Destination("catalog/variant/{${RouteArgs.MODEL_ID}}") {
+        public fun routeFor(modelId: String): String = "catalog/variant/$modelId"
+    }
+
+    /** Modelos que pararam no primeiro passo e ainda não têm variante (FR-029). */
+    public data object Incomplete : Destination("catalog/incomplete")
 
     /**
      * Cadastro rápido de exemplar (US1). O `variantId` chega por argumento e é lido do
@@ -63,24 +76,43 @@ public fun AppNavHost(
         navController = navController,
         startDestination = startDestination.route,
     ) {
-        // As telas de verdade chegam com as histórias; por enquanto o esqueleto
-        // mostra o estado da fundação, sem simular funcionalidade que não existe.
+        // Cadastro da miniatura em dois passos: o modelo é resolvido primeiro e a
+        // variante (com o primeiro exemplar e as fotos) vem em seguida.
         composable(Destination.Dashboard.route) {
             CatalogScreen(
                 onVariantClick = { variantId ->
                     navController.navigate(Destination.AddExemplar.routeFor(variantId))
                 },
                 onCreateEntry = { navController.navigate(Destination.CreateEntry.route) },
+                onOpenIncomplete = { navController.navigate(Destination.Incomplete.route) },
+            )
+        }
+        composable(Destination.Incomplete.route) {
+            IncompleteEntriesScreen(
+                onSelectModel = { modelId ->
+                    navController.navigate(Destination.VariantForm.routeFor(modelId))
+                },
             )
         }
         composable(Destination.CreateEntry.route) {
             CreateCatalogEntryScreen(
-                onCreated = { variantId ->
-                    // Volta para a lista e já abre o cadastro de exemplar da nova variante:
-                    // cadastrar a miniatura e registrar o exemplar é uma intenção só.
+                onModelCreated = { modelId ->
+                    // Cadastrar a miniatura é uma intenção só: o modelo resolvido segue
+                    // direto para a variante, que cria o exemplar e recebe as fotos.
                     navController.popBackStack()
-                    navController.navigate(Destination.AddExemplar.routeFor(variantId))
+                    navController.navigate(Destination.VariantForm.routeFor(modelId))
                 },
+            )
+        }
+        composable(
+            route = Destination.VariantForm.route,
+            arguments = listOf(navArgument(RouteArgs.MODEL_ID) { type = NavType.StringType }),
+        ) { entry ->
+            VariantFormScreen(
+                modelId = entry.arguments?.getString(RouteArgs.MODEL_ID).orEmpty(),
+                // Volta para quem abriu: catálogo no cadastro novo, lista de incompletos
+                // quando a variante está sendo criada para completar um modelo órfão.
+                onVariantSaved = { navController.popBackStack() },
             )
         }
         composable(Destination.Capture.route) { PlaceholderScreen() }

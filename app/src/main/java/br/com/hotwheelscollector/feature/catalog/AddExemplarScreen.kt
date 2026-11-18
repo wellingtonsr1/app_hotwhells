@@ -1,5 +1,6 @@
 package br.com.hotwheelscollector.feature.catalog
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -133,7 +134,7 @@ internal fun AddExemplarContent(
                     FilterChip(
                         selected = state.condition == condition,
                         onClick = { onConditionChange(condition) },
-                        label = { Text(condition.labelPtBr()) },
+                        label = { Text(stringResource(condition.labelRes())) },
                     )
                 }
             }
@@ -142,7 +143,7 @@ internal fun AddExemplarContent(
                     FilterChip(
                         selected = state.condition == condition,
                         onClick = { onConditionChange(condition) },
-                        label = { Text(condition.labelPtBr()) },
+                        label = { Text(stringResource(condition.labelRes())) },
                     )
                 }
             }
@@ -270,12 +271,14 @@ internal fun AddExemplarContent(
     }
 }
 
-internal fun Condition.labelPtBr(): String = when (this) {
-    Condition.SEALED -> "Lacrado"
-    Condition.LOOSE -> "Solto"
-    Condition.DAMAGED -> "Danificado"
-    Condition.RESTORED -> "Restaurado"
-    Condition.INCOMPLETE -> "Incompleto"
+/** Rótulo pt-BR de cada condição; o texto mora em `strings.xml` (T131, Art. IV). */
+@StringRes
+internal fun Condition.labelRes(): Int = when (this) {
+    Condition.SEALED -> R.string.condition_sealed
+    Condition.LOOSE -> R.string.condition_loose
+    Condition.DAMAGED -> R.string.condition_damaged
+    Condition.RESTORED -> R.string.condition_restored
+    Condition.INCOMPLETE -> R.string.condition_incomplete
 }
 
 @Preview(showBackground = true)

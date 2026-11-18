@@ -1,0 +1,383 @@
+package br.com.hotwheelscollector.feature.catalog
+
+import br.com.hotwheelscollector.domain.error.DomainError
+import br.com.hotwheelscollector.domain.error.DomainResult
+import br.com.hotwheelscollector.domain.model.CarModel
+import br.com.hotwheelscollector.domain.model.ColorItem
+import br.com.hotwheelscollector.domain.model.Condition
+import br.com.hotwheelscollector.domain.model.Exemplar
+import br.com.hotwheelscollector.domain.model.ExemplarStatus
+import br.com.hotwheelscollector.domain.model.IncompleteEntry
+import br.com.hotwheelscollector.domain.model.Photo
+import br.com.hotwheelscollector.domain.model.PhotoAngle
+import br.com.hotwheelscollector.domain.model.Series
+import br.com.hotwheelscollector.domain.model.Variant
+import br.com.hotwheelscollector.domain.model.VariantSummary
+import br.com.hotwheelscollector.domain.repository.AddExemplarOutcome
+import br.com.hotwheelscollector.domain.repository.CarModelRepository
+import br.com.hotwheelscollector.domain.repository.ColorRepository
+import br.com.hotwheelscollector.domain.repository.ExemplarRepository
+import br.com.hotwheelscollector.domain.repository.NewExemplar
+import br.com.hotwheelscollector.domain.repository.PhotoRepository
+import br.com.hotwheelscollector.domain.repository.SeriesRepository
+import br.com.hotwheelscollector.domain.repository.VariantRepository
+import br.com.hotwheelscollector.domain.usecase.AddExemplarUseCase
+import br.com.hotwheelscollector.domain.usecase.CreateVariantUseCase
+import com.google.common.truth.Truth.assertThat
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+
+/**
+ * Testes do cadastro completo de variante: os casos de uso são os reais, o banco é falso.
+ *
+ * O que se verifica aqui é justamente a ordem que a tela não pode errar: variante →
+ * exemplar → fotos (a foto pertence ao exemplar, FR-020), sem duplicar nada quando a
+ * gravação de uma foto falha e o usuário tenta de novo.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+class VariantFormViewModelTest {
+
+    private val dispatcher = UnconfinedTestDispatcher()
+    private val fixedClock: Clock = Clock.fixed(Instant.parse("2026-11-16T12:00:00Z"), ZoneOffset.UTC)
+
+    private val models = FakeCarModelRepository()
+    private val variants = FakeVariantRepository()
+    private val exemplars = FakeExemplarRepository()
+    private val photos = FakePhotoRepository()
+    private val colors = FakeColorRepository()
+    private val series = FakeSeriesRepository()
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(dispatcher)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    private fun viewModel(): VariantFormViewModel = VariantFormViewModel(
+        createVariant = CreateVariantUseCase(models, variants, fixedClock),
+        addExemplar = AddExemplarUseCase(exemplars, fixedClock),
+        photoRepository = photos,
+        models = models,
+        colors = colors,
+        seriesRepository = series,
+    )
+
+    @Test
+    fun `salvar cria variante e exemplar com cor e condicao escolhidas`() = runTest {
+        val model = viewModel()
+        model.onPrimaryColorChange("Vermelho")
+        model.onConditionChange(Condition.DAMAGED)
+
+        model.onSave(MODEL_ID)
+
+        val created = variants.lastCreated
+        assertThat(created).isNotNull()
+        assertThat(created!!.primaryColorId).isEqualTo("color-vermelho")
+        assertThat(exemplars.lastDraft?.variantId).isEqualTo(created.id)
+        assertThat(exemplars.lastDraft?.condition).isEqualTo(Condition.DAMAGED)
+        assertThat(model.state.value.savedVariantId).isEqualTo(created.id)
+        assertThat(model.state.value.exemplarCode).isEqualTo("HW-000001")
+    }
+
+    @Test
+    fun `fotos pendentes vao para o exemplar criado e a primeira vira principal`() = runTest {
+        val model = viewModel()
+        model.onAddPhoto(byteArrayOf(1, 2, 3), PhotoAngle.FRONT)
+        model.onAddPhoto(byteArrayOf(4, 5, 6), PhotoAngle.BACK)
+
+        model.onSave(MODEL_ID)
+
+        assertThat(photos.added.map { it.second }).containsExactly(PhotoAngle.FRONT, PhotoAngle.BACK)
+        assertThat(photos.added.map { it.first }).containsExactly("exemplar-1", "exemplar-1")
+        assertThat(photos.primaryCalls).containsExactly("exemplar-1" to "photo-1")
+        assertThat(model.state.value.photos).isEmpty()
+        assertThat(model.state.value.savedVariantId).isNotNull()
+    }
+
+    @Test
+    fun `remover a foto principal promove a proxima`() = runTest {
+        val model = viewModel()
+        model.onAddPhoto(byteArrayOf(1), PhotoAngle.FRONT)
+        model.onAddPhoto(byteArrayOf(2), PhotoAngle.BACK)
+        val firstId = model.state.value.photos.first().id
+
+        model.onRemovePhoto(firstId)
+
+        assertThat(model.state.value.photos).hasSize(1)
+        assertThat(model.state.value.photos.single().isPrimary).isTrue()
+    }
+
+    @Test
+    fun `ano invalido nao cria variante`() = runTest {
+        val model = viewModel()
+        model.onReleaseYearChange("abc")
+
+        model.onSave(MODEL_ID)
+
+        assertThat(model.state.value.message).contains("Ano inválido")
+        assertThat(variants.createCalls).isEqualTo(0)
+        assertThat(exemplars.addCalls).isEqualTo(0)
+    }
+
+    @Test
+    fun `variante identica e reaproveitada e o exemplar ainda e criado`() = runTest {
+        variants.existingFingerprintVariant = variantOf("variante-existente")
+        val model = viewModel()
+
+        model.onSave(MODEL_ID)
+
+        // Fingerprint repetido não cria variante nova: reaproveita a existente.
+        assertThat(variants.createCalls).isEqualTo(0)
+        assertThat(exemplars.addCalls).isEqualTo(1)
+        assertThat(exemplars.lastDraft?.variantId).isEqualTo("variante-existente")
+        assertThat(model.state.value.savedVariantId).isEqualTo("variante-existente")
+    }
+
+    @Test
+    fun `serie digitada e cadastrada no fabricante do modelo`() = runTest {
+        val model = viewModel()
+        model.onSeriesChange("HW Racing")
+
+        model.onSave(MODEL_ID)
+
+        assertThat(series.lastManufacturerId).isEqualTo("mattel")
+        assertThat(series.lastName).isEqualTo("HW Racing")
+        assertThat(variants.lastCreated?.seriesId).isEqualTo("series-1")
+    }
+
+    @Test
+    fun `falha de foto mantem a pendente e nao duplica exemplar na nova tentativa`() = runTest {
+        photos.failure = DomainError.Storage("sem espaço")
+        val model = viewModel()
+        model.onAddPhoto(byteArrayOf(9), PhotoAngle.DETAIL)
+
+        model.onSave(MODEL_ID)
+
+        assertThat(model.state.value.savedVariantId).isNull()
+        assertThat(model.state.value.photos).hasSize(1)
+        assertThat(model.state.value.message).contains("foto")
+        assertThat(exemplars.addCalls).isEqualTo(1)
+
+        photos.failure = null
+        model.onSave(MODEL_ID)
+
+        assertThat(model.state.value.savedVariantId).isNotNull()
+        assertThat(model.state.value.photos).isEmpty()
+        assertThat(variants.createCalls).isEqualTo(1)
+        assertThat(exemplars.addCalls).isEqualTo(1)
+    }
+
+    private companion object {
+        const val MODEL_ID = "model-1"
+    }
+}
+
+private fun variantOf(id: String): Variant = Variant(
+    id = id,
+    modelId = "model-1",
+    fingerprint = "fingerprint",
+    createdAt = Instant.parse("2026-01-01T00:00:00Z"),
+    updatedAt = Instant.parse("2026-01-01T00:00:00Z"),
+)
+
+private class FakeCarModelRepository : CarModelRepository {
+
+    override fun observeActive(): Flow<List<CarModel>> = flowOf(listOf(model()))
+
+    override fun observeByManufacturer(manufacturerId: String): Flow<List<CarModel>> =
+        flowOf(listOf(model()))
+
+    override suspend fun findById(id: String): CarModel? = if (id == "model-1") model() else null
+
+    override suspend fun findByIdentity(
+        manufacturerId: String,
+        name: String,
+        scale: String,
+    ): CarModel? = null
+
+    override suspend fun add(
+        manufacturerId: String,
+        name: String,
+        scale: String,
+        brandId: String?,
+        realVehicleId: String?,
+    ): DomainResult<CarModel> = Result.failure(DomainError.NotFound)
+
+    override suspend fun archive(id: String): DomainResult<Unit> = Result.success(Unit)
+
+    override fun observeWithoutVariant(): Flow<List<IncompleteEntry>> = flowOf(emptyList())
+
+    private fun model(): CarModel = CarModel(
+        id = "model-1",
+        manufacturerId = "mattel",
+        name = "Twin Mill",
+        scale = "1:64",
+        createdAt = Instant.parse("2026-01-01T00:00:00Z"),
+        updatedAt = Instant.parse("2026-01-01T00:00:00Z"),
+    )
+}
+
+private class FakeVariantRepository : VariantRepository {
+
+    var createCalls: Int = 0
+    var lastCreated: Variant? = null
+    var existingFingerprintVariant: Variant? = null
+
+    override fun observeSummaries(): Flow<List<VariantSummary>> = flowOf(emptyList())
+
+    override fun observeByModel(modelId: String): Flow<List<Variant>> = flowOf(emptyList())
+
+    override suspend fun findById(id: String): Variant? = lastCreated?.takeIf { it.id == id }
+
+    override suspend fun findActiveByFingerprint(fingerprint: String): Variant? =
+        existingFingerprintVariant
+
+    override suspend fun create(variant: Variant): DomainResult<Variant> {
+        createCalls++
+        lastCreated = variant
+        return Result.success(variant)
+    }
+
+    override suspend fun archive(id: String): DomainResult<Unit> = Result.success(Unit)
+
+    override suspend fun mergeVariants(targetId: String, absorbedId: String): DomainResult<Unit> =
+        Result.success(Unit)
+}
+
+private class FakeExemplarRepository : ExemplarRepository {
+
+    var addCalls: Int = 0
+    var lastDraft: NewExemplar? = null
+
+    override fun observeOwned(): Flow<List<Exemplar>> = flowOf(emptyList())
+
+    override fun observeByVariant(variantId: String): Flow<List<Exemplar>> = flowOf(emptyList())
+
+    override suspend fun findById(id: String): Exemplar? = null
+
+    override suspend fun add(draft: NewExemplar): DomainResult<AddExemplarOutcome> {
+        addCalls++
+        lastDraft = draft
+        val now = Instant.parse("2026-11-16T12:00:00Z")
+        return Result.success(
+            AddExemplarOutcome(
+                exemplar = Exemplar(
+                    id = "exemplar-1",
+                    variantId = draft.variantId,
+                    internalCode = "HW-000001",
+                    condition = draft.condition,
+                    status = ExemplarStatus.OWNED,
+                    createdAt = now,
+                    updatedAt = now,
+                ),
+                sameVariantCount = 1,
+            ),
+        )
+    }
+
+    override suspend fun updateCondition(
+        id: String,
+        condition: Condition,
+        expectedRowVersion: Long,
+    ): DomainResult<Exemplar> = Result.failure(DomainError.NotFound)
+
+    override suspend fun move(id: String, toLocationId: String?, note: String?): DomainResult<Unit> =
+        Result.success(Unit)
+
+    override suspend fun countByVariant(variantId: String): Int = 0
+}
+
+private class FakePhotoRepository : PhotoRepository {
+
+    val added: MutableList<Pair<String, PhotoAngle>> = mutableListOf()
+    val primaryCalls: MutableList<Pair<String, String>> = mutableListOf()
+    var failure: DomainError? = null
+    private var counter: Int = 0
+
+    override fun observeByExemplar(exemplarId: String): Flow<List<Photo>> = flowOf(emptyList())
+
+    override suspend fun add(
+        exemplarId: String,
+        angle: PhotoAngle,
+        source: ByteArray,
+    ): DomainResult<Photo> {
+        failure?.let { return Result.failure(it) }
+        counter++
+        added += exemplarId to angle
+        return Result.success(
+            Photo(
+                id = "photo-$counter",
+                exemplarId = exemplarId,
+                angle = angle,
+                path = "images/$exemplarId/photo-$counter.jpg",
+                checksum = "checksum-$counter",
+                isPrimary = counter == 1,
+            ),
+        )
+    }
+
+    override suspend fun setPrimary(exemplarId: String, photoId: String): DomainResult<Unit> {
+        primaryCalls += exemplarId to photoId
+        return Result.success(Unit)
+    }
+
+    override suspend fun remove(photoId: String): DomainResult<Unit> = Result.success(Unit)
+}
+
+private class FakeColorRepository : ColorRepository {
+
+    override fun observeAll(): Flow<List<ColorItem>> = flowOf(emptyList())
+
+    override suspend fun findOrCreate(name: String, hex: String?): DomainResult<ColorItem> =
+        Result.success(
+            ColorItem(
+                id = "color-${name.trim().lowercase()}",
+                name = name.trim(),
+                hex = hex,
+            ),
+        )
+}
+
+private class FakeSeriesRepository : SeriesRepository {
+
+    var lastManufacturerId: String? = null
+    var lastName: String? = null
+
+    override fun observeByManufacturer(manufacturerId: String): Flow<List<Series>> =
+        flowOf(emptyList())
+
+    override suspend fun add(
+        manufacturerId: String,
+        name: String,
+        parentId: String?,
+    ): DomainResult<Series> {
+        lastManufacturerId = manufacturerId
+        lastName = name
+        return Result.success(
+            Series(
+                id = "series-1",
+                manufacturerId = manufacturerId,
+                name = name,
+                parentId = parentId,
+                createdAt = Instant.parse("2026-01-01T00:00:00Z"),
+                updatedAt = Instant.parse("2026-01-01T00:00:00Z"),
+            ),
+        )
+    }
+}

@@ -88,7 +88,7 @@ public fun PhotoCaptureActions(
             },
             modifier = Modifier.weight(1f),
         ) {
-            Text("Galeria")
+            Text(stringResource(R.string.photo_gallery))
         }
 
         OutlinedButton(
@@ -108,7 +108,7 @@ public fun PhotoCaptureActions(
             },
             modifier = Modifier.weight(1f),
         ) {
-            Text("Câmera")
+            Text(stringResource(R.string.photo_camera))
         }
     }
 }

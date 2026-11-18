@@ -17,21 +17,23 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Cadastro de miniatura: fabricante, modelo, escala e o que diferencia a variante.
+ * Primeiro passo da miniatura: fabricante, modelo e escala.
  *
- * Inclui rascunho recuperável após interrupção (FR-023) e sugestões de modelos existentes (FR-024).
+ * Para no modelo de propósito — cor, rodas, base, decoração, série e fotos são da variante
+ * e do exemplar, e são coletados na tela seguinte. Assim o cadastro mínimo não cria uma
+ * variante que ninguém consegue completar, e não há duas formas de cadastrar a mesma coisa.
+ *
+ * Inclui rascunho recuperável após interrupção (FR-023) e sugestões de modelos existentes
+ * (FR-024).
  */
 public data class CreateCatalogEntryUiState(
     val manufacturer: String = "",
     val model: String = "",
     val scale: String = "1:64",
-    val color: String = "",
-    val yearText: String = "",
-    val manufacturerCode: String = "",
     val availableModels: List<CarModel> = emptyList(),
     val saving: Boolean = false,
     val message: String? = null,
-    val createdVariantId: String? = null,
+    val createdModelId: String? = null,
 )
 
 @HiltViewModel
@@ -76,21 +78,6 @@ public class CreateCatalogEntryViewModel @Inject constructor(
         saveDraftAsync()
     }
 
-    public fun onColorChange(value: String) {
-        _state.update { it.copy(color = value) }
-        saveDraftAsync()
-    }
-
-    public fun onYearChange(value: String) {
-        _state.update { it.copy(yearText = value) }
-        saveDraftAsync()
-    }
-
-    public fun onManufacturerCodeChange(value: String) {
-        _state.update { it.copy(manufacturerCode = value) }
-        saveDraftAsync()
-    }
-
     public fun onSelectModelSuggestion(model: CarModel) {
         _state.update {
             it.copy(
@@ -107,39 +94,19 @@ public class CreateCatalogEntryViewModel @Inject constructor(
         val current = _state.value
         if (current.saving) return
 
-        val year = current.yearText.trim().takeIf { it.isNotEmpty() }?.toIntOrNull()
-        if (current.yearText.isNotBlank() && year == null) {
-            _state.update { it.copy(message = "Ano inválido. Use quatro dígitos, ex.: 2024.") }
-            return
-        }
-
         _state.update { it.copy(saving = true) }
         viewModelScope.launch {
-            runCatching {
-                createEntry(
-                    NewCatalogEntry(
-                        manufacturerName = current.manufacturer,
-                        modelName = current.model,
-                        scale = current.scale,
-                        colorName = current.color,
-                        releaseYear = year,
-                        manufacturerCode = current.manufacturerCode,
-                    ),
-                )
-            }.fold(
-                onSuccess = { result ->
-                    result.fold(
-                        onSuccess = { variant ->
-                            // Limpa rascunho ao concluir com sucesso
-                            draftRepository.clearDraft(DRAFT_KEY)
-                            _state.update {
-                                it.copy(saving = false, createdVariantId = variant.id)
-                            }
-                        },
-                        onFailure = { error ->
-                            _state.update { it.copy(saving = false, message = error.toMessage()) }
-                        },
-                    )
+            createEntry(
+                NewCatalogEntry(
+                    manufacturerName = current.manufacturer,
+                    modelName = current.model,
+                    scale = current.scale,
+                ),
+            ).fold(
+                onSuccess = { model ->
+                    // Limpa rascunho ao concluir com sucesso
+                    draftRepository.clearDraft(DRAFT_KEY)
+                    _state.update { it.copy(saving = false, createdModelId = model.id) }
                 },
                 onFailure = { error ->
                     _state.update { it.copy(saving = false, message = error.toMessage()) }
@@ -151,22 +118,19 @@ public class CreateCatalogEntryViewModel @Inject constructor(
     private fun saveDraftAsync() {
         val current = _state.value
         viewModelScope.launch {
-            val serialized = "${current.manufacturer}|${current.model}|${current.scale}|${current.color}|${current.yearText}|${current.manufacturerCode}"
+            val serialized = "${current.manufacturer}|${current.model}|${current.scale}"
             draftRepository.saveDraft(DRAFT_KEY, serialized)
         }
     }
 
     private fun parseDraft(raw: String) {
         val parts = raw.split("|")
-        if (parts.size >= 6) {
+        if (parts.size >= 3) {
             _state.update {
                 it.copy(
                     manufacturer = parts[0],
                     model = parts[1],
                     scale = parts[2],
-                    color = parts[3],
-                    yearText = parts[4],
-                    manufacturerCode = parts[5],
                 )
             }
         }
@@ -174,8 +138,8 @@ public class CreateCatalogEntryViewModel @Inject constructor(
 
     private fun Throwable.toMessage(): String = when (this) {
         is DomainError.Validation -> reason
-        is DomainError.Duplicate -> "Já existe uma variante com estes atributos."
-        else -> message ?: "Erro ao salvar miniatura."
+        is DomainError.Storage -> "Falha ao salvar: ${reason}"
+        else -> message ?: "Erro ao salvar modelo."
     }
 
     private companion object {

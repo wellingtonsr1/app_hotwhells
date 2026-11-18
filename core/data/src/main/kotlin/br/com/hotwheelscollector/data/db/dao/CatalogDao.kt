@@ -1,5 +1,6 @@
 package br.com.hotwheelscollector.data.db.dao
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -74,11 +75,43 @@ public interface ColorDao {
     public suspend fun insert(entity: ColorEntity)
 }
 
+/** Projeção de modelo sem variante: o que a tela de incompletos mostra (FR-029). */
+public data class IncompleteModelRow(
+    @ColumnInfo(name = "model_id") val modelId: String,
+    @ColumnInfo(name = "model_name") val modelName: String,
+    @ColumnInfo(name = "manufacturer_name") val manufacturerName: String,
+    @ColumnInfo(name = "scale") val scale: String,
+)
+
 @Dao
 public interface CarModelDao {
 
     @Query("SELECT * FROM car_model WHERE archived_at IS NULL ORDER BY name COLLATE NOCASE")
     public fun observeActive(): Flow<List<CarModelEntity>>
+
+    /**
+     * Modelos ativos sem nenhuma variante ativa.
+     *
+     * `NOT EXISTS` em vez de `LEFT JOIN ... IS NULL` porque a intenção é explícita e o
+     * índice de `variant(model_id)` continua sendo usado.
+     */
+    @Query(
+        """
+        SELECT m.id AS model_id,
+               m.name AS model_name,
+               mf.name AS manufacturer_name,
+               m.scale AS scale
+        FROM car_model m
+        JOIN manufacturer mf ON mf.id = m.manufacturer_id
+        WHERE m.archived_at IS NULL
+          AND NOT EXISTS (
+              SELECT 1 FROM variant v
+              WHERE v.model_id = m.id AND v.archived_at IS NULL
+          )
+        ORDER BY mf.name COLLATE NOCASE, m.name COLLATE NOCASE
+        """,
+    )
+    public fun observeWithoutVariant(): Flow<List<IncompleteModelRow>>
 
     @Query("SELECT * FROM car_model WHERE manufacturer_id = :manufacturerId AND archived_at IS NULL ORDER BY name COLLATE NOCASE")
     public fun observeByManufacturer(manufacturerId: String): Flow<List<CarModelEntity>>

@@ -3,12 +3,10 @@ package br.com.hotwheelscollector.feature.catalog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -25,17 +23,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.ui.theme.HotWheelsTheme
 
-/** Cadastro da primeira miniatura: só o essencial, o resto pode ficar em branco. */
+/**
+ * Cadastro da primeira miniatura: fabricante, modelo e escala.
+ *
+ * A variante, o exemplar e as fotos vêm na tela seguinte — aqui só se resolve o que
+ * identifica o carro, para não criar uma variante que ninguém consegue completar.
+ */
 @Composable
 public fun CreateCatalogEntryScreen(
-    onCreated: (variantId: String) -> Unit,
+    onModelCreated: (modelId: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CreateCatalogEntryViewModel = hiltViewModel(),
 ) {
@@ -48,8 +50,8 @@ public fun CreateCatalogEntryScreen(
             viewModel.onMessageShown()
         }
     }
-    LaunchedEffect(state.createdVariantId) {
-        state.createdVariantId?.let(onCreated)
+    LaunchedEffect(state.createdModelId) {
+        state.createdModelId?.let(onModelCreated)
     }
 
     Scaffold(
@@ -94,39 +96,13 @@ public fun CreateCatalogEntryScreen(
                     availableModels = state.availableModels,
                     onSelectModel = viewModel::onSelectModelSuggestion,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = state.scale,
-                        onValueChange = viewModel::onScaleChange,
-                        label = { Text(stringResource(R.string.create_entry_scale)) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
-                    OutlinedTextField(
-                        value = state.yearText,
-                        onValueChange = viewModel::onYearChange,
-                        label = { Text(stringResource(R.string.create_entry_year)) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = state.color,
-                        onValueChange = viewModel::onColorChange,
-                        label = { Text(stringResource(R.string.create_entry_color)) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
-                    OutlinedTextField(
-                        value = state.manufacturerCode,
-                        onValueChange = viewModel::onManufacturerCodeChange,
-                        label = { Text(stringResource(R.string.create_entry_code)) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
+                OutlinedTextField(
+                    value = state.scale,
+                    onValueChange = viewModel::onScaleChange,
+                    label = { Text(stringResource(R.string.create_entry_scale)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
 
                 Button(
                     onClick = viewModel::onSave,

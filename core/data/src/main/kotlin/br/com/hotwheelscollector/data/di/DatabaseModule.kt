@@ -4,20 +4,24 @@ import android.content.Context
 import androidx.room.Room
 import br.com.hotwheelscollector.data.db.AppDatabase
 import br.com.hotwheelscollector.data.repository.CarModelRepositoryImpl
+import br.com.hotwheelscollector.data.repository.ColorRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ExemplarRepositoryImpl
 import br.com.hotwheelscollector.data.repository.HistoryRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ManufacturerRepositoryImpl
 import br.com.hotwheelscollector.data.repository.LocationRepositoryImpl
 import br.com.hotwheelscollector.data.repository.PhotoRepositoryImpl
+import br.com.hotwheelscollector.data.repository.SeriesRepositoryImpl
 import br.com.hotwheelscollector.data.repository.VariantRepositoryImpl
 import br.com.hotwheelscollector.data.storage.FileImageStore
 import br.com.hotwheelscollector.data.storage.ImageStore
 import br.com.hotwheelscollector.domain.repository.CarModelRepository
+import br.com.hotwheelscollector.domain.repository.ColorRepository
 import br.com.hotwheelscollector.domain.repository.ExemplarRepository
 import br.com.hotwheelscollector.domain.repository.HistoryRepository
 import br.com.hotwheelscollector.domain.repository.ManufacturerRepository
 import br.com.hotwheelscollector.domain.repository.LocationRepository
 import br.com.hotwheelscollector.domain.repository.PhotoRepository
+import br.com.hotwheelscollector.domain.repository.SeriesRepository
 import br.com.hotwheelscollector.domain.repository.VariantRepository
 import dagger.Binds
 import dagger.Module
@@ -108,6 +112,14 @@ public abstract class RepositoryModule {
     @Binds
     @Singleton
     public abstract fun bindVariantRepository(impl: VariantRepositoryImpl): VariantRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindColorRepository(impl: ColorRepositoryImpl): ColorRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindSeriesRepository(impl: SeriesRepositoryImpl): SeriesRepository
 
     @Binds
     @Singleton

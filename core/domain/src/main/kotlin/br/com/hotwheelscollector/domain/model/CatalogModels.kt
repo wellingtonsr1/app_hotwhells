@@ -64,6 +64,21 @@ public data class CarModel(
     }
 }
 
+/**
+ * Modelo ativo que ainda não tem variante: cadastro incompleto, listável para
+ * complementação posterior (FR-029).
+ *
+ * Não é uma entidade — é uma projeção de leitura, montada pela consulta que verifica a
+ * ausência de variante. Enquanto não houver variante, o exemplar não pode existir, e é
+ * por isso que este caso precisa de tela própria.
+ */
+public data class IncompleteEntry(
+    val modelId: String,
+    val modelName: String,
+    val manufacturerName: String,
+    val scale: String,
+)
+
 /** Série ou subcoleção declarada pelo fabricante (FR-048–FR-049). */
 public data class Series(
     val id: String,

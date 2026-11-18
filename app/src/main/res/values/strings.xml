@@ -16,9 +16,15 @@
     <string name="catalog_title">Coleção</string>
     <string name="catalog_add">+ Mini</string>
     <string name="catalog_empty_title">Nenhuma miniatura ainda</string>
+    <string name="catalog_incomplete_action">Incompletos (%1$d)</string>
+    <string name="catalog_exemplar_none">nenhum exemplar</string>
+    <plurals name="catalog_exemplar_count">
+        <item quantity="one">%1$d exemplar</item>
+        <item quantity="other">%1$d exemplares</item>
+    </plurals>
     <string name="catalog_empty_hint">Toque em + Mini para cadastrar a primeira. Depois, toque na variante para registrar um exemplar.</string>
     <string name="create_entry_title">Nova miniatura</string>
-    <string name="create_entry_hint">Só fabricante e modelo são obrigatórios. O que você não souber pode ficar em branco.</string>
+    <string name="create_entry_hint">Só fabricante e modelo são obrigatórios. Na próxima tela você informa a variante, o exemplar e as fotos.</string>
     <string name="create_entry_manufacturer">Fabricante</string>
     <string name="create_entry_model">Modelo</string>
     <string name="create_entry_scale">Escala</string>
@@ -26,6 +32,13 @@
     <string name="create_entry_color">Cor principal</string>
     <string name="create_entry_code">Código do fabricante</string>
     <string name="create_entry_save">Salvar miniatura</string>
+
+    <!-- Rótulos de condição do exemplar (T131, Art. IV). -->
+    <string name="condition_sealed">Lacrado</string>
+    <string name="condition_loose">Solto</string>
+    <string name="condition_damaged">Danificado</string>
+    <string name="condition_restored">Restaurado</string>
+    <string name="condition_incomplete">Incompleto</string>
 
     <!-- Cadastro rápido de exemplar (US1). -->
     <string name="add_exemplar_title">Novo exemplar</string>
@@ -60,18 +73,25 @@
     <string name="photo_angle_packaging">Embalagem</string>
     <string name="photo_angle_detail">Detalhe</string>
     <string name="photo_permission_denied">Permissão de câmera recusada. Você ainda pode usar o seletor de fotos da galeria.</string>
+    <string name="photo_gallery">Galeria</string>
+    <string name="photo_camera">Câmera</string>
+    <string name="photo_pending">Ainda não salva</string>
 
     <!-- Cadastros incompletos (T048 - US2, FR-029). -->
     <string name="incomplete_entries_title">Cadastros incompletos</string>
-    <string name="incomplete_entries_empty">Nenhum cadastro incompleto. Todos os modelos possuem dados suficientes.</string>
+    <string name="incomplete_entries_empty">Nenhum cadastro incompleto. Todo modelo cadastrado já tem variante.</string>
+    <string name="incomplete_missing_variant">Sem variante cadastrada</string>
     <string name="incomplete_badge">Incompleto</string>
 
     <!-- Formulários detalhados de modelo e variante (T043, T044). -->
-    <string name="model_form_title">Cadastrar modelo</string>
     <string name="variant_form_title">Cadastrar variante</string>
+    <string name="variant_form_hint">A variante e o primeiro exemplar são criados juntos. As fotos ficam vinculadas a este exemplar.</string>
+    <string name="variant_form_save">Salvar variante e exemplar</string>
+    <string name="variant_condition">Condição do exemplar</string>
     <string name="variant_wheels">Tipo de rodas (ex: 5SP, Real Riders)</string>
     <string name="variant_base">Tipo de base (Metal ou Plástico)</string>
     <string name="variant_decoration">Decoração / Grafismo</string>
     <string name="variant_series">Série / Coleção</string>
     <string name="variant_secondary_colors">Cores secundárias</string>
+    <string name="variant_secondary_colors_hint">Separadas por vírgula</string>
 </resources>

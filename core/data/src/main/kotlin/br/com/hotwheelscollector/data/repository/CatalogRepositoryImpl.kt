@@ -1,15 +1,23 @@
 package br.com.hotwheelscollector.data.repository
 
 import br.com.hotwheelscollector.data.db.AppDatabase
+import br.com.hotwheelscollector.data.db.dao.IncompleteModelRow
 import br.com.hotwheelscollector.data.db.entity.CarModelEntity
 import br.com.hotwheelscollector.data.db.entity.ManufacturerEntity
+import br.com.hotwheelscollector.data.db.entity.SeriesEntity
 import br.com.hotwheelscollector.data.mapper.toDomain
+import br.com.hotwheelscollector.data.mapper.toEntity
 import br.com.hotwheelscollector.domain.error.DomainError
 import br.com.hotwheelscollector.domain.error.DomainResult
 import br.com.hotwheelscollector.domain.model.CarModel
+import br.com.hotwheelscollector.domain.model.ColorItem
+import br.com.hotwheelscollector.domain.model.IncompleteEntry
 import br.com.hotwheelscollector.domain.model.Manufacturer
+import br.com.hotwheelscollector.domain.model.Series
 import br.com.hotwheelscollector.domain.repository.CarModelRepository
+import br.com.hotwheelscollector.domain.repository.ColorRepository
 import br.com.hotwheelscollector.domain.repository.ManufacturerRepository
+import br.com.hotwheelscollector.domain.repository.SeriesRepository
 import java.time.Clock
 import java.time.Instant
 import java.util.UUID
@@ -147,7 +155,94 @@ public class CarModelRepositoryImpl @Inject constructor(
         return Result.success(Unit)
     }
 
+    override fun observeWithoutVariant(): Flow<List<IncompleteEntry>> =
+        database.carModelDao().observeWithoutVariant().map { rows -> rows.map { it.toDomain() } }
+
+    private fun IncompleteModelRow.toDomain(): IncompleteEntry = IncompleteEntry(
+        modelId = modelId,
+        modelName = modelName,
+        manufacturerName = manufacturerName,
+        scale = scale,
+    )
+
     private companion object {
         val SCALE_PATTERN = Regex("""^1:[0-9]{1,3}$""")
+    }
+}
+
+/**
+ * Cores do catálogo (FR-017): o nome é o dado primário e é único, então cadastrar a
+ * mesma cor duas vezes reaproveita o registro em vez de criar sentinela duplicada.
+ */
+@Singleton
+public class ColorRepositoryImpl @Inject constructor(
+    private val database: AppDatabase,
+) : ColorRepository {
+
+    override fun observeAll(): Flow<List<ColorItem>> =
+        database.colorDao().observeAll().map { rows -> rows.map { it.toDomain() } }
+
+    override suspend fun findOrCreate(name: String, hex: String?): DomainResult<ColorItem> {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) {
+            return Result.failure(DomainError.Validation("Informe o nome da cor."))
+        }
+        database.colorDao().findByName(trimmed)?.let { return Result.success(it.toDomain()) }
+
+        val item = ColorItem(
+            id = UUID.randomUUID().toString(),
+            name = trimmed,
+            hex = hex?.trim()?.takeIf { it.isNotEmpty() },
+        )
+        return try {
+            database.colorDao().insert(item.toEntity())
+            Result.success(item)
+        } catch (error: Throwable) {
+            Result.failure(DomainError.Storage(error.message ?: "Falha ao salvar cor."))
+        }
+    }
+}
+
+/**
+ * Séries declaradas pelo fabricante (FR-048–FR-049). A hierarquia é livre: `parentId`
+ * só é usado quando quem chama sabe a série superior, nunca presumida aqui.
+ */
+@Singleton
+public class SeriesRepositoryImpl @Inject constructor(
+    private val database: AppDatabase,
+    private val clock: Clock,
+) : SeriesRepository {
+
+    override fun observeByManufacturer(manufacturerId: String): Flow<List<Series>> =
+        database.seriesDao().observeByManufacturer(manufacturerId)
+            .map { rows -> rows.map { it.toDomain() } }
+
+    override suspend fun add(
+        manufacturerId: String,
+        name: String,
+        parentId: String?,
+    ): DomainResult<Series> {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) {
+            return Result.failure(DomainError.Validation("Informe o nome da série."))
+        }
+        val now = Instant.now(clock).toEpochMilli()
+        val entity = SeriesEntity(
+            id = UUID.randomUUID().toString(),
+            manufacturerId = manufacturerId,
+            name = trimmed,
+            parentId = parentId,
+            kind = null,
+            year = null,
+            archivedAt = null,
+            createdAt = now,
+            updatedAt = now,
+        )
+        return try {
+            database.seriesDao().insert(entity)
+            Result.success(entity.toDomain())
+        } catch (error: Throwable) {
+            Result.failure(DomainError.Storage(error.message ?: "Falha ao salvar série."))
+        }
     }
 }

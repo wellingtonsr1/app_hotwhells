@@ -4,6 +4,7 @@ import br.com.hotwheelscollector.domain.error.DomainResult
 import br.com.hotwheelscollector.domain.model.Brand
 import br.com.hotwheelscollector.domain.model.CarModel
 import br.com.hotwheelscollector.domain.model.ColorItem
+import br.com.hotwheelscollector.domain.model.IncompleteEntry
 import br.com.hotwheelscollector.domain.model.Manufacturer
 import br.com.hotwheelscollector.domain.model.RealVehicle
 import br.com.hotwheelscollector.domain.model.Series
@@ -53,6 +54,12 @@ public interface CarModelRepository {
         realVehicleId: String? = null,
     ): DomainResult<CarModel>
     public suspend fun archive(id: String): DomainResult<Unit>
+
+    /**
+     * Modelos ativos sem nenhuma variante — o que fica pendente quando o cadastro para no
+     * primeiro passo (FR-029). Enquanto não houver variante, nenhum exemplar pode existir.
+     */
+    public fun observeWithoutVariant(): Flow<List<IncompleteEntry>>
 }
 
 public interface SeriesRepository {

@@ -2,6 +2,7 @@ package br.com.hotwheelscollector.domain.usecase
 
 import br.com.hotwheelscollector.domain.error.DomainResult
 import br.com.hotwheelscollector.domain.model.CarModel
+import br.com.hotwheelscollector.domain.model.IncompleteEntry
 import br.com.hotwheelscollector.domain.model.Variant
 import br.com.hotwheelscollector.domain.model.VariantSummary
 import br.com.hotwheelscollector.domain.repository.CarModelRepository
@@ -148,6 +149,7 @@ public class CreateVariantUseCaseTest {
         }
 
         override suspend fun archive(id: String): DomainResult<Unit> = Result.success(Unit)
+        override fun observeWithoutVariant(): Flow<List<IncompleteEntry>> = flowOf(emptyList())
     }
 
     private class FakeVariantRepository : VariantRepository {

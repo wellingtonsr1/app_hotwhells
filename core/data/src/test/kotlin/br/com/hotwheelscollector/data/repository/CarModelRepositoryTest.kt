@@ -3,7 +3,10 @@ package br.com.hotwheelscollector.data.repository
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import br.com.hotwheelscollector.data.db.AppDatabase
+import br.com.hotwheelscollector.data.db.AuditLogWriter
+import br.com.hotwheelscollector.data.db.TransactionRunner
 import br.com.hotwheelscollector.domain.error.DomainError
+import br.com.hotwheelscollector.domain.model.Variant
 import com.google.common.truth.Truth.assertThat
 import java.time.Clock
 import java.time.Instant
@@ -102,6 +105,36 @@ public class CarModelRepositoryTest {
         assertThat(invalidScale.isFailure).isTrue()
         assertThat(invalidScale.exceptionOrNull()).isInstanceOf(DomainError.Validation::class.java)
     }
+
+    @Test
+    fun `observeWithoutVariant lista modelo sem variante e o remove quando a variante e criada`() =
+        runBlocking {
+            val manufacturer = manufacturerRepository.add("Mattel", "EUA").getOrThrow()
+            val model = modelRepository.add(manufacturer.id, "Twin Mill", "1:64").getOrThrow()
+            val variants = VariantRepositoryImpl(
+                database = database,
+                transactionRunner = TransactionRunner(database),
+                auditLogWriter = AuditLogWriter(database.historyDao()),
+                clock = clock,
+            )
+
+            val before = modelRepository.observeWithoutVariant().first()
+            assertThat(before.map { it.modelId }).containsExactly(model.id)
+            assertThat(before.single().manufacturerName).isEqualTo("Mattel")
+
+            variants.create(
+                Variant(
+                    id = "variant-1",
+                    modelId = model.id,
+                    fingerprint = "fp-1",
+                    createdAt = Instant.parse("2026-11-16T12:00:00Z"),
+                    updatedAt = Instant.parse("2026-11-16T12:00:00Z"),
+                ),
+            ).getOrThrow()
+
+            // Com variante ativa o modelo deixa de ser incompleto, sem flag armazenada.
+            assertThat(modelRepository.observeWithoutVariant().first()).isEmpty()
+        }
 
     @Test
     fun `arquivar modelo remove da lista de ativos`() = runBlocking {

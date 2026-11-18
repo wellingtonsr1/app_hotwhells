@@ -17,20 +17,40 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.hotwheelscollector.R
-import br.com.hotwheelscollector.domain.model.VariantSummary
+import br.com.hotwheelscollector.domain.model.IncompleteEntry
 
 /**
- * Tela de listagem de cadastros incompletos para complementação (T048 - US2, FR-029).
+ * Cadastros incompletos: modelo que ficou sem variante (T048 - US2, FR-029).
+ *
+ * A lista é derivada da consulta, não armazenada — no momento em que a variante é criada,
+ * o modelo sai sozinho daqui. Tocar no cartão retoma o cadastro pelo ponto onde parou.
  */
 @Composable
 public fun IncompleteEntriesScreen(
-    incompleteVariants: List<VariantSummary>,
-    onSelectVariant: (variantId: String) -> Unit,
+    onSelectModel: (modelId: String) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: IncompleteEntriesViewModel = hiltViewModel(),
+) {
+    val state by viewModel.state.collectAsState()
+    IncompleteEntriesContent(
+        state = state,
+        onSelectModel = onSelectModel,
+        modifier = modifier,
+    )
+}
+
+@Composable
+internal fun IncompleteEntriesContent(
+    state: IncompleteEntriesUiState,
+    onSelectModel: (modelId: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -48,21 +68,21 @@ public fun IncompleteEntriesScreen(
                 modifier = Modifier.padding(bottom = 12.dp),
             )
 
-            if (incompleteVariants.isEmpty()) {
-                Text(
+            when {
+                state.isEmpty -> Text(
                     text = stringResource(R.string.incomplete_entries_empty),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            } else {
-                LazyColumn(
+
+                else -> LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    items(incompleteVariants, key = { it.variantId }) { variant ->
-                        IncompleteVariantCard(
-                            variant = variant,
-                            onClick = { onSelectVariant(variant.variantId) },
+                    items(state.entries, key = { it.modelId }) { entry ->
+                        IncompleteModelCard(
+                            entry = entry,
+                            onClick = { onSelectModel(entry.modelId) },
                         )
                     }
                 }
@@ -72,8 +92,8 @@ public fun IncompleteEntriesScreen(
 }
 
 @Composable
-private fun IncompleteVariantCard(
-    variant: VariantSummary,
+private fun IncompleteModelCard(
+    entry: IncompleteEntry,
     onClick: () -> Unit,
 ) {
     Card(
@@ -89,7 +109,7 @@ private fun IncompleteVariantCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = variant.modelName,
+                    text = entry.modelName,
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Surface(
@@ -106,24 +126,17 @@ private fun IncompleteVariantCard(
             }
 
             Text(
-                text = variant.manufacturerName,
+                text = "${entry.manufacturerName} · ${entry.scale}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp),
             )
-
-            val missingFields = mutableListOf<String>()
-            if (variant.colorName.isNullOrBlank()) missingFields.add("Cor principal não informada")
-            if (variant.releaseYear == null) missingFields.add("Ano não informado")
-
-            if (missingFields.isNotEmpty()) {
-                Text(
-                    text = missingFields.joinToString(" • "),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 6.dp),
-                )
-            }
+            Text(
+                text = stringResource(R.string.incomplete_missing_variant),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 6.dp),
+            )
         }
     }
 }

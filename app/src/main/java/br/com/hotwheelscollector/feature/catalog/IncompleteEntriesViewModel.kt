@@ -1,0 +1,39 @@
+package br.com.hotwheelscollector.feature.catalog
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import br.com.hotwheelscollector.domain.model.IncompleteEntry
+import br.com.hotwheelscollector.domain.repository.CarModelRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+
+/** Modelos que pararam no primeiro passo do cadastro e ainda não têm variante (FR-029). */
+public data class IncompleteEntriesUiState(
+    val entries: List<IncompleteEntry> = emptyList(),
+    val loading: Boolean = true,
+) {
+    public val isEmpty: Boolean get() = !loading && entries.isEmpty()
+}
+
+@HiltViewModel
+public class IncompleteEntriesViewModel @Inject constructor(
+    carModelRepository: CarModelRepository,
+) : ViewModel() {
+
+    public val state: StateFlow<IncompleteEntriesUiState> =
+        carModelRepository.observeWithoutVariant()
+            .map { IncompleteEntriesUiState(entries = it, loading = false) }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+                initialValue = IncompleteEntriesUiState(),
+            )
+
+    private companion object {
+        const val STOP_TIMEOUT_MS = 5_000L
+    }
+}

@@ -18,7 +18,8 @@ import org.junit.runner.RunWith
 import org.junit.runners.model.Statement
 
 /**
- * Fluxo P1 inteiro no aplicativo de verdade: catálogo vazio, miniatura, exemplar, repetição.
+ * Fluxo P1 inteiro no aplicativo de verdade: catálogo vazio, modelo, variante, exemplar,
+ * repetição.
  *
  * Sobe o [MainActivity] real — grafo Hilt, `Room` em arquivo, navegação e ViewModels de
  * produção — e conversa com as telas pela semântica do Compose, que é o mesmo caminho do
@@ -66,12 +67,13 @@ class CatalogFlowTest {
             performTextInput("Twin Mill")
         }
 
-        // 4. Salvar a miniatura leva direto ao exemplar: cadastrar é uma intenção só.
+        // 4. Salvar o modelo leva ao cadastro completo da variante.
+        //    A variante não nasce mais no primeiro passo: cor, rodas, base e fotos são dela.
         composeRule.onNodeWithText("Salvar miniatura").performScrollTo().performClick()
-        waitForText("Novo exemplar")
+        waitForText("Cadastrar variante")
 
-        // 5. Salvar o exemplar volta ao catálogo, já com a contagem.
-        composeRule.onNodeWithText("Salvar exemplar").performScrollTo().performClick()
+        // 5. A tela de variante cria também o primeiro exemplar; as fotos ficam para depois.
+        composeRule.onNodeWithText("Salvar variante e exemplar").performScrollTo().performClick()
         waitForText("1 exemplar", substring = true)
 
         // 6. O cartão da variante é o outro caminho de entrada do exemplar.

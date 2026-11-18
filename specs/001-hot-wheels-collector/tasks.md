@@ -143,7 +143,7 @@ Fechamento: `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:assem
 
 **Defeitos encontrados na execução:** `DomainError` precisou estender `Exception` para caber em `Result.failure`; o `SavedStateHandle` do ViewModel precisou ser propriedade (`private val`) para ser lido nos métodos; `first(flow)` não existe como função estática — é extensão de `Flow`.
 
-**Lacuna de alcance — fechada em 2026-11-17:** o app não abre mais em placeholder. O dashboard passou a ser o **catálogo de variantes** (`CatalogScreen`), com contagem de exemplares vinda da consulta; tocar numa variante abre `exemplar/add/{variantId}`; o FAB abre o **cadastro mínimo de miniatura** (`CreateCatalogEntryScreen`), que cria fabricante/modelo/variante reaproveitando o que já existe e calcula o `fingerprint`. Sem esse degrau, US1 ficava inalcançável numa instalação nova. Continua aberto o cadastro completo de US2 (T041, T043, T044 e fotos).
+**Lacuna de alcance — fechada em 2026-11-17:** o app não abre mais em placeholder. O dashboard passou a ser o **catálogo de variantes** (`CatalogScreen`), com contagem de exemplares vinda da consulta; tocar numa variante abre `exemplar/add/{variantId}`; o FAB abre o **cadastro mínimo de miniatura** (`CreateCatalogEntryScreen`), que cria fabricante/modelo/variante reaproveitando o que já existe e calcula o `fingerprint`. Sem esse degrau, US1 ficava inalcançável numa instalação nova. Continua aberto o cadastro completo de US2 (T041, T043, T044 e fotos). **Atualização de 2026-11-17:** T041, T044 e as fotos foram implementados; T043 foi aposentada — ver o bloco «Situação real — Fase 4 / US2».
 
 **Correções desta rodada:**
 
@@ -199,6 +199,100 @@ Fechamento: `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:assem
 - [ ] T049 [US2] Implementar busca-assistida de modelo existente ao digitar (FR-024) em `app/.../feature/catalog/ModelAutocomplete.kt`
 
 **Checkpoint**: US1 e US2 funcionam independentemente
+
+### Situação real — Fase 4 / US2 (2026-11-17)
+
+**A fase não está concluída.** Nenhum teste desta fase foi executado no ambiente onde este
+levantamento foi feito (sem Android SDK e com Java 11 no `PATH`), então nenhum checkbox
+foi marcado: a constituição (Art. V.4) não permite declarar concluído o que não tem teste
+verde. A tabela distingue *artefato pronto* de *execução verificada*.
+
+| Tarefa | Estado em 2026-11-17 | Arquivo / observação |
+|---|---|---|
+| T037 | teste escrito, não executado | `core/domain/.../validation/CatalogValidationTest.kt` |
+| T038 | teste escrito, não executado | `core/data/.../storage/ImageStoreTest.kt` |
+| T039 | teste escrito, não executado | `core/data/.../repository/CarModelRepositoryTest.kt` |
+| T040 | **pendente** | `CreateCatalogEntryScreenTest.kt` não existe |
+| T041 | implementado + teste escrito | `CreateModelUseCase` (+ `CreateModelUseCaseTest`) |
+| T042 | implementado + teste escrito | `CreateVariantUseCase` (+ `CreateVariantUseCaseTest`) |
+| T043 | aposentada em 2026-11-17 (código morto removido) | o cadastro de modelo é o `CreateCatalogEntryScreen` (com `CreateCatalogEntryUseCase`); `ModelFormScreen` devolvia `"new-model-id"`/`"forced-new-model-id"` e não persistia nada |
+| T044 | implementado em 2026-11-17 | `VariantFormScreen` + `VariantFormViewModel`: cria a variante pelo `CreateVariantUseCase` |
+| T045 | implementado | `PhotoCapture` (câmera e Photo Picker, recusa tratada) alimentando o `PhotoRepository`, não mais descartado |
+| T046 | implementado | `PhotoGrid` com `PhotoTile` (`File` ou `ByteArray`), sem `LazyVerticalGrid` dentro de formulário rolável; gravação pelo `PhotoRepositoryImpl` |
+| T047 | implementado + teste escrito | `DraftRepositoryImpl` (+ `DraftRepositoryTest`) |
+| T048 | implementado em 2026-11-17 (modelo sem variante) | consulta `CarModelDao.observeWithoutVariant`, `CarModelRepository.observeWithoutVariant`, `IncompleteEntriesViewModel`, rota `catalog/incomplete` e atalho no cabeçalho do catálogo; variante com campo faltando ainda não entra (exigiria edição de variante) |
+| T049 | implementado | `ModelAutocomplete` ligado ao `CreateCatalogEntryScreen` |
+
+**O que mudou nesta rodada (2026-11-17):**
+
+1. **Fotos saíram da maquete.** `VariantFormScreen` descartava os bytes com
+   `// Em produção, salvo no PhotoRepository`. Como `photo.exemplar_id` é obrigatório
+   (FR-020), o formulário de variante passou a criar **também o primeiro exemplar**: a
+   variante nasce, o exemplar nasce e as capturas pendentes são gravadas nele. Sem isso a
+   foto não teria dono válido no schema.
+2. **Nenhum ID fixo no fluxo.** `"variant-saved-id"` morreu; `VariantFormViewModel.onSave(modelId)`
+   devolve o id real da variante. Retry após falha de foto não duplica variante nem
+   exemplar (`createdVariantId`/`createdExemplarId` ficam no estado).
+3. **Dois repositórios que faltavam.** `ColorRepositoryImpl` (cor por nome, `findOrCreate`)
+   e `SeriesRepositoryImpl` (série resolvida dentro do fabricante do modelo), com `@Binds`
+   novos em `DatabaseModule` — sem eles o Hilt não montaria o ViewModel.
+4. **Grade sem scroll aninhado.** `LazyVerticalGrid` dentro de `Column.verticalScroll`
+   estourava `IllegalStateException` ao ser ligada; a grade agora é construída com
+   `Row`/`Column` e aceita foto já gravada e captura pendente no mesmo componente.
+5. **Strings.** Rótulos de ângulo, "Galeria", "Câmera", "Ainda não salva" e os textos da
+   tela de variante saíram do Kotlin e foram para `strings.xml`.
+6. **Teste novo, não executado:** `app/src/test/.../VariantFormViewModelTest.kt` cobre cor e
+   condição aplicadas, ordem das fotos, promoção da principal, ano inválido sem gravação,
+   variante reaproveitada, série cadastrada no fabricante e retry sem duplicar exemplar.
+
+**Para fechar a fase**, nesta ordem:
+
+```text
+./gradlew :app:testDebugUnitTest :core:data:testDebugUnitTest :app:assembleDebug :app:lint
+```
+
+1. rodar o comando acima e, se verde, marcar T037–T039, T041–T042, T044–T047 e T049;
+2. ~~decidir `ModelFormScreen`~~ — **feito em 2026-11-17**: aposentada, o cadastro de
+   modelo fica em `CreateCatalogEntryScreen`;
+3. escrever `CreateCatalogEntryScreenTest` — T040;
+4. ~~criar a consulta e a rota de cadastros incompletos~~ — **feito em 2026-11-17**, com
+   escopo em modelo sem variante (ver abaixo);
+5. ~~dar entrada para `VariantFormScreen` na navegação~~ — **feita em 2026-11-17**: rota
+   `catalog/variant/{modelId}`, alcançada pelo cadastro e pela lista de incompletos.
+
+**Feito em 2026-11-17 — opção A (cadastro completo vira o fluxo padrão):**
+
+- `CreateCatalogEntryUseCase` passou a resolver **só fabricante e modelo** e a devolver
+  `CarModel`; a criação de variante com `fingerprint` saiu de lá (`CreateVariantUseCase`
+  já fazia esse trabalho, com os atributos que a tela de variante coleta).
+- `CreateCatalogEntryScreen`/`ViewModel` ficaram com fabricante, modelo e escala; os campos
+  de cor, ano e código migraram para a tela de variante, junto das fotos.
+- Rota nova `catalog/variant/{modelId}` (`Destination.VariantForm`) ligada ao FAB: `+ Mini`
+  → modelo → variante (com primeiro exemplar e fotos) → catálogo.
+- `CatalogFlowTest` atualizado para o novo caminho — **não executado** neste ambiente.
+- Teste novo, também **não executado**: `CreateCatalogEntryUseCaseTest` (reaproveitamento de
+  fabricante/modelo e validações).
+
+Isso fecha a pendência 5 e a decisão pendente de T043 no que diz respeito ao fluxo.
+
+**T043 (parte de modelo) encerrada por remoção (2026-11-17)** — o checkbox segue aberto
+por causa do veículo real: `ModelFormScreen` era tela de maquete —
+salvava devolvendo `"new-model-id"`/`"forced-new-model-id"` e não gravava nada. Com o
+cadastro de modelo em `CreateCatalogEntryScreen`, ela virou código morto sem chamador e foi
+excluída junto com a string `model_form_title`. O cadastro de **veículo real** (que também
+estava agrupado em T043) continua não existindo: o campo opcional `real_vehicle_id` do
+modelo segue sem tela, e isso precisa virar tarefa própria se for retomado.
+
+**T048 entregue com escopo reduzido (2026-11-17):** a lista mostra **modelo ativo sem
+variante ativa** — o buraco que o fluxo em dois passos abriu. Tocar no cartão retoma o
+cadastro na tela de variante, e a consulta reage sozinha: ao criar a variante, o modelo
+sai da lista. O outro caso de FR-029 — variante existente sem cor principal ou sem ano —
+**não entrou**: complementar variante exige uma tela de edição que preserve `fingerprint`
+e histórico, e as fotos (que pertencem ao exemplar) não cabem nela. Fica como tarefa nova,
+fora de T048.
+
+Decisão de entrada registrada: o atalho «Incompletos (N)» aparece no cabeçalho do catálogo
+**apenas quando há algo a completar**, para não competir com o `+ Mini`.
 
 ---
 ## Phase 5: User Story 3 - Painel do estado da coleção (Priority: P2)
@@ -438,6 +532,24 @@ Fechamento: `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:assem
 - [ ] T137 [P] Escrever documentação operacional (instalação, backup, restauração, solução de problemas) em `docs/operacao.md`
 - [ ] T138 Executar os 14 cenários do `quickstart.md` no aparelho e registrar evidências em `docs/validacao.md`, com verificação explícita e assinada de SC-003, SC-005, SC-009, SC-011, SC-012 e SC-014
 - [ ] T139 Revisar segurança e privacidade: zero chamadas de rede, nenhum segredo, permissões mínimas, nenhuma telemetria (Art. III) em `docs/revisao-seguranca.md`
+
+### T131 — parcial (2026-11-17)
+
+Saiu do Kotlin, nesta rodada:
+
+- rótulos de `Condition` (`labelPtBr()` → `labelRes()` com `@StringRes`) usados por
+  `AddExemplarScreen` e `VariantFormScreen`;
+- a segunda linha do cartão do catálogo: `VariantSummary.subtitle()` foi **removida do
+  domínio** (texto de apresentação em Kotlin puro violava Art. IV) e a montagem foi para
+  `CatalogScreen`, com `<plurals name="catalog_exemplar_count">` e
+  `catalog_exemplar_none`;
+- rótulos de ângulo de foto, «Galeria»/«Câmera» e «Ainda não salva» (rodada anterior).
+
+**Continua fora de `strings.xml`**, e por isso o checkbox segue aberto: as mensagens de
+snackbar dos ViewModels (`AddExemplarViewModel`, `CreateCatalogEntryViewModel`,
+`VariantFormViewModel`) e o texto do `PlaceholderScreen`, que ainda mostra a mensagem de
+andaime «Estrutura inicial criada…». Padronizar isso exige decidir se as mensagens de
+estado viram `@StringRes` no ViewModel ou códigos de erro resolvidos na tela.
 
 ---
 

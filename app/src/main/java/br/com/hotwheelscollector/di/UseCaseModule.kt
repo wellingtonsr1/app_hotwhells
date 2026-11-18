@@ -33,9 +33,7 @@ public object UseCaseModule {
     public fun provideCreateCatalogEntryUseCase(
         manufacturers: ManufacturerRepository,
         models: CarModelRepository,
-        variants: VariantRepository,
-        clock: Clock,
-    ): CreateCatalogEntryUseCase = CreateCatalogEntryUseCase(manufacturers, models, variants, clock)
+    ): CreateCatalogEntryUseCase = CreateCatalogEntryUseCase(manufacturers, models)
 
     @Provides
     @Singleton
