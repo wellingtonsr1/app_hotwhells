@@ -1,8 +1,10 @@
-# Hot Wheels Collector
+# Coleção de Miniaturas
 
-Aplicativo Android nativo, offline-first, para catalogar miniaturas 1:64 distinguindo
-**modelo → variante → exemplar**. Toda leitura e escrita acontece no aparelho: o banco
-Room local é a coleção, e nenhuma funcionalidade essencial usa rede.
+Aplicativo Android nativo, offline-first, para catalogar miniaturas 1:64 de **qualquer
+fabricante** — Hot Wheels, Matchbox, Mini GT, Greenlight — distinguindo
+**modelo → variante → exemplar**. Fabricante é registro do banco, não enum: o nome é
+digitado no cadastro e reaproveitado por sugestão. Toda leitura e escrita acontece no
+aparelho: o banco Room local é a coleção, e nenhuma funcionalidade essencial usa rede.
 
 Kotlin 2.1 + Jetpack Compose (Material3) + Room + Hilt, organizados em quatro módulos
 Gradle: `:core:domain` (Kotlin puro), `:core:data` (Room, arquivos, import/export),
@@ -11,6 +13,10 @@ Gradle: `:core:domain` (Kotlin puro), `:core:data` (Room, arquivos, import/expor
 A especificação funcional, o plano, o modelo de dados e a lista de tarefas ficam em
 [`specs/001-hot-wheels-collector/`](specs/001-hot-wheels-collector/). Para retomar o
 trabalho em outra máquina, use [`docs/continua.md`](docs/continua.md).
+
+A simulação do app completo (maquete animada, não gravação de tela) está em
+[`docs/simulacao-app.mp4`](docs/simulacao-app.mp4) e é gerada por
+[`tools/mockup/simulacao.py`](tools/mockup/simulacao.py).
 
 ## Pré-requisitos
 

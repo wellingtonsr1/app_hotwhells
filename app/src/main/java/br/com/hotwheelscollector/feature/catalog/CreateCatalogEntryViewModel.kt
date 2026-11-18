@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.hotwheelscollector.domain.error.DomainError
 import br.com.hotwheelscollector.domain.model.CarModel
+import br.com.hotwheelscollector.domain.model.Manufacturer
 import br.com.hotwheelscollector.domain.repository.CarModelRepository
 import br.com.hotwheelscollector.domain.repository.DraftRepository
+import br.com.hotwheelscollector.domain.repository.ManufacturerRepository
 import br.com.hotwheelscollector.domain.usecase.CreateCatalogEntryUseCase
 import br.com.hotwheelscollector.domain.usecase.NewCatalogEntry
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,13 +25,14 @@ import kotlinx.coroutines.launch
  * e do exemplar, e são coletados na tela seguinte. Assim o cadastro mínimo não cria uma
  * variante que ninguém consegue completar, e não há duas formas de cadastrar a mesma coisa.
  *
- * Inclui rascunho recuperável após interrupção (FR-023) e sugestões de modelos existentes
- * (FR-024).
+ * Inclui rascunho recuperável após interrupção (FR-023) e sugestões de fabricantes e
+ * modelos existentes (FR-024).
  */
 public data class CreateCatalogEntryUiState(
     val manufacturer: String = "",
     val model: String = "",
     val scale: String = "1:64",
+    val availableManufacturers: List<Manufacturer> = emptyList(),
     val availableModels: List<CarModel> = emptyList(),
     val saving: Boolean = false,
     val message: String? = null,
@@ -40,6 +43,7 @@ public data class CreateCatalogEntryUiState(
 public class CreateCatalogEntryViewModel @Inject constructor(
     private val createEntry: CreateCatalogEntryUseCase,
     private val carModelRepository: CarModelRepository,
+    private val manufacturerRepository: ManufacturerRepository,
     private val draftRepository: DraftRepository,
 ) : ViewModel() {
 
@@ -47,7 +51,12 @@ public class CreateCatalogEntryViewModel @Inject constructor(
     public val state: StateFlow<CreateCatalogEntryUiState> = _state.asStateFlow()
 
     init {
-        // Observa modelos para autocomplete (FR-024)
+        // Observa fabricantes e modelos para autocomplete (FR-024)
+        viewModelScope.launch {
+            manufacturerRepository.observeActive().collect { manufacturers ->
+                _state.update { it.copy(availableManufacturers = manufacturers) }
+            }
+        }
         viewModelScope.launch {
             carModelRepository.observeActive().collect { models ->
                 _state.update { it.copy(availableModels = models) }
@@ -75,6 +84,12 @@ public class CreateCatalogEntryViewModel @Inject constructor(
 
     public fun onScaleChange(value: String) {
         _state.update { it.copy(scale = value) }
+        saveDraftAsync()
+    }
+
+    public fun onSelectManufacturerSuggestion(manufacturer: Manufacturer) {
+        // Só o fabricante muda: modelo e escala continuam o que o usuário digitou.
+        _state.update { it.copy(manufacturer = manufacturer.name) }
         saveDraftAsync()
     }
 

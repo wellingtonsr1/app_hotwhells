@@ -84,6 +84,11 @@ public fun CreateCatalogEntryScreen(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                ManufacturerAutocomplete(
+                    query = state.manufacturer,
+                    availableManufacturers = state.availableManufacturers,
+                    onSelectManufacturer = viewModel::onSelectManufacturerSuggestion,
+                )
                 OutlinedTextField(
                     value = state.model,
                     onValueChange = viewModel::onModelChange,

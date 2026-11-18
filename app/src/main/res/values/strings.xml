@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Hot Wheels Collector</string>
+    <string name="app_name">Coleção de Miniaturas</string>
     <string name="setup_status_message">Estrutura inicial criada. Banco local e cadastro de exemplares entram na próxima etapa.</string>
 
     <!-- Erros de domínio traduzidos para o usuário (T027). -->
@@ -57,6 +57,8 @@
 
     <!-- Autocomplete e sugestões (T049). -->
     <string name="autocomplete_model_suggestion">Modelos existentes com nome semelhante:</string>
+    <string name="autocomplete_manufacturer_suggestion">Fabricantes já cadastrados:</string>
+    <string name="autocomplete_model_scale">Escala %1$s</string>
 
     <!-- Fotografias e grade de fotos (T045, T046 - US2). -->
     <string name="photo_grid_title">Fotografias</string>

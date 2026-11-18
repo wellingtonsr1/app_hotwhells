@@ -196,7 +196,7 @@ Fechamento: `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:assem
 - [ ] T046 [US2] Implementar grade de fotos por ângulo com definição de foto principal (transação única) em `app/.../feature/catalog/PhotoGrid.kt`
 - [ ] T047 [US2] Implementar persistência de rascunho de cadastro no banco, recuperável após interrupção (FR-023) em `core/data/.../repository/DraftRepositoryImpl.kt`
 - [ ] T048 [US2] Marcar cadastros incompletos e listá-los para complementação (FR-029) em `app/.../feature/catalog/IncompleteEntriesScreen.kt`
-- [ ] T049 [US2] Implementar busca-assistida de modelo existente ao digitar (FR-024) em `app/.../feature/catalog/ModelAutocomplete.kt`
+- [ ] T049 [US2] Implementar busca-assistida de modelo existente ao digitar (FR-024) em `app/.../feature/catalog/Autocomplete.kt`
 
 **Checkpoint**: US1 e US2 funcionam independentemente
 
@@ -221,7 +221,14 @@ verde. A tabela distingue *artefato pronto* de *execução verificada*.
 | T046 | implementado | `PhotoGrid` com `PhotoTile` (`File` ou `ByteArray`), sem `LazyVerticalGrid` dentro de formulário rolável; gravação pelo `PhotoRepositoryImpl` |
 | T047 | implementado + teste escrito | `DraftRepositoryImpl` (+ `DraftRepositoryTest`) |
 | T048 | implementado em 2026-11-17 (modelo sem variante) | consulta `CarModelDao.observeWithoutVariant`, `CarModelRepository.observeWithoutVariant`, `IncompleteEntriesViewModel`, rota `catalog/incomplete` e atalho no cabeçalho do catálogo; variante com campo faltando ainda não entra (exigiria edição de variante) |
-| T049 | implementado | `ModelAutocomplete` ligado ao `CreateCatalogEntryScreen` |
+| T049 | implementado | `Autocomplete.kt`: `ModelAutocomplete` e `ManufacturerAutocomplete` ligados ao `CreateCatalogEntryScreen` |
+
+**Vocabulário de produto (2026-11-17):** o app deixou de se apresentar como marca única.
+`app_name` passou de "Hot Wheels Collector" para "Coleção de Miniaturas"; o ícone já era
+silhueta genérica de miniatura (sem logotipo de terceiro), então não mudou. O fabricante
+já era registro do banco (`Manufacturer`, identidade `fabricante + nome + escala`) e segue
+assim. **Não alterados** por serem identificadores técnicos: `applicationId`, pacote
+`br.com.hotwheelscollector`, nomes dos módulos Gradle e a pasta `specs/001-hot-wheels-collector`.
 
 **O que mudou nesta rodada (2026-11-17):**
 
