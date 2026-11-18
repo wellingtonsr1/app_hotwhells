@@ -107,5 +107,8 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.espresso.core)
+    androidTestImplementation(libs.espresso.intents)
+    // Os testes instrumentados limpam as tabelas do banco real entre um teste e outro.
+    androidTestImplementation(libs.room.runtime)
     debugImplementation(libs.compose.ui.test.manifest)
 }

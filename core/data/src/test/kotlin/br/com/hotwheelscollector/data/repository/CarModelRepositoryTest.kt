@@ -6,6 +6,7 @@ import br.com.hotwheelscollector.data.db.AppDatabase
 import br.com.hotwheelscollector.data.db.AuditLogWriter
 import br.com.hotwheelscollector.data.db.TransactionRunner
 import br.com.hotwheelscollector.domain.error.DomainError
+import br.com.hotwheelscollector.domain.model.MissingField
 import br.com.hotwheelscollector.domain.model.Variant
 import com.google.common.truth.Truth.assertThat
 import java.time.Clock
@@ -107,7 +108,7 @@ public class CarModelRepositoryTest {
     }
 
     @Test
-    fun `observeWithoutVariant lista modelo sem variante e o remove quando a variante e criada`() =
+    fun `observeIncomplete lista modelo sem variante e o remove quando a variante e criada`() =
         runBlocking {
             val manufacturer = manufacturerRepository.add("Mattel", "EUA").getOrThrow()
             val model = modelRepository.add(manufacturer.id, "Twin Mill", "1:64").getOrThrow()
@@ -118,7 +119,7 @@ public class CarModelRepositoryTest {
                 clock = clock,
             )
 
-            val before = modelRepository.observeWithoutVariant().first()
+            val before = modelRepository.observeIncomplete().first()
             assertThat(before.map { it.modelId }).containsExactly(model.id)
             assertThat(before.single().manufacturerName).isEqualTo("Mattel")
 
@@ -132,9 +133,64 @@ public class CarModelRepositoryTest {
                 ),
             ).getOrThrow()
 
-            // Com variante ativa o modelo deixa de ser incompleto, sem flag armazenada.
-            assertThat(modelRepository.observeWithoutVariant().first()).isEmpty()
+            // Com variante ativa o modelo deixa de ser "sem variante", sem flag armazenada.
+            // A variante criada aqui não tem cor nem ano, então o que muda é o motivo: a
+            // linha continua, agora apontada para a variante (ver o teste seguinte).
+            val after = modelRepository.observeIncomplete().first()
+            assertThat(after.map { it.variantId }).containsExactly("variant-1")
+            assertThat(after.single().modelId).isEqualTo(model.id)
         }
+
+    @Test
+    fun `observeIncomplete lista variante sem cor ou sem ano e ignora a completa`() = runBlocking {
+        val manufacturer = manufacturerRepository.add("Mattel", "EUA").getOrThrow()
+        val model = modelRepository.add(manufacturer.id, "Twin Mill", "1:64").getOrThrow()
+        val red = ColorRepositoryImpl(database).findOrCreate("Vermelho", null).getOrThrow()
+        val variants = VariantRepositoryImpl(
+            database = database,
+            transactionRunner = TransactionRunner(database),
+            auditLogWriter = AuditLogWriter(database.historyDao()),
+            clock = clock,
+        )
+        val now = Instant.parse("2026-11-16T12:00:00Z")
+
+        variants.create(
+            Variant("v-sem-nada", model.id, "fp-1", createdAt = now, updatedAt = now),
+        ).getOrThrow()
+        variants.create(
+            Variant(
+                id = "v-sem-ano",
+                modelId = model.id,
+                fingerprint = "fp-2",
+                primaryColorId = red.id,
+                createdAt = now,
+                updatedAt = now,
+            ),
+        ).getOrThrow()
+        variants.create(
+            Variant(
+                id = "v-completa",
+                modelId = model.id,
+                fingerprint = "fp-3",
+                primaryColorId = red.id,
+                releaseYear = 2024,
+                createdAt = now,
+                updatedAt = now,
+            ),
+        ).getOrThrow()
+
+        // O modelo já tem variante: nenhuma linha é "modelo sem variante".
+        val missing = modelRepository.observeIncomplete().first()
+            .associate { it.key to it.missingFields }
+
+        assertThat(missing).hasSize(2)
+        assertThat(missing["v-sem-nada"]).containsExactly(
+            MissingField.PRIMARY_COLOR,
+            MissingField.RELEASE_YEAR,
+        )
+        assertThat(missing["v-sem-ano"]).containsExactly(MissingField.RELEASE_YEAR)
+        assertThat(missing).doesNotContainKey("v-completa")
+    }
 
     @Test
     fun `arquivar modelo remove da lista de ativos`() = runBlocking {

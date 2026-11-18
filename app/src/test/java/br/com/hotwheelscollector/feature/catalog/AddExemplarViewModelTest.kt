@@ -43,7 +43,7 @@ class AddExemplarViewModelTest {
 
     private val dispatcher = UnconfinedTestDispatcher()
     private val fixedClock: Clock = Clock.fixed(Instant.parse("2026-11-16T12:00:00Z"), ZoneOffset.UTC)
-    private val repository = FakeExemplarRepository()
+    private val repository = FakeAddExemplarRepository()
     private val locationRepository = FakeLocationRepository()
 
     @Before
@@ -212,7 +212,7 @@ class AddExemplarViewModelTest {
     }
 }
 
-private class FakeExemplarRepository : ExemplarRepository {
+private class FakeAddExemplarRepository : ExemplarRepository {
 
     var existingCount: Int = 0
     var nextCount: Int = 1

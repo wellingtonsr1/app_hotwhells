@@ -26,12 +26,16 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.model.IncompleteEntry
+import br.com.hotwheelscollector.domain.model.MissingField
 
 /**
- * Cadastros incompletos: modelo que ficou sem variante (T048 - US2, FR-029).
+ * Cadastros incompletos (T048 - US2, FR-029): modelo que ficou sem variante e variante que
+ * ficou sem cor principal ou sem ano.
  *
- * A lista é derivada da consulta, não armazenada — no momento em que a variante é criada,
- * o modelo sai sozinho daqui. Tocar no cartão retoma o cadastro pelo ponto onde parou.
+ * A lista é derivada da consulta, não armazenada — no momento em que o campo é preenchido,
+ * a linha sai sozinha. Só o modelo sem variante é retomável: tocar no cartão abre a tela de
+ * variante. A variante incompleta aparece marcada, mas ainda não é editável — complementá-la
+ * exige uma tela de edição que preserve `fingerprint` e histórico.
  */
 @Composable
 public fun IncompleteEntriesScreen(
@@ -79,7 +83,7 @@ internal fun IncompleteEntriesContent(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    items(state.entries, key = { it.modelId }) { entry ->
+                    items(state.entries, key = { it.key }) { entry ->
                         IncompleteModelCard(
                             entry = entry,
                             onClick = { onSelectModel(entry.modelId) },
@@ -92,14 +96,23 @@ internal fun IncompleteEntriesContent(
 }
 
 @Composable
+private fun MissingField.labelRes(): Int = when (this) {
+    MissingField.PRIMARY_COLOR -> R.string.incomplete_missing_color
+    MissingField.RELEASE_YEAR -> R.string.incomplete_missing_year
+}
+
+@Composable
 private fun IncompleteModelCard(
     entry: IncompleteEntry,
     onClick: () -> Unit,
 ) {
+    // Só o modelo sem variante tem para onde voltar. Um cartão que parece clicável e não
+    // faz nada seria pior que um cartão sem toque.
+    val click = if (entry.hasVariant) Modifier else Modifier.clickable(onClick = onClick)
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .then(click),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
@@ -131,8 +144,13 @@ private fun IncompleteModelCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp),
             )
+            val missing = entry.missingFields.map { field -> stringResource(field.labelRes()) }
             Text(
-                text = stringResource(R.string.incomplete_missing_variant),
+                text = if (missing.isEmpty()) {
+                    stringResource(R.string.incomplete_missing_variant)
+                } else {
+                    stringResource(R.string.incomplete_missing_fields, missing.joinToString(", "))
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(top = 6.dp),

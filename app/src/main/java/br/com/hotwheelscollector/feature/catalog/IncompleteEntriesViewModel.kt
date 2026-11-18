@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-/** Modelos que pararam no primeiro passo do cadastro e ainda não têm variante (FR-029). */
+/** Cadastros incompletos: modelo sem variante e variante sem cor principal ou sem ano. */
 public data class IncompleteEntriesUiState(
     val entries: List<IncompleteEntry> = emptyList(),
     val loading: Boolean = true,
@@ -25,7 +25,7 @@ public class IncompleteEntriesViewModel @Inject constructor(
 ) : ViewModel() {
 
     public val state: StateFlow<IncompleteEntriesUiState> =
-        carModelRepository.observeWithoutVariant()
+        carModelRepository.observeIncomplete()
             .map { IncompleteEntriesUiState(entries = it, loading = false) }
             .stateIn(
                 scope = viewModelScope,

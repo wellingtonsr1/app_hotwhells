@@ -22,6 +22,17 @@ public data class VariantSummaryRow(
     @ColumnInfo(name = "exemplar_count") val exemplarCount: Int,
 )
 
+/** Projeção de variante com campo faltando: o outro caso de FR-029. */
+public data class IncompleteVariantRow(
+    @ColumnInfo(name = "variant_id") val variantId: String,
+    @ColumnInfo(name = "model_id") val modelId: String,
+    @ColumnInfo(name = "model_name") val modelName: String,
+    @ColumnInfo(name = "manufacturer_name") val manufacturerName: String,
+    @ColumnInfo(name = "scale") val scale: String,
+    @ColumnInfo(name = "missing_primary_color") val missingPrimaryColor: Boolean,
+    @ColumnInfo(name = "missing_release_year") val missingReleaseYear: Boolean,
+)
+
 @Dao
 public interface VariantDao {
 
@@ -42,6 +53,33 @@ public interface VariantDao {
         """,
     )
     public fun observeSummaries(): Flow<List<VariantSummaryRow>>
+
+    /**
+     * Variantes ativas sem cor principal ou sem ano — cadastro que não dá para reconhecer
+     * e por isso entra na lista de incompletos (FR-029).
+     *
+     * O `CASE` vira `Boolean` no Room: a consulta devolve 0 ou 1, e o mapeador sabe o que
+     * cada coluna significa. Variante arquivada ou de modelo arquivado não entra.
+     */
+    @Query(
+        """
+        SELECT v.id AS variant_id,
+               m.id AS model_id,
+               m.name AS model_name,
+               mf.name AS manufacturer_name,
+               m.scale AS scale,
+               v.primary_color_id IS NULL AS missing_primary_color,
+               v.release_year IS NULL AS missing_release_year
+        FROM variant v
+        JOIN car_model m ON m.id = v.model_id
+        JOIN manufacturer mf ON mf.id = m.manufacturer_id
+        WHERE v.archived_at IS NULL
+          AND m.archived_at IS NULL
+          AND (v.primary_color_id IS NULL OR v.release_year IS NULL)
+        ORDER BY mf.name COLLATE NOCASE, m.name COLLATE NOCASE, v.created_at
+        """,
+    )
+    public fun observeIncompleteVariants(): Flow<List<IncompleteVariantRow>>
 
     @Query("SELECT * FROM variant WHERE model_id = :modelId AND archived_at IS NULL ORDER BY created_at")
     public fun observeByModel(modelId: String): Flow<List<VariantEntity>>

@@ -1,5 +1,7 @@
 # Gradle / Android
 .gradle/
+# Sessões do compilador Kotlin: o Gradle apaga/cria a cada build e não é fonte do projeto.
+.kotlin/
 build/
 local.properties
 captures/

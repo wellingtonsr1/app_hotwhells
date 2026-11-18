@@ -84,6 +84,9 @@
     <string name="incomplete_entries_empty">Nenhum cadastro incompleto. Todo modelo cadastrado já tem variante.</string>
     <string name="incomplete_missing_variant">Sem variante cadastrada</string>
     <string name="incomplete_badge">Incompleto</string>
+    <string name="incomplete_missing_fields">Falta: %1$s</string>
+    <string name="incomplete_missing_color">cor principal</string>
+    <string name="incomplete_missing_year">ano</string>
 
     <!-- Formulários detalhados de modelo e variante (T043, T044). -->
     <string name="variant_form_title">Cadastrar variante</string>

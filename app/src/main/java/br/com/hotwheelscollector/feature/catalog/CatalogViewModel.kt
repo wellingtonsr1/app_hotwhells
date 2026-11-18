@@ -13,8 +13,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
 /**
- * Lista de variantes com a contagem de exemplares de cada uma e quantos modelos ficaram
- * sem variante. O contador de incompletos só aparece quando há algo a completar.
+ * Lista de variantes com a contagem de exemplares de cada uma e quantos cadastros ficaram
+ * incompletos (modelo sem variante ou variante sem cor/ano). O contador só aparece quando
+ * há algo a completar.
  */
 public data class CatalogUiState(
     val variants: List<VariantSummary> = emptyList(),
@@ -33,7 +34,7 @@ public class CatalogViewModel @Inject constructor(
 
     public val state: StateFlow<CatalogUiState> = combine(
         variantRepository.observeSummaries(),
-        carModelRepository.observeWithoutVariant(),
+        carModelRepository.observeIncomplete(),
     ) { variants, incomplete ->
         CatalogUiState(
             variants = variants,

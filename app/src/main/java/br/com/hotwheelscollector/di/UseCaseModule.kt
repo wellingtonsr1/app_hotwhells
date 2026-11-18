@@ -6,6 +6,8 @@ import br.com.hotwheelscollector.domain.repository.ManufacturerRepository
 import br.com.hotwheelscollector.domain.repository.VariantRepository
 import br.com.hotwheelscollector.domain.usecase.AddExemplarUseCase
 import br.com.hotwheelscollector.domain.usecase.CreateCatalogEntryUseCase
+import br.com.hotwheelscollector.domain.usecase.CreateModelUseCase
+import br.com.hotwheelscollector.domain.usecase.CreateVariantUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

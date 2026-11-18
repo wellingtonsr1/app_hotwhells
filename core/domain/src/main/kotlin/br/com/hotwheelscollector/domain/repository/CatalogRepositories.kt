@@ -56,10 +56,10 @@ public interface CarModelRepository {
     public suspend fun archive(id: String): DomainResult<Unit>
 
     /**
-     * Modelos ativos sem nenhuma variante — o que fica pendente quando o cadastro para no
-     * primeiro passo (FR-029). Enquanto não houver variante, nenhum exemplar pode existir.
+     * Cadastros incompletos (FR-029): modelo ativo sem variante ativa, e variante ativa sem
+     * cor principal ou sem ano. Nada é armazenado: ao preencher o campo, a linha sai sozinha.
      */
-    public fun observeWithoutVariant(): Flow<List<IncompleteEntry>>
+    public fun observeIncomplete(): Flow<List<IncompleteEntry>>
 }
 
 public interface SeriesRepository {

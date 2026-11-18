@@ -181,47 +181,257 @@ Fechamento: `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:assem
 
 ### Tests for User Story 2
 
-- [ ] T037 [P] [US2] Teste unitário de validação (escala `1:N`, condição, prioridade, campos desconhecidos como `NULL`) em `core/domain/src/test/kotlin/br/com/hotwheelscollector/domain/validation/CatalogValidationTest.kt`
-- [ ] T038 [P] [US2] Teste do `ImageStore` (compressão, remoção de EXIF, checksum estável) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/storage/ImageStoreTest.kt`
-- [ ] T039 [P] [US2] Teste de criação de modelo duplicado (aviso, não bloqueio) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/CarModelRepositoryTest.kt`
-- [ ] T040 [P] [US2] Teste Compose de cadastro completo com foto em `app/src/androidTest/java/br/com/hotwheelscollector/feature/catalog/CreateCatalogEntryScreenTest.kt`
+- [X] T037 [P] [US2] Teste unitário de validação (escala `1:N`, condição, prioridade, campos desconhecidos como `NULL`) em `core/domain/src/test/kotlin/br/com/hotwheelscollector/domain/validation/CatalogValidationTest.kt`
+- [X] T038 [P] [US2] Teste do `ImageStore` (compressão, remoção de EXIF, checksum estável) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/storage/ImageStoreTest.kt`
+- [X] T039 [P] [US2] Teste de criação de modelo duplicado (aviso, não bloqueio) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/CarModelRepositoryTest.kt`
+- [X] T040 [P] [US2] Teste Compose de cadastro completo com foto em `app/src/androidTest/java/br/com/hotwheelscollector/feature/catalog/CreateCatalogEntryScreenTest.kt`
 
 ### Implementation for User Story 2
 
-- [ ] T041 [US2] Implementar `CreateModelUseCase` (aviso de mesmo nome+fabricante, opção usar existente) em `core/domain/.../usecase/CreateModelUseCase.kt`
-- [ ] T042 [US2] Implementar `CreateVariantUseCase` com cálculo de `fingerprint` e aviso de variante idêntica (FR-040) em `core/domain/.../usecase/CreateVariantUseCase.kt`
+- [X] T041 [US2] Implementar `CreateModelUseCase` (aviso de mesmo nome+fabricante, opção usar existente) em `core/domain/.../usecase/CreateModelUseCase.kt`
+- [X] T042 [US2] Implementar `CreateVariantUseCase` com cálculo de `fingerprint` e aviso de variante idêntica (FR-040) em `core/domain/.../usecase/CreateVariantUseCase.kt`
 - [ ] T043 [US2] Implementar telas de cadastro de modelo e veículo real em `app/.../feature/catalog/ModelFormScreen.kt`
-- [ ] T044 [US2] Implementar tela de cadastro de variante (cor principal, cores secundárias, rodas, base, decoração, série) em `app/.../feature/catalog/VariantFormScreen.kt`
-- [ ] T045 [US2] Implementar captura por câmera e seleção via Photo Picker, com recusa de permissão tratada em `app/.../feature/catalog/PhotoCapture.kt`
-- [ ] T046 [US2] Implementar grade de fotos por ângulo com definição de foto principal (transação única) em `app/.../feature/catalog/PhotoGrid.kt`
-- [ ] T047 [US2] Implementar persistência de rascunho de cadastro no banco, recuperável após interrupção (FR-023) em `core/data/.../repository/DraftRepositoryImpl.kt`
-- [ ] T048 [US2] Marcar cadastros incompletos e listá-los para complementação (FR-029) em `app/.../feature/catalog/IncompleteEntriesScreen.kt`
-- [ ] T049 [US2] Implementar busca-assistida de modelo existente ao digitar (FR-024) em `app/.../feature/catalog/Autocomplete.kt`
+- [X] T044 [US2] Implementar tela de cadastro de variante (cor principal, cores secundárias, rodas, base, decoração, série) em `app/.../feature/catalog/VariantFormScreen.kt`
+- [X] T045 [US2] Implementar captura por câmera e seleção via Photo Picker, com recusa de permissão tratada em `app/.../feature/catalog/PhotoCapture.kt`
+- [X] T046 [US2] Implementar grade de fotos por ângulo com definição de foto principal (transação única) em `app/.../feature/catalog/PhotoGrid.kt`
+- [X] T047 [US2] Implementar persistência de rascunho de cadastro no banco, recuperável após interrupção (FR-023) em `core/data/.../repository/DraftRepositoryImpl.kt`
+- [X] T048 [US2] Marcar cadastros incompletos e listá-los para complementação (FR-029) em `app/.../feature/catalog/IncompleteEntriesScreen.kt`
+- [X] T049 [US2] Implementar busca-assistida de modelo existente ao digitar (FR-024) em `app/.../feature/catalog/Autocomplete.kt`
 
 **Checkpoint**: US1 e US2 funcionam independentemente
 
-### Situação real — Fase 4 / US2 (2026-11-17)
+### Situação real — Fase 4 / US2 (levantada em 2026-11-17, atualizada em 2026-11-18)
 
-**A fase não está concluída.** Nenhum teste desta fase foi executado no ambiente onde este
-levantamento foi feito (sem Android SDK e com Java 11 no `PATH`), então nenhum checkbox
-foi marcado: a constituição (Art. V.4) não permite declarar concluído o que não tem teste
-verde. A tabela distingue *artefato pronto* de *execução verificada*.
+**A fase avançou em 2026-11-18:** o módulo `:app` compila, e T037–T039, T041, T042,
+T044, T047 e T049 têm teste verde (ver «Evidências — Fase 4 / US2 (2026-11-18)»).
+T040, T045, T046 e T048 também ficaram verdes: os testes instrumentados rodam no emulador
+API 36 desde 2026-11-18. Na fase, a única tarefa ainda aberta é T043 — aposentada por
+remoção de código morto, com a parte de **veículo real** que continua sem tela. A tabela
+distingue *artefato pronto* de *execução verificada*.
 
-| Tarefa | Estado em 2026-11-17 | Arquivo / observação |
+| Tarefa | Estado em 2026-11-18 | Arquivo / observação |
 |---|---|---|
-| T037 | teste escrito, não executado | `core/domain/.../validation/CatalogValidationTest.kt` |
-| T038 | teste escrito, não executado | `core/data/.../storage/ImageStoreTest.kt` |
-| T039 | teste escrito, não executado | `core/data/.../repository/CarModelRepositoryTest.kt` |
-| T040 | **pendente** | `CreateCatalogEntryScreenTest.kt` não existe |
-| T041 | implementado + teste escrito | `CreateModelUseCase` (+ `CreateModelUseCaseTest`) |
-| T042 | implementado + teste escrito | `CreateVariantUseCase` (+ `CreateVariantUseCaseTest`) |
+| T037 | **verde** — 10 testes, 0 falhas | `core/domain/.../validation/CatalogValidationTest.kt` |
+| T038 | **verde** — 5 testes, 0 falhas | `core/data/.../storage/ImageStoreTest.kt` |
+| T039 | **verde** — 5 testes, 0 falhas | `core/data/.../repository/CarModelRepositoryTest.kt` |
+| T040 | **verde** — 1 teste, 0 falhas, 7,4 s no emulador API 36 | `CreateCatalogEntryScreenTest.kt` (ver «Evidências — T040») |
+| T041 | **verde** — compila; `CreateModelUseCaseTest` 4 testes, 0 falhas | `CreateModelUseCase` |
+| T042 | **verde** — compila; `CreateVariantUseCaseTest` 4 testes, 0 falhas | `CreateVariantUseCase` |
 | T043 | aposentada em 2026-11-17 (código morto removido) | o cadastro de modelo é o `CreateCatalogEntryScreen` (com `CreateCatalogEntryUseCase`); `ModelFormScreen` devolvia `"new-model-id"`/`"forced-new-model-id"` e não persistia nada |
-| T044 | implementado em 2026-11-17 | `VariantFormScreen` + `VariantFormViewModel`: cria a variante pelo `CreateVariantUseCase` |
-| T045 | implementado | `PhotoCapture` (câmera e Photo Picker, recusa tratada) alimentando o `PhotoRepository`, não mais descartado |
-| T046 | implementado | `PhotoGrid` com `PhotoTile` (`File` ou `ByteArray`), sem `LazyVerticalGrid` dentro de formulário rolável; gravação pelo `PhotoRepositoryImpl` |
-| T047 | implementado + teste escrito | `DraftRepositoryImpl` (+ `DraftRepositoryTest`) |
-| T048 | implementado em 2026-11-17 (modelo sem variante) | consulta `CarModelDao.observeWithoutVariant`, `CarModelRepository.observeWithoutVariant`, `IncompleteEntriesViewModel`, rota `catalog/incomplete` e atalho no cabeçalho do catálogo; variante com campo faltando ainda não entra (exigiria edição de variante) |
-| T049 | implementado | `Autocomplete.kt`: `ModelAutocomplete` e `ManufacturerAutocomplete` ligados ao `CreateCatalogEntryScreen` |
+| T044 | **verde** — compila; `VariantFormViewModelTest` 7 testes, 0 falhas | `VariantFormScreen` + `VariantFormViewModel` |
+| T045 | **verde** — 2 testes (captura e recusa), 0 falhas | `PhotoCapture` + `PhotoCaptureTest` (ver «Evidências — T045 e T046») |
+| T046 | **verde** — 3 testes de grade + `PhotoRepositoryTest.setPrimary`, 0 falhas | `PhotoGrid` + `PhotoGridTest` |
+| T047 | **verde** — 3 testes, 0 falhas | `DraftRepositoryImpl` (+ `DraftRepositoryTest`) |
+| T048 | **verde** — 2 testes de app + 6 de dados, 0 falhas | `CarModelRepository.observeIncomplete` (modelo sem variante + variante sem cor/ano) e `IncompleteEntriesTest` (ver «Evidências — T048») |
+| T049 | **verde** — compila; `AutocompleteTest` 5 testes, 0 falhas | `Autocomplete.kt`: `ModelAutocomplete` e `ManufacturerAutocomplete` ligados ao `CreateCatalogEntryScreen` |
+
+### Evidências — Fase 4 / US2 (2026-11-18)
+
+Primeira execução real dos testes do módulo `:app` nesta máquina (JDK 17.0.21, AGP 8.9.2,
+`compileSdk 36`, `local.properties` com o SDK em `%LOCALAPPDATA%\Android\Sdk`). Comandos
+e saída:
+
+```text
+$ ./gradlew :app:assembleDebug :app:lint :app:testDebugUnitTest --continue
+> Task :app:assembleDebug
+> Task :app:lint
+> Task :app:testDebugUnitTest
+BUILD SUCCESSFUL in 7s
+EXIT=0
+
+$ ./gradlew :core:domain:test :core:data:testDebugUnitTest
+BUILD SUCCESSFUL in 3s
+EXIT=0
+```
+
+Testes por módulo (de `*/build/test-results/*/*.xml`, todas com `failures="0" errors="0"`):
+
+| Módulo | Suítes (testes) | Total |
+|---|---|---|
+| `:app` | `AddExemplarViewModelTest` (13), `AutocompleteTest` (5), `VariantFormViewModelTest` (7) | **25** |
+| `:core:domain` | `CatalogValidationTest` (10), `AddExemplarUseCaseTest` (6), `CreateCatalogEntryUseCaseTest` (4), `CreateModelUseCaseTest` (4), `CreateVariantUseCaseTest` (4) | **28** |
+| `:core:data` | `ImageStoreTest` (5), `CarModelRepositoryTest` (5), `ExemplarRepositoryTest` (5), `PhotoRepositoryTest` (4), `MigrationTest` (3), `DraftRepositoryTest` (3) | **25** |
+
+78 testes, 0 falhas.
+
+- **Lint:** `:app:lint` verde com 4 *warnings* e 0 erros (`ChromeOsAbiSupport`,
+  `ModifierParameter`, `UnusedResources` ×2) — `app/build/reports/lint-results-debug.html`.
+- **APK:** `app/build/outputs/apk/debug/app-debug.apk`, 84.678.092 bytes.
+
+**Três defeitos em cadeia, cada um visível só depois do anterior:**
+
+1. `di/UseCaseModule.kt` chamava `CreateModelUseCase` e `CreateVariantUseCase` sem importá-los;
+   o KSP falhava antes do Kotlin com `NonExistentClass`, mascarando o erro real. Corrigido com
+   os dois imports.
+2. `feature/catalog/PhotoGrid.kt:199` usava `RoundedCornerShape(topLeft = 8.dp)`, parâmetro que
+   não existe na sobrecarga de `Dp` (é `bottomStart`/`topStart`). Corrigido para `topStart`.
+3. `FakeExemplarRepository` era declarado em `AddExemplarViewModelTest` e em
+   `VariantFormViewModelTest`, no mesmo pacote — `private` de topo é privado ao arquivo, mas o
+   nome ainda colide. O fake do fluxo de exemplar virou `FakeAddExemplarRepository`.
+
+**Verificado depois, na mesma data:** `:app:connectedDebugAndroidTest` no emulador API 36
+(`hw_test`) — 5 testes, 0 falhas. Detalhes e correções em «Evidências — T040 (2026-11-18)».
+As capturas `docs/e2e-1..7-*.png` continuam sendo da execução anterior, agora só
+desatualizadas na aparência — o fluxo que elas mostram está coberto por teste.
+
+### Evidências — T040 (2026-11-18)
+
+Primeira execução de `:app:connectedDebugAndroidTest` em emulador `hw_test` (API 36,
+x86_64), com o AVD criado pelo próprio SDK local:
+
+```text
+$ ./gradlew :app:connectedDebugAndroidTest
+> Task :app:connectedDebugAndroidTest
+Starting 5 tests on hw_test(AVD) - 16
+hw_test(AVD) - 16 Tests 1/5 completed. (0 skipped) (0 failed)
+hw_test(AVD) - 16 Tests 4/5 completed. (0 skipped) (0 failed)
+Finished 5 tests on hw_test(AVD) - 16
+BUILD SUCCESSFUL in 44s
+EXIT=0
+
+TEST-hw_test(AVD) - 16-_app-.xml: tests="5" failures="0" errors="0" skipped="0" time="23.466"
+  CatalogFlowTest.catalogoAteDoisExemplaresDaMesmaVariante          9,145 s
+  AddExemplarScreenTest.avisoDeVarianteRepetidaNaoBloqueiaSalvar    2,257 s
+  AddExemplarScreenTest.trocarCondicaoNotificaOViewModel            1,841 s
+  AddExemplarScreenTest.mostraApenasCamposDoExemplar                1,678 s
+  CreateCatalogEntryScreenTest.cadastroCompletoComFotoChegaAoColecao 7,433 s
+```
+
+**O que o T040 verifica de ponta a ponta:** sobe o `MainActivity` real (grafo Hilt, `Room`
+em arquivo, navegação e ViewModels de produção) e percorre catálogo vazio → `+ Mini` →
+fabricante/modelo → `Salvar miniatura` → tela de variante (cor, ano, condição `Solto`) →
+`Galeria` → `Salvar variante e exemplar` → catálogo com `1 exemplar`. O seletor de fotos é
+do sistema e não tem como ser tocado por teste de Compose, então o `PickVisualMedia` é
+stubbado (`espresso-intents`) devolvendo um **JPEG real gerado no teste**; o resto do
+caminho — ler os bytes pela `ContentResolver`, guardar a captura pendente, gravar variante,
+exemplar e foto — é código de produção. Ao final, além da tela, afirma que existe arquivo
+em `filesDir/images/<exemplarId>/`: grade bonita com foto perdida no caminho não é cadastro
+com foto.
+
+**Dois defeitos encontrados ao escrever este teste:**
+
+1. **`deleteDatabase` com o banco aberto** — o `CatalogFlowTest` apagava o arquivo do banco
+   antes de subir a activity, o que funciona só no primeiro teste do processo. No segundo,
+   o `AppDatabase` do Hilt já estava aberto: o arquivo apagado por baixo, o
+   `SQLiteOpenHelper` considerando-se aberto (não roda `onCreate` de novo) e a primeira
+   consulta falhando com `no such table: car_model`. Os dois testes passaram a usar
+   `testing/FreshInstall.kt`, que limpa as tabelas numa conexão própria e fecha em seguida
+   — mesmo estado de instalação nova, sem tocar no arquivo.
+2. **`@EntryPoint` de `androidTest` não é injetado no componente real** — a primeira versão
+   do helper tentava obter o `AppDatabase` do Hilt e morria com
+   `ClassCastException: Cannot cast DaggerHotWheelsApp_HiltComponents_SingletonC$SingletonCImpl to DatabaseEntryPoint`.
+   Daí a conexão própria.
+
+**Dependências acrescentadas para o teste:** `androidx.test.espresso:espresso-intents`
+(stub do seletor) e `androidx.room:room-runtime` em `androidTestImplementation` (o módulo
+`:app` não expõe a API do Room, que é `implementation` em `:core:data`).
+
+**Na época, não coberto por teste:** captura pela câmera e recusa de permissão (T045) e
+definição de foto principal na grade (T046) — cobertos depois, na mesma data, em
+«Evidências — T045 e T046». A lista de cadastros incompletos (T048) foi coberta depois,
+em «Evidências — T048».
+
+### Evidências — T045 e T046 (2026-11-18)
+
+Segunda execução da suíte instrumentada no mesmo emulador, agora com os testes das
+fotografias:
+
+```text
+$ ./gradlew :app:connectedDebugAndroidTest
+> Task :app:connectedDebugAndroidTest
+Starting 10 tests on hw_test(AVD) - 16
+hw_test(AVD) - 16 Tests 3/10 completed. (0 skipped) (0 failed)
+hw_test(AVD) - 16 Tests 5/10 completed. (0 skipped) (0 failed)
+hw_test(AVD) - 16 Tests 10/10 completed. (0 skipped) (0 failed)
+Finished 10 tests on hw_test(AVD) - 16
+BUILD SUCCESSFUL in 1m 1s
+EXIT=0
+
+TEST-hw_test(AVD) - 16-_app-.xml: tests="10" failures="0" errors="0" skipped="0" time="41.892"
+  CatalogFlowTest.catalogoAteDoisExemplaresDaMesmaVariante           12,216 s
+  AddExemplarScreenTest.avisoDeVarianteRepetidaNaoBloqueiaSalvar      2,789 s
+  AddExemplarScreenTest.trocarCondicaoNotificaOViewModel              2,727 s
+  AddExemplarScreenTest.mostraApenasCamposDoExemplar                  2,450 s
+  CreateCatalogEntryScreenTest.cadastroCompletoComFotoChegaAoColecao   8,277 s
+  PhotoCaptureTest.recusaDePermissaoAvisaATelaSemEntregarBytes         2,317 s
+  PhotoCaptureTest.capturaPelaCameraEntregaOsBytesDoArquivoTemporario  1,906 s
+  PhotoGridTest.removerFotoAvisaOIdDoCartaoTocado                     2,483 s
+  PhotoGridTest.definirPrincipalNaSegundaFotoAvisaOIdEscolhido         2,032 s
+  PhotoGridTest.gradeMostraUmCartaoPorFotoComOsDoisAngulos             1,807 s
+```
+
+**T046 — `PhotoGridTest` (3 testes).** Um cartão por foto (duas fotos → duas estrelas de
+«Definir como principal»), tocar a estrela do **segundo** cartão avisa `p2` (não `p1`), e
+remover avisa o id do cartão tocado. O teste existe porque a transação do repositório não
+prova isto: se a grade trocasse a referência dos cartões, o usuário trocaria a principal da
+foto errada. A troca em si (desmarcar a anterior e marcar a nova, numa transação) já estava
+coberta por `PhotoRepositoryTest.setPrimary altera a foto principal`, verde em
+`:core:data:testDebugUnitTest`.
+
+**T045 — `PhotoCaptureTest` (2 testes).** Recusa de permissão: a tela é avisada
+(`onPermissionDenied`) e nenhum byte é entregue. Captura: permissão concedida → launcher da
+câmera → resultado OK → os bytes do arquivo temporário chegam com o ângulo escolhido
+(`PhotoAngle.BACK`). O caminho da galeria já estava coberto pelo `CreateCatalogEntryScreenTest`.
+
+**Defeito encontrado ao escrever este teste:** a primeira versão dava e tirava a permissão
+do aparelho com `pm grant` / `pm revoke`, e o ActivityManager matava o processo da
+instrumentação no meio da execução — `Killing 3618:br.com.hotwheelscollector.debug/u0a216
+(adj 0): permissions revoked` —, abortando a suíte em 7 de 10 testes. A versão que ficou
+injeta as duas bordas que o código de produção usa, sem mexer no estado do aparelho:
+`LocalContext` com `checkSelfPermission` respondendo, e um `ActivityResultRegistry` no lugar
+do registro da activity.
+
+**Limite declarado:** nem o aplicativo de câmera nem a UI do Photo Picker são abertos — o
+resultado é injetado na borda do `ActivityResultRegistry`. O que está verificado é o código
+do app nessas bordas (branch de permissão, leitura dos bytes do URI, entrega com o ângulo),
+não o app de câmera do sistema.
+
+### Evidências — T048 (2026-11-18)
+
+```text
+$ ./gradlew :core:data:testDebugUnitTest :core:domain:test
+BUILD SUCCESSFUL in 11s
+EXIT=0
+  CarModelRepositoryTest  tests="6" failures="0" errors="0"   (era 5: +1 teste de variante incompleta)
+  core:data               26 testes, 0 falhas
+  core:domain             28 testes, 0 falhas
+
+$ ./gradlew :app:testDebugUnitTest :app:connectedDebugAndroidTest --continue
+> Task :app:testDebugUnitTest
+> Task :app:connectedDebugAndroidTest
+Starting 12 tests on hw_test(AVD) - 16
+hw_test(AVD) - 16 Tests 6/12 completed. (0 skipped) (0 failed)
+hw_test(AVD) - 16 Tests 11/12 completed. (0 skipped) (0 failed)
+Finished 12 tests on hw_test(AVD) - 16
+BUILD SUCCESSFUL in 1m 27s
+EXIT=0
+
+TEST-hw_test(AVD) - 16-_app-.xml: tests="12" failures="0" errors="0" skipped="0" time="41.705"
+  IncompleteEntriesTest.modeloSemVarianteEntraNaListaComMotivoERetomaOCadastro    4,793 s
+  IncompleteEntriesTest.varianteSemCorESemAnoEntraNaListaComOsCamposQueFaltam     5,185 s
+```
+
+**O que mudou no código:**
+
+1. **Domínio:** `IncompleteEntry` ganhou `variantId` (nulo quando é o modelo) e
+   `missingFields`, mais `key` (chave de lista, porque um modelo e cada variante incompleta
+   são linhas diferentes) e `hasVariant`. `MissingField` é o enum de dois valores acima.
+2. **Consulta nova:** `VariantDao.observeIncompleteVariants` — variante ativa de modelo
+   ativo com `primary_color_id IS NULL OR release_year IS NULL`, devolvendo as bandeiras
+   por campo em vez de uma lista fixa.
+3. **Repositório:** `CarModelRepository.observeWithoutVariant` virou `observeIncomplete` e
+   passou a ser `combine` das duas consultas. O nome antigo mentiria depois desta mudança.
+4. **Tela:** o cartão mostra o motivo por campo («Falta: cor principal, ano»), e o
+   `key` da `LazyColumn` passou a ser `entry.key`.
+
+**Efeito colateral que precisou de correção:** o teste que já existia (modelo sai da lista
+quando a variante é criada) começou a falhar — e por um motivo legítimo: a variante criada
+nele não tem cor nem ano, então agora ela mesma é incompleta, e a linha muda de motivo em
+vez de desaparecer. O teste passou a afirmar isso, em vez de ser enfraquecido.
+
+**Higiene do repositório:** `.kotlin/` entrou no `.gitignore` — o Gradle apaga e recria
+`kotlin-compiler-*.salive` a cada build, e o arquivo estava versionado (aparecia como
+deletado em toda execução).
 
 **Vocabulário de produto (2026-11-17):** o app deixou de se apresentar como marca única.
 `app_name` passou de "Hot Wheels Collector" para "Coleção de Miniaturas"; o ícone já era
@@ -258,10 +468,13 @@ assim. **Não alterados** por serem identificadores técnicos: `applicationId`, 
 ./gradlew :app:testDebugUnitTest :core:data:testDebugUnitTest :app:assembleDebug :app:lint
 ```
 
-1. rodar o comando acima e, se verde, marcar T037–T039, T041–T042, T044–T047 e T049;
+1. ~~rodar o comando acima e, se verde, marcar T037–T039, T041–T042, T044–T047 e T049~~ —
+   **feito em 2026-11-18** (ver «Evidências — Fase 4 / US2»): T037–T039, T041, T042, T044,
+   T047 e T049 marcadas; T045, T046 e T048 continuam abertas por não terem teste automatizado;
 2. ~~decidir `ModelFormScreen`~~ — **feito em 2026-11-17**: aposentada, o cadastro de
    modelo fica em `CreateCatalogEntryScreen`;
-3. escrever `CreateCatalogEntryScreenTest` — T040;
+3. ~~escrever `CreateCatalogEntryScreenTest`~~ — **feito em 2026-11-18** (T040), ver
+   «Evidências — T040»;
 4. ~~criar a consulta e a rota de cadastros incompletos~~ — **feito em 2026-11-17**, com
    escopo em modelo sem variante (ver abaixo);
 5. ~~dar entrada para `VariantFormScreen` na navegação~~ — **feita em 2026-11-17**: rota
@@ -290,13 +503,18 @@ excluída junto com a string `model_form_title`. O cadastro de **veículo real**
 estava agrupado em T043) continua não existindo: o campo opcional `real_vehicle_id` do
 modelo segue sem tela, e isso precisa virar tarefa própria se for retomado.
 
-**T048 entregue com escopo reduzido (2026-11-17):** a lista mostra **modelo ativo sem
-variante ativa** — o buraco que o fluxo em dois passos abriu. Tocar no cartão retoma o
-cadastro na tela de variante, e a consulta reage sozinha: ao criar a variante, o modelo
-sai da lista. O outro caso de FR-029 — variante existente sem cor principal ou sem ano —
-**não entrou**: complementar variante exige uma tela de edição que preserve `fingerprint`
-e histórico, e as fotos (que pertencem ao exemplar) não cabem nela. Fica como tarefa nova,
-fora de T048.
+**T048 (2026-11-17, ampliada em 2026-11-18):** a primeira entrega mostrava só **modelo ativo
+sem variante ativa** — o buraco que o fluxo em dois passos abriu. Em 2026-11-18 o outro caso
+de FR-029 entrou: **variante ativa sem cor principal ou sem ano** também é listada, com o
+motivo no cartão («Falta: cor principal, ano»). O que continua fora é a **complementação**
+da variante — exige tela de edição que preserve `fingerprint` e histórico, e as fotos
+(que pertencem ao exemplar) não cabem nela. Por isso o cartão da variante aparece, mas
+não é clicável: não existe para onde ir. Só o modelo sem variante retoma o cadastro.
+
+Quais campos contam como faltando é decisão de produto, registrada em código:
+`MissingField` tem só `PRIMARY_COLOR` e `RELEASE_YEAR`. FR-014 admite campo desconhecido
+como `NULL`, então cobrar todo opcional transformaria o acervo inteiro em pendência; a
+lista cobra o que impede o colecionador de reconhecer a miniatura.
 
 Decisão de entrada registrada: o atalho «Incompletos (N)» aparece no cabeçalho do catálogo
 **apenas quando há algo a completar**, para não competir com o `+ Mini`.

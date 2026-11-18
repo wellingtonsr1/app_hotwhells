@@ -2,6 +2,7 @@ package br.com.hotwheelscollector.data.repository
 
 import br.com.hotwheelscollector.data.db.AppDatabase
 import br.com.hotwheelscollector.data.db.dao.IncompleteModelRow
+import br.com.hotwheelscollector.data.db.dao.IncompleteVariantRow
 import br.com.hotwheelscollector.data.db.entity.CarModelEntity
 import br.com.hotwheelscollector.data.db.entity.ManufacturerEntity
 import br.com.hotwheelscollector.data.db.entity.SeriesEntity
@@ -13,6 +14,7 @@ import br.com.hotwheelscollector.domain.model.CarModel
 import br.com.hotwheelscollector.domain.model.ColorItem
 import br.com.hotwheelscollector.domain.model.IncompleteEntry
 import br.com.hotwheelscollector.domain.model.Manufacturer
+import br.com.hotwheelscollector.domain.model.MissingField
 import br.com.hotwheelscollector.domain.model.Series
 import br.com.hotwheelscollector.domain.repository.CarModelRepository
 import br.com.hotwheelscollector.domain.repository.ColorRepository
@@ -24,6 +26,7 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 /** Fabricantes, com reaproveitamento por nome para não duplicar a Mattel. */
@@ -155,14 +158,30 @@ public class CarModelRepositoryImpl @Inject constructor(
         return Result.success(Unit)
     }
 
-    override fun observeWithoutVariant(): Flow<List<IncompleteEntry>> =
-        database.carModelDao().observeWithoutVariant().map { rows -> rows.map { it.toDomain() } }
+    override fun observeIncomplete(): Flow<List<IncompleteEntry>> = combine(
+        database.carModelDao().observeWithoutVariant(),
+        database.variantDao().observeIncompleteVariants(),
+    ) { models, variants ->
+        models.map { it.toDomain() } + variants.map { it.toDomain() }
+    }
 
     private fun IncompleteModelRow.toDomain(): IncompleteEntry = IncompleteEntry(
         modelId = modelId,
         modelName = modelName,
         manufacturerName = manufacturerName,
         scale = scale,
+    )
+
+    private fun IncompleteVariantRow.toDomain(): IncompleteEntry = IncompleteEntry(
+        modelId = modelId,
+        modelName = modelName,
+        manufacturerName = manufacturerName,
+        scale = scale,
+        variantId = variantId,
+        missingFields = buildList {
+            if (missingPrimaryColor) add(MissingField.PRIMARY_COLOR)
+            if (missingReleaseYear) add(MissingField.RELEASE_YEAR)
+        },
     )
 
     private companion object {

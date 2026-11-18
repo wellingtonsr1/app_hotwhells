@@ -153,6 +153,6 @@ public class CreateModelUseCaseTest {
 
         override suspend fun archive(id: String): DomainResult<Unit> = Result.success(Unit)
 
-        override fun observeWithoutVariant(): Flow<List<IncompleteEntry>> = flowOf(emptyList())
+        override fun observeIncomplete(): Flow<List<IncompleteEntry>> = flowOf(emptyList())
     }
 }

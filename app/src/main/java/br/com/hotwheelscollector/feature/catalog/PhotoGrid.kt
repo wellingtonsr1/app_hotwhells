@@ -196,7 +196,7 @@ private fun PhotoItemCard(
                     .align(Alignment.BottomEnd)
                     .background(
                         color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f),
-                        shape = RoundedCornerShape(topLeft = 8.dp),
+                        shape = RoundedCornerShape(topStart = 8.dp),
                     )
                     .padding(2.dp),
                 verticalAlignment = Alignment.CenterVertically,

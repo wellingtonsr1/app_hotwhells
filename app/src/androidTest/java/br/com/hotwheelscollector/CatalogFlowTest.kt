@@ -8,14 +8,12 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
-import br.com.hotwheelscollector.data.db.AppDatabase
+import br.com.hotwheelscollector.testing.freshInstallRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.rules.TestRule
 import org.junit.runner.RunWith
-import org.junit.runners.model.Statement
 
 /**
  * Fluxo P1 inteiro no aplicativo de verdade: catálogo vazio, modelo, variante, exemplar,
@@ -34,16 +32,11 @@ class CatalogFlowTest {
 
     private val composeRule = createAndroidComposeRule<MainActivity>()
 
-    /** Instalação limpa: roda antes da activity, que é quem abre o banco pela primeira vez. */
-    private val freshInstall = TestRule { base, _ ->
-        object : Statement() {
-            override fun evaluate() {
-                InstrumentationRegistry.getInstrumentation().targetContext
-                    .deleteDatabase(AppDatabase.DATABASE_NAME)
-                base.evaluate()
-            }
-        }
-    }
+    /**
+     * Instalação limpa: roda antes da activity. Limpa as tabelas em vez de apagar o arquivo
+     * do banco, que já está aberto pelo Hilt desde o primeiro teste do processo.
+     */
+    private val freshInstall = freshInstallRule()
 
     @get:Rule
     val rules: TestRule = RuleChain.outerRule(freshInstall).around(composeRule)

@@ -65,19 +65,40 @@ public data class CarModel(
 }
 
 /**
- * Modelo ativo que ainda não tem variante: cadastro incompleto, listável para
- * complementação posterior (FR-029).
+ * Campo que o cadastro pode deixar em branco e que a lista de incompletos cobra (FR-029).
  *
- * Não é uma entidade — é uma projeção de leitura, montada pela consulta que verifica a
- * ausência de variante. Enquanto não houver variante, o exemplar não pode existir, e é
- * por isso que este caso precisa de tela própria.
+ * A lista é curta de propósito: campo desconhecido é legítimo (FR-014 admite `NULL`), então
+ * só entra aqui o que impede o colecionador de reconhecer a própria miniatura — a cor
+ * principal e o ano. Anotar tudo o que é opcional transformaria o acervo inteiro em
+ * pendência.
+ */
+public enum class MissingField {
+    PRIMARY_COLOR,
+    RELEASE_YEAR,
+}
+
+/**
+ * Cadastro incompleto, listável para complementação posterior (FR-029).
+ *
+ * Não é uma entidade — é projeção de leitura, montada por duas consultas: modelo ativo sem
+ * variante ativa (`variantId` nulo) e variante ativa sem cor principal ou sem ano
+ * (`missingFields` preenchido). Enquanto não houver variante, o exemplar não pode existir.
  */
 public data class IncompleteEntry(
     val modelId: String,
     val modelName: String,
     val manufacturerName: String,
     val scale: String,
-)
+    /** Preenchido quando o incompleto é a variante; `null` quando é o modelo sem variante. */
+    val variantId: String? = null,
+    val missingFields: List<MissingField> = emptyList(),
+) {
+    /** Chave de lista: um modelo sem variante e cada variante incompleta são linhas distintas. */
+    public val key: String get() = variantId ?: modelId
+
+    /** Modelo sem variante é o único caso que ainda pode ser retomado pela tela de cadastro. */
+    public val hasVariant: Boolean get() = variantId != null
+}
 
 /** Série ou subcoleção declarada pelo fabricante (FR-048–FR-049). */
 public data class Series(
