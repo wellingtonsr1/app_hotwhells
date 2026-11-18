@@ -10,6 +10,7 @@ import br.com.hotwheelscollector.data.db.dao.CarModelDao
 import br.com.hotwheelscollector.data.db.dao.CollectionDao
 import br.com.hotwheelscollector.data.db.dao.CollectionItemDao
 import br.com.hotwheelscollector.data.db.dao.ColorDao
+import br.com.hotwheelscollector.data.db.dao.DashboardDao
 import br.com.hotwheelscollector.data.db.dao.ExemplarDao
 import br.com.hotwheelscollector.data.db.dao.HistoryDao
 import br.com.hotwheelscollector.data.db.dao.LocationDao
@@ -138,6 +139,9 @@ public abstract class AppDatabase : RoomDatabase() {
     public abstract fun appSettingDao(): AppSettingDao
 
     public abstract fun searchIndexDao(): SearchIndexDao
+
+    /** Só leitura agregada: o painel não grava nada (FR-001–FR-011). */
+    public abstract fun dashboardDao(): DashboardDao
 
     public companion object {
         public const val DATABASE_NAME: String = "hotwheels.db"

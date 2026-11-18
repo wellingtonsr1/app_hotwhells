@@ -43,8 +43,8 @@ class CatalogFlowTest {
 
     @Test
     fun catalogoAteDoisExemplaresDaMesmaVariante() {
-        // 1. Instalação nova: o catálogo abre vazio.
-        waitForText(EMPTY_CATALOG)
+        // 1. Instalação nova: o app abre no painel (US3); o acervo fica na aba «Catálogo».
+        openCatalogTab()
 
         // 2. O FAB abre o cadastro de miniatura.
         composeRule.onNodeWithText("+ Mini").performClick()
@@ -76,6 +76,11 @@ class CatalogFlowTest {
         // 7. Repetir a variante avisa, mas não bloqueia (FR-039).
         composeRule.onNodeWithText("Salvar exemplar").performScrollTo().performClick()
         waitForText("2 exemplares", substring = true)
+    }
+
+    private fun openCatalogTab() {
+        composeRule.onNodeWithText("Catálogo").performClick()
+        waitForText(EMPTY_CATALOG)
     }
 
     /**

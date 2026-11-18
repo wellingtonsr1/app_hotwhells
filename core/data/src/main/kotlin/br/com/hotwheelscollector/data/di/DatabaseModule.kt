@@ -5,6 +5,7 @@ import androidx.room.Room
 import br.com.hotwheelscollector.data.db.AppDatabase
 import br.com.hotwheelscollector.data.repository.CarModelRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ColorRepositoryImpl
+import br.com.hotwheelscollector.data.repository.DashboardRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ExemplarRepositoryImpl
 import br.com.hotwheelscollector.data.repository.HistoryRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ManufacturerRepositoryImpl
@@ -16,6 +17,7 @@ import br.com.hotwheelscollector.data.storage.FileImageStore
 import br.com.hotwheelscollector.data.storage.ImageStore
 import br.com.hotwheelscollector.domain.repository.CarModelRepository
 import br.com.hotwheelscollector.domain.repository.ColorRepository
+import br.com.hotwheelscollector.domain.repository.DashboardRepository
 import br.com.hotwheelscollector.domain.repository.ExemplarRepository
 import br.com.hotwheelscollector.domain.repository.HistoryRepository
 import br.com.hotwheelscollector.domain.repository.ManufacturerRepository
@@ -73,6 +75,9 @@ public object DatabaseModule {
     public fun provideAcquisitionDao(database: AppDatabase) = database.acquisitionDao()
 
     @Provides
+    public fun provideValuationDao(database: AppDatabase) = database.valuationDao()
+
+    @Provides
     public fun provideHistoryDao(database: AppDatabase) = database.historyDao()
 
     @Provides
@@ -80,6 +85,9 @@ public object DatabaseModule {
 
     @Provides
     public fun providePhotoDao(database: AppDatabase) = database.photoDao()
+
+    @Provides
+    public fun provideDashboardDao(database: AppDatabase) = database.dashboardDao()
 }
 
 /** Ligação interface de domínio → implementação de dados. */
@@ -128,6 +136,10 @@ public abstract class RepositoryModule {
     @Binds
     @Singleton
     public abstract fun bindHistoryRepository(impl: HistoryRepositoryImpl): HistoryRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindDashboardRepository(impl: DashboardRepositoryImpl): DashboardRepository
 
     @Binds
     @Singleton

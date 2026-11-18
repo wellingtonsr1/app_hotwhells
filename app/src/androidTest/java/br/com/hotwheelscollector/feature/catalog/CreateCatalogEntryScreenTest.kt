@@ -70,7 +70,8 @@ class CreateCatalogEntryScreenTest {
 
     @Test
     fun cadastroCompletoComFotoChegaAoColecao() {
-        // 1. Instalação nova: o catálogo abre vazio.
+        // 1. Instalação nova: o app abre no painel (US3); o acervo fica na aba «Catálogo».
+        composeRule.onNodeWithText("Catálogo").performClick()
         waitForText(EMPTY_CATALOG)
 
         // 2. O FAB abre o cadastro de miniatura.

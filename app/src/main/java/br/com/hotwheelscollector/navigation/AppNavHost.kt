@@ -1,17 +1,40 @@
 package br.com.hotwheelscollector.navigation
 
-import androidx.compose.foundation.layout.Box
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ViewList
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import br.com.hotwheelscollector.R
@@ -20,6 +43,7 @@ import br.com.hotwheelscollector.feature.catalog.CatalogScreen
 import br.com.hotwheelscollector.feature.catalog.CreateCatalogEntryScreen
 import br.com.hotwheelscollector.feature.catalog.IncompleteEntriesScreen
 import br.com.hotwheelscollector.feature.catalog.VariantFormScreen
+import br.com.hotwheelscollector.feature.dashboard.DashboardScreen
 
 /**
  * Rotas do aplicativo.
@@ -30,8 +54,12 @@ import br.com.hotwheelscollector.feature.catalog.VariantFormScreen
  * pelo nome declarado aqui, nunca por string solta.
  */
 public sealed class Destination(public val route: String) {
+
+    /** Painel do estado da coleção (US3): a primeira tela do app. */
     public data object Dashboard : Destination("dashboard")
-    public data object Capture : Destination("capture")
+
+    /** Acervo: a lista de miniaturas e o cadastro rápido (US1). */
+    public data object Catalog : Destination("catalog")
 
     /** Primeiro passo da miniatura: fabricante, modelo e escala. */
     public data object CreateEntry : Destination("catalog/create")
@@ -67,75 +95,162 @@ public object RouteArgs {
     public const val PHOTO_ID: String = "photoId"
 }
 
+/** Aba da barra inferior: rota, rótulo e ícone. Só rotas de primeiro nível entram aqui. */
+private data class BottomTab(
+    val destination: Destination,
+    @StringRes val label: Int,
+    val icon: ImageVector,
+)
+
+private val bottomTabs: List<BottomTab> = listOf(
+    BottomTab(Destination.Dashboard, R.string.dashboard_tab, Icons.Filled.Home),
+    BottomTab(Destination.Catalog, R.string.catalog_tab, Icons.Filled.ViewList),
+    BottomTab(Destination.Wishlist, R.string.wishlist_tab, Icons.Filled.FavoriteBorder),
+    BottomTab(Destination.Finance, R.string.finance_tab, Icons.Filled.AttachMoney),
+    BottomTab(Destination.Settings, R.string.settings_tab, Icons.Filled.Settings),
+)
+
 @Composable
 public fun AppNavHost(
     navController: NavHostController = rememberNavController(),
     startDestination: Destination = Destination.Dashboard,
 ) {
-    NavHost(
-        navController = navController,
-        startDestination = startDestination.route,
-    ) {
-        // Cadastro da miniatura em dois passos: o modelo é resolvido primeiro e a
-        // variante (com o primeiro exemplar e as fotos) vem em seguida.
-        composable(Destination.Dashboard.route) {
-            CatalogScreen(
-                onVariantClick = { variantId ->
-                    navController.navigate(Destination.AddExemplar.routeFor(variantId))
-                },
-                onCreateEntry = { navController.navigate(Destination.CreateEntry.route) },
-                onOpenIncomplete = { navController.navigate(Destination.Incomplete.route) },
-            )
-        }
-        composable(Destination.Incomplete.route) {
-            IncompleteEntriesScreen(
-                onSelectModel = { modelId ->
-                    navController.navigate(Destination.VariantForm.routeFor(modelId))
-                },
-            )
-        }
-        composable(Destination.CreateEntry.route) {
-            CreateCatalogEntryScreen(
-                onModelCreated = { modelId ->
-                    // Cadastrar a miniatura é uma intenção só: o modelo resolvido segue
-                    // direto para a variante, que cria o exemplar e recebe as fotos.
-                    navController.popBackStack()
-                    navController.navigate(Destination.VariantForm.routeFor(modelId))
-                },
-            )
-        }
-        composable(
-            route = Destination.VariantForm.route,
-            arguments = listOf(navArgument(RouteArgs.MODEL_ID) { type = NavType.StringType }),
-        ) { entry ->
-            VariantFormScreen(
-                modelId = entry.arguments?.getString(RouteArgs.MODEL_ID).orEmpty(),
-                // Volta para quem abriu: catálogo no cadastro novo, lista de incompletos
-                // quando a variante está sendo criada para completar um modelo órfão.
-                onVariantSaved = { navController.popBackStack() },
-            )
-        }
-        composable(Destination.Capture.route) { PlaceholderScreen() }
-        composable(
-            route = Destination.AddExemplar.route,
-            arguments = listOf(navArgument(RouteArgs.VARIANT_ID) { type = NavType.StringType }),
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+
+    Scaffold(
+        // O padding do Scaffold externo é só o da barra: as telas de dentro já tratam as
+        // barras do sistema, e somar as duas daria margem dobrada no topo.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        bottomBar = {
+            if (bottomTabs.any { it.destination.route == currentRoute }) {
+                NavigationBar {
+                    bottomTabs.forEach { tab ->
+                        val selected = backStackEntry?.destination?.hierarchy
+                            ?.any { it.route == tab.destination.route } == true
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                if (!selected) {
+                                    navController.navigate(tab.destination.route) {
+                                        // Trocar de aba não empilha: volta ao início do
+                                        // grafo e preserva o estado de cada aba.
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            },
+                            icon = { Icon(tab.icon, contentDescription = null) },
+                            label = { Text(stringResource(tab.label)) },
+                        )
+                    }
+                }
+            }
+        },
+    ) { padding ->
+        NavHost(
+            navController = navController,
+            startDestination = startDestination.route,
+            modifier = Modifier.padding(padding),
         ) {
-            AddExemplarScreen(
-                onSaved = { navController.popBackStack() },
-            )
+            composable(Destination.Dashboard.route) {
+                DashboardScreen()
+            }
+            composable(Destination.Catalog.route) {
+                CatalogScreen(
+                    onVariantClick = { variantId ->
+                        navController.navigate(Destination.AddExemplar.routeFor(variantId))
+                    },
+                    onCreateEntry = { navController.navigate(Destination.CreateEntry.route) },
+                    onOpenIncomplete = { navController.navigate(Destination.Incomplete.route) },
+                )
+            }
+            // Cadastro da miniatura em dois passos: o modelo é resolvido primeiro e a
+            // variante (com o primeiro exemplar e as fotos) vem em seguida.
+            composable(Destination.Incomplete.route) {
+                IncompleteEntriesScreen(
+                    onSelectModel = { modelId ->
+                        navController.navigate(Destination.VariantForm.routeFor(modelId))
+                    },
+                )
+            }
+            composable(Destination.CreateEntry.route) {
+                CreateCatalogEntryScreen(
+                    onModelCreated = { modelId ->
+                        // Cadastrar a miniatura é uma intenção só: o modelo resolvido segue
+                        // direto para a variante, que cria o exemplar e recebe as fotos.
+                        navController.popBackStack()
+                        navController.navigate(Destination.VariantForm.routeFor(modelId))
+                    },
+                )
+            }
+            composable(
+                route = Destination.VariantForm.route,
+                arguments = listOf(navArgument(RouteArgs.MODEL_ID) { type = NavType.StringType }),
+            ) { entry ->
+                VariantFormScreen(
+                    modelId = entry.arguments?.getString(RouteArgs.MODEL_ID).orEmpty(),
+                    // Volta para quem abriu: catálogo no cadastro novo, lista de incompletos
+                    // quando a variante está sendo criada para completar um modelo órfão.
+                    onVariantSaved = { navController.popBackStack() },
+                )
+            }
+            composable(
+                route = Destination.AddExemplar.route,
+                arguments = listOf(navArgument(RouteArgs.VARIANT_ID) { type = NavType.StringType }),
+            ) {
+                AddExemplarScreen(
+                    onSaved = { navController.popBackStack() },
+                )
+            }
+            composable(Destination.Wishlist.route) {
+                PlaceholderScreen(
+                    title = stringResource(R.string.placeholder_wishlist),
+                    message = stringResource(R.string.placeholder_wishlist_body),
+                )
+            }
+            composable(Destination.Finance.route) {
+                PlaceholderScreen(
+                    title = stringResource(R.string.placeholder_finance),
+                    message = stringResource(R.string.placeholder_finance_body),
+                )
+            }
+            composable(Destination.Settings.route) {
+                PlaceholderScreen(
+                    title = stringResource(R.string.placeholder_settings),
+                    message = stringResource(R.string.placeholder_settings_body),
+                )
+            }
         }
-        composable(Destination.Wishlist.route) { PlaceholderScreen() }
-        composable(Destination.Finance.route) { PlaceholderScreen() }
-        composable(Destination.Settings.route) { PlaceholderScreen() }
     }
 }
 
+/**
+ * Tela ainda não implementada, mas alcançável pela barra: diz o nome da área e o que já
+ * funciona no lugar dela. Placeholder mudo faria a aba parecer quebrada.
+ */
 @Composable
-private fun PlaceholderScreen() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+private fun PlaceholderScreen(title: String, message: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
         Text(
-            text = stringResource(R.string.setup_status_message),
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = message,
             style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
         )
     }
 }

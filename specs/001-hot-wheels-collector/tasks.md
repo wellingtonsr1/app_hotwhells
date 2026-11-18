@@ -143,7 +143,7 @@ Fechamento: `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:assem
 
 **Defeitos encontrados na execução:** `DomainError` precisou estender `Exception` para caber em `Result.failure`; o `SavedStateHandle` do ViewModel precisou ser propriedade (`private val`) para ser lido nos métodos; `first(flow)` não existe como função estática — é extensão de `Flow`.
 
-**Lacuna de alcance — fechada em 2026-11-17:** o app não abre mais em placeholder. O dashboard passou a ser o **catálogo de variantes** (`CatalogScreen`), com contagem de exemplares vinda da consulta; tocar numa variante abre `exemplar/add/{variantId}`; o FAB abre o **cadastro mínimo de miniatura** (`CreateCatalogEntryScreen`), que cria fabricante/modelo/variante reaproveitando o que já existe e calcula o `fingerprint`. Sem esse degrau, US1 ficava inalcançável numa instalação nova. Continua aberto o cadastro completo de US2 (T041, T043, T044 e fotos). **Atualização de 2026-11-17:** T041, T044 e as fotos foram implementados; T043 foi aposentada — ver o bloco «Situação real — Fase 4 / US2».
+**Lacuna de alcance — fechada em 2026-11-17:** o app não abre mais em placeholder. O dashboard passou a ser o **catálogo de variantes** (`CatalogScreen`), com contagem de exemplares vinda da consulta; tocar numa variante abre `exemplar/add/{variantId}`; o FAB abre o **cadastro mínimo de miniatura** (`CreateCatalogEntryScreen`), que cria fabricante/modelo/variante reaproveitando o que já existe e calcula o `fingerprint`. Sem esse degrau, US1 ficava inalcançável numa instalação nova. Continua aberto o cadastro completo de US2 (T041, T043, T044 e fotos). **Em 2026-11-18** a rota `dashboard` deixou de apontar para o catálogo: ela é o painel (US3) e o acervo passou para `catalog`, alcançável pela barra inferior — ver «Evidências — Fase 5 / US3». **Atualização de 2026-11-17:** T041, T044 e as fotos foram implementados; T043 foi aposentada — ver o bloco «Situação real — Fase 4 / US2».
 
 **Correções desta rodada:**
 
@@ -528,17 +528,50 @@ Decisão de entrada registrada: o atalho «Incompletos (N)» aparece no cabeçal
 
 ### Tests for User Story 3
 
-- [ ] T050 [P] [US3] Teste de agregações (exemplares possuídos, modelos distintos, investido, estimado, itens sem avaliação) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/DashboardQueryTest.kt`
-- [ ] T051 [P] [US3] Teste Compose do painel verificando cartões separados e aviso de estimativa parcial em `app/src/androidTest/java/br/com/hotwheelscollector/feature/dashboard/DashboardScreenTest.kt`
+- [X] T050 [P] [US3] Teste de agregações (exemplares possuídos, modelos distintos, investido, estimado, itens sem avaliação) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/DashboardQueryTest.kt`
+- [X] T051 [P] [US3] Teste Compose do painel verificando cartões separados e aviso de estimativa parcial em `app/src/androidTest/java/br/com/hotwheelscollector/feature/dashboard/DashboardScreenTest.kt`
 
 ### Implementation for User Story 3
 
-- [ ] T052 [US3] Implementar `DashboardRepository` com as consultas derivadas de `data-model.md` (nada armazenado) em `core/data/src/main/kotlin/br/com/hotwheelscollector/data/repository/DashboardRepositoryImpl.kt`
-- [ ] T053 [US3] Criar `DashboardViewModel` com estados de carregando, vazio e erro em `app/src/main/java/br/com/hotwheelscollector/feature/dashboard/DashboardViewModel.kt`
-- [ ] T054 [US3] Criar `DashboardScreen` com os 11 indicadores, últimas aquisições e últimos cadastros (FR-001–FR-011) em `app/.../feature/dashboard/DashboardScreen.kt`
-- [ ] T055 [US3] Implementar selo de estimativa com data, fonte e contagem de itens sem avaliação (FR-008, FR-086) em `app/.../feature/dashboard/EstimateBadge.kt`
+- [X] T052 [US3] Implementar `DashboardRepository` com as consultas derivadas de `data-model.md` (nada armazenado) em `core/data/src/main/kotlin/br/com/hotwheelscollector/data/repository/DashboardRepositoryImpl.kt`
+- [X] T053 [US3] Criar `DashboardViewModel` com estados de carregando, vazio e erro em `app/src/main/java/br/com/hotwheelscollector/feature/dashboard/DashboardViewModel.kt`
+- [X] T054 [US3] Criar `DashboardScreen` com os 11 indicadores, últimas aquisições e últimos cadastros (FR-001–FR-011) em `app/.../feature/dashboard/DashboardScreen.kt`
+- [X] T055 [US3] Implementar selo de estimativa com data, fonte e contagem de itens sem avaliação (FR-008, FR-086) — implementado como `EstimateCard` em `app/.../feature/dashboard/DashboardScreen.kt`; ver evidências abaixo para o motivo de não haver `EstimateBadge.kt`
 
 **Checkpoint**: US3 entrega visão gerencial sem depender de relatórios
+
+**Evidências — Fase 5 / US3 (2026-11-18)** — emulador `hw_test` (API 36, x86_64):
+
+| Verificação | Comando | Resultado observado |
+| --- | --- | --- |
+| Agregações (T050) | `./gradlew :core:data:testDebugUnitTest` | `DashboardQueryTest`: 4 testes, 0 falhas (7,03 s) |
+| Painel e barra (T051) | `./gradlew :app:connectedDebugAndroidTest` | 17 testes, 0 falhas (1m 49s), incluindo `DashboardScreenTest` (4) e `NavigationBarTest` (1) |
+| Compilação | `./gradlew :app:assembleDebug :app:assembleDebugAndroidTest` | `BUILD SUCCESSFUL in 18s` |
+| Lint | `./gradlew :app:lintDebug` | `BUILD SUCCESSFUL` |
+| Regressão unitária | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest` | `BUILD SUCCESSFUL` |
+
+Decisões registradas nesta entrega:
+
+- **Barra de navegação fechada**: cinco abas — Painel, Catálogo, Desejos, Financeiro,
+  Ajustes. O painel é a tela inicial (FR-001 pede a visão de estado primeiro) e o acervo
+  virou a aba `catalog`. A rota `capture` — placeholder que duplicava o `+ Mini` e não
+  tinha entrada — foi removida. Desejos/Financeiro/Ajustes continuam sem tela, mas agora
+  dizem o nome da área e o que já funciona no lugar dela, em vez da mensagem de andaime.
+- **Rótulo de aba ≠ título de tela** (`dashboard_tab` = «Painel», `catalog_tab` =
+  «Catálogo» contra `catalog_title` = «Coleção»): texto repetido quebrava a semântica do
+  Compose e os testes existentes que procuram «Coleção».
+- **Totais em `Long` cru**, não em `MoneyCents`: o limite de 9.999.999,99 é por item
+  (FR-076) e a soma do acervo pode passar disso.
+- **Selo de estimativa dentro de `DashboardScreen.kt`** (`EstimateCard`): data da avaliação
+  mais recente, fonte e contagem de exemplares sem avaliação saem do mesmo snapshot; um
+  arquivo separado só criaria indireção sem testar nada a mais.
+- **Teste de agregação com seed em SQL cru**: o alvo é a consulta; semear pelos DAOs
+  testaria a outra ponta. O seed cobre exemplar vendido, avaliação antiga, variante
+  repetida, item não colecionável e coleção arquivada.
+- **Ajuste nos testes existentes**: `CatalogFlowTest`, `CreateCatalogEntryScreenTest` e
+  `IncompleteEntriesTest` agora abrem a aba «Catálogo» antes do `+ Mini`; a tela inicial
+  mudou e o teste que esperava o catálogo direto estourava timeout (dois casos vistos e
+  corrigidos na primeira execução instrumentada).
 
 ---
 

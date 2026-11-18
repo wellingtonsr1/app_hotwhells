@@ -99,4 +99,49 @@
     <string name="variant_series">Série / Coleção</string>
     <string name="variant_secondary_colors">Cores secundárias</string>
     <string name="variant_secondary_colors_hint">Separadas por vírgula</string>
+
+    <!-- Barra de navegação (T050). Os rótulos das abas diferem dos títulos das telas
+         para o mesmo texto não aparecer duas vezes na árvore de semântica. -->
+    <string name="dashboard_tab">Painel</string>
+    <string name="catalog_tab">Catálogo</string>
+    <string name="wishlist_tab">Desejos</string>
+    <string name="finance_tab">Financeiro</string>
+    <string name="settings_tab">Ajustes</string>
+
+    <!-- Áreas ainda sem tela: a aba existe e diz o que já funciona no lugar. -->
+    <string name="placeholder_wishlist">Lista de desejos</string>
+    <string name="placeholder_wishlist_body">Esta área ainda não tem tela. O painel já mostra quantos itens estão em aberto na lista de desejos.</string>
+    <string name="placeholder_finance">Financeiro</string>
+    <string name="placeholder_finance_body">Esta área ainda não tem tela. Investido, estimado e diferença já aparecem no painel.</string>
+    <string name="placeholder_settings">Ajustes</string>
+    <string name="placeholder_settings_body">Esta área ainda não tem tela. Localizações, backup e preferências entram nas próximas etapas.</string>
+
+    <!-- Painel do estado da coleção (US3, FR-001–FR-011). -->
+    <string name="dashboard_title">Painel</string>
+    <string name="dashboard_empty_title">Coleção vazia</string>
+    <string name="dashboard_empty_hint">Cadastre a primeira miniatura para ver o resumo do acervo aqui.</string>
+    <string name="dashboard_error_title">Não foi possível ler a coleção</string>
+    <string name="dashboard_error_hint">Feche e abra o app novamente. Se continuar, o banco local precisa ser verificado.</string>
+    <string name="dashboard_metric_exemplars">Exemplares</string>
+    <string name="dashboard_metric_models">Modelos</string>
+    <string name="dashboard_metric_variants">Variantes</string>
+    <string name="dashboard_metric_manufacturers">Fabricantes</string>
+    <string name="dashboard_metric_series">Séries</string>
+    <string name="dashboard_metric_collections">Coleções</string>
+    <string name="dashboard_metric_duplicates">Variantes repetidas</string>
+    <string name="dashboard_metric_wanted">Na lista de desejos</string>
+    <string name="dashboard_metric_invested">Investido</string>
+    <string name="dashboard_metric_estimated">Estimado</string>
+    <string name="dashboard_metric_difference">Diferença</string>
+    <string name="dashboard_money">R$ %1$s</string>
+    <string name="dashboard_estimate_badge">Estimativa</string>
+    <string name="dashboard_estimate_note">Os valores estimados vêm das avaliações que você registrou, não de preço de mercado.</string>
+    <string name="dashboard_estimate_until">Avaliações até %1$s.</string>
+    <string name="dashboard_estimate_missing">%1$d exemplar(es) sem avaliação ficam de fora da estimativa.</string>
+    <string name="dashboard_latest_acquisitions">Últimas aquisições</string>
+    <string name="dashboard_latest_entries">Últimos cadastros</string>
+    <string name="dashboard_latest_empty">Nada registrado ainda.</string>
+    <string name="dashboard_collections">Progresso das coleções</string>
+    <string name="dashboard_collections_empty">Nenhuma coleção ativa.</string>
+    <string name="dashboard_collection_progress">%1$d de %2$d itens</string>
 </resources>

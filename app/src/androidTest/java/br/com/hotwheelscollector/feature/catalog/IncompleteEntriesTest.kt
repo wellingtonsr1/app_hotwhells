@@ -83,8 +83,9 @@ class IncompleteEntriesTest {
 
     /** Modelo criado pelo fluxo real, parando na tela de variante. */
     private fun createModel(manufacturer: String, model: String) {
+        // A primeira tela é o painel (US3): o acervo abre na aba «Catálogo».
+        composeRule.onNodeWithText("Catálogo").performClick()
         waitForText("Nenhuma miniatura ainda")
-
         composeRule.onNodeWithText("+ Mini").performClick()
         waitForText("Nova miniatura")
 
