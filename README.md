@@ -9,7 +9,8 @@ Gradle: `:core:domain` (Kotlin puro), `:core:data` (Room, arquivos, import/expor
 `:core:ui` (design system) e `:app` (navegação, features, DI).
 
 A especificação funcional, o plano, o modelo de dados e a lista de tarefas ficam em
-[`specs/001-hot-wheels-collector/`](specs/001-hot-wheels-collector/).
+[`specs/001-hot-wheels-collector/`](specs/001-hot-wheels-collector/). Para retomar o
+trabalho em outra máquina, use [`docs/continua.md`](docs/continua.md).
 
 ## Pré-requisitos
 
