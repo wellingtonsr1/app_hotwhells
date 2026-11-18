@@ -3,6 +3,7 @@ package br.com.hotwheelscollector.data.di
 import android.content.Context
 import androidx.room.Room
 import br.com.hotwheelscollector.data.db.AppDatabase
+import br.com.hotwheelscollector.data.repository.AcquisitionRepositoryImpl
 import br.com.hotwheelscollector.data.repository.CarModelRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ColorRepositoryImpl
 import br.com.hotwheelscollector.data.repository.DashboardRepositoryImpl
@@ -12,9 +13,11 @@ import br.com.hotwheelscollector.data.repository.ManufacturerRepositoryImpl
 import br.com.hotwheelscollector.data.repository.LocationRepositoryImpl
 import br.com.hotwheelscollector.data.repository.PhotoRepositoryImpl
 import br.com.hotwheelscollector.data.repository.SeriesRepositoryImpl
+import br.com.hotwheelscollector.data.repository.ValuationRepositoryImpl
 import br.com.hotwheelscollector.data.repository.VariantRepositoryImpl
 import br.com.hotwheelscollector.data.storage.FileImageStore
 import br.com.hotwheelscollector.data.storage.ImageStore
+import br.com.hotwheelscollector.domain.repository.AcquisitionRepository
 import br.com.hotwheelscollector.domain.repository.CarModelRepository
 import br.com.hotwheelscollector.domain.repository.ColorRepository
 import br.com.hotwheelscollector.domain.repository.DashboardRepository
@@ -24,6 +27,7 @@ import br.com.hotwheelscollector.domain.repository.ManufacturerRepository
 import br.com.hotwheelscollector.domain.repository.LocationRepository
 import br.com.hotwheelscollector.domain.repository.PhotoRepository
 import br.com.hotwheelscollector.domain.repository.SeriesRepository
+import br.com.hotwheelscollector.domain.repository.ValuationRepository
 import br.com.hotwheelscollector.domain.repository.VariantRepository
 import dagger.Binds
 import dagger.Module
@@ -144,4 +148,12 @@ public abstract class RepositoryModule {
     @Binds
     @Singleton
     public abstract fun bindDraftRepository(impl: br.com.hotwheelscollector.data.repository.DraftRepositoryImpl): br.com.hotwheelscollector.domain.repository.DraftRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindAcquisitionRepository(impl: AcquisitionRepositoryImpl): AcquisitionRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindValuationRepository(impl: ValuationRepositoryImpl): ValuationRepository
 }

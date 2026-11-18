@@ -39,28 +39,36 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.hotwheelscollector.R
+import br.com.hotwheelscollector.domain.model.Acquisition
 import br.com.hotwheelscollector.domain.model.Condition
 import br.com.hotwheelscollector.domain.model.ExemplarStatus
+import br.com.hotwheelscollector.domain.model.IsoDate
 import br.com.hotwheelscollector.domain.model.Location
 import br.com.hotwheelscollector.domain.model.LocationType
+import br.com.hotwheelscollector.domain.model.MoneyCents
 import br.com.hotwheelscollector.domain.model.Movement
 import br.com.hotwheelscollector.domain.model.PackagingCondition
+import br.com.hotwheelscollector.domain.model.Valuation
 import br.com.hotwheelscollector.domain.repository.ExemplarDependents
 import br.com.hotwheelscollector.ui.theme.HotWheelsTheme
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 /**
  * Edição de um exemplar físico (FR-028, FR-091): condição, embalagem, observações,
- * movimentação com histórico e a escolha entre arquivar e excluir.
+ * aquisição, avaliações, movimentação com histórico e a escolha entre arquivar e excluir.
  *
  * A exclusão física só é oferecida quando [ExemplarDependents] está vazio; com qualquer
  * vínculo, a tela explica o bloqueio e mantém o arquivamento como caminho (Art. I.6–I.7).
+ * Valores estimados aparecem sempre como estimativa do colecionador, nunca como preço de
+ * mercado (FR-086).
  */
 @Composable
 public fun ExemplarDetailScreen(
@@ -98,6 +106,19 @@ public fun ExemplarDetailScreen(
             onMove = viewModel::onMove,
             onArchive = viewModel::onArchive,
             onDelete = viewModel::onDelete,
+            onAcquisitionPriceChange = viewModel::onAcquisitionPriceChange,
+            onAcquisitionShippingChange = viewModel::onAcquisitionShippingChange,
+            onAcquisitionDiscountChange = viewModel::onAcquisitionDiscountChange,
+            onAcquisitionDateChange = viewModel::onAcquisitionDateChange,
+            onAcquisitionStoreChange = viewModel::onAcquisitionStoreChange,
+            onAcquisitionSellerChange = viewModel::onAcquisitionSellerChange,
+            onAcquisitionNotesChange = viewModel::onAcquisitionNotesChange,
+            onSaveAcquisition = viewModel::onSaveAcquisition,
+            onValuationValueChange = viewModel::onValuationValueChange,
+            onValuationDateChange = viewModel::onValuationDateChange,
+            onValuationSourceChange = viewModel::onValuationSourceChange,
+            onValuationNotesChange = viewModel::onValuationNotesChange,
+            onAddValuation = viewModel::onAddValuation,
         )
     }
 }
@@ -116,6 +137,19 @@ internal fun ExemplarDetailContent(
     onMove: () -> Unit,
     onArchive: () -> Unit,
     onDelete: () -> Unit,
+    onAcquisitionPriceChange: (String) -> Unit = {},
+    onAcquisitionShippingChange: (String) -> Unit = {},
+    onAcquisitionDiscountChange: (String) -> Unit = {},
+    onAcquisitionDateChange: (String) -> Unit = {},
+    onAcquisitionStoreChange: (String) -> Unit = {},
+    onAcquisitionSellerChange: (String) -> Unit = {},
+    onAcquisitionNotesChange: (String) -> Unit = {},
+    onSaveAcquisition: () -> Unit = {},
+    onValuationValueChange: (String) -> Unit = {},
+    onValuationDateChange: (String) -> Unit = {},
+    onValuationSourceChange: (String) -> Unit = {},
+    onValuationNotesChange: (String) -> Unit = {},
+    onAddValuation: () -> Unit = {},
 ) {
     var showArchiveDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -229,6 +263,180 @@ internal fun ExemplarDetailContent(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(stringResource(R.string.exemplar_save))
+                }
+
+                HorizontalDivider()
+
+                // ---- Aquisição ----------------------------------------------------
+                Text(
+                    text = stringResource(R.string.acquisition_section),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                val totalCost = state.acquisition?.totalCost()
+                Text(
+                    text = when {
+                        state.acquisition == null -> stringResource(R.string.acquisition_none)
+                        totalCost == null -> stringResource(R.string.acquisition_without_value)
+                        else -> stringResource(R.string.acquisition_total, totalCost.formatPtBr())
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = state.acquisitionPrice,
+                        onValueChange = onAcquisitionPriceChange,
+                        label = { Text(stringResource(R.string.add_exemplar_price)) },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal,
+                        ),
+                        modifier = Modifier.weight(1f),
+                    )
+                    OutlinedTextField(
+                        value = state.acquisitionShipping,
+                        onValueChange = onAcquisitionShippingChange,
+                        label = { Text(stringResource(R.string.add_exemplar_shipping)) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = state.acquisitionDiscount,
+                        onValueChange = onAcquisitionDiscountChange,
+                        label = { Text(stringResource(R.string.add_exemplar_discount)) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                    OutlinedTextField(
+                        value = state.acquisitionDate,
+                        onValueChange = onAcquisitionDateChange,
+                        label = { Text(stringResource(R.string.add_exemplar_date)) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = state.acquisitionStore,
+                        onValueChange = onAcquisitionStoreChange,
+                        label = { Text(stringResource(R.string.add_exemplar_store)) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                    OutlinedTextField(
+                        value = state.acquisitionSeller,
+                        onValueChange = onAcquisitionSellerChange,
+                        label = { Text(stringResource(R.string.acquisition_seller)) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                OutlinedTextField(
+                    value = state.acquisitionNotes,
+                    onValueChange = onAcquisitionNotesChange,
+                    label = { Text(stringResource(R.string.exemplar_notes)) },
+                    minLines = 2,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Button(
+                    onClick = onSaveAcquisition,
+                    enabled = !state.savingAcquisition,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.acquisition_save))
+                }
+
+                HorizontalDivider()
+
+                // ---- Avaliações ---------------------------------------------------
+                Text(
+                    text = stringResource(R.string.valuation_section),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    text = stringResource(R.string.valuation_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                val currentValuation = state.currentValuation
+                if (currentValuation == null) {
+                    Text(
+                        text = stringResource(R.string.valuation_none),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                } else {
+                    Text(
+                        text = stringResource(
+                            R.string.valuation_current_value,
+                            currentValuation.value.formatPtBr(),
+                        ),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    Text(
+                        text = listOfNotNull(
+                            stringResource(R.string.valuation_on_date, currentValuation.date.formatPtBr()),
+                            currentValuation.source,
+                        ).joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (state.valuations.size > 1) {
+                    state.valuations.drop(1).forEach { valuation ->
+                        Text(
+                            text = listOfNotNull(
+                                valuation.date.formatPtBr(),
+                                "R$ ${valuation.value.formatPtBr()}",
+                                valuation.source,
+                            ).joinToString(" · "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = state.valuationValue,
+                        onValueChange = onValuationValueChange,
+                        label = { Text(stringResource(R.string.valuation_value)) },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal,
+                        ),
+                        modifier = Modifier.weight(1f),
+                    )
+                    OutlinedTextField(
+                        value = state.valuationDate,
+                        onValueChange = onValuationDateChange,
+                        label = { Text(stringResource(R.string.valuation_date)) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                OutlinedTextField(
+                    value = state.valuationSource,
+                    onValueChange = onValuationSourceChange,
+                    label = { Text(stringResource(R.string.valuation_source)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = state.valuationNotes,
+                    onValueChange = onValuationNotesChange,
+                    label = { Text(stringResource(R.string.valuation_notes)) },
+                    minLines = 2,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedButton(
+                    onClick = onAddValuation,
+                    enabled = !state.savingValuation,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.valuation_add))
                 }
 
                 HorizontalDivider()
@@ -451,6 +659,26 @@ private fun ExemplarDetailPreview() {
                     ),
                 ),
                 dependents = ExemplarDependents(photos = 2, acquisitions = 1, movements = 1),
+                acquisition = Acquisition(
+                    id = "a1",
+                    exemplarId = "e1",
+                    date = IsoDate(LocalDate.of(2026, 11, 2)),
+                    price = MoneyCents(5900),
+                    shipping = MoneyCents(1200),
+                    store = "Loja do shopping",
+                    createdAt = now,
+                    updatedAt = now,
+                ),
+                valuations = listOf(
+                    Valuation(
+                        id = "val1",
+                        exemplarId = "e1",
+                        date = IsoDate(LocalDate.of(2026, 11, 10)),
+                        value = MoneyCents(8500),
+                        source = "Colecionador",
+                        createdAt = now,
+                    ),
+                ),
                 loading = false,
             ),
             contentPadding = PaddingValues(0.dp),

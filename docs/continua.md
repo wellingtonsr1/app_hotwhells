@@ -11,8 +11,10 @@ nos blocos «Evidências» de cada fase. Este documento é operacional.
   (painel).
 - Ciclo de vida do exemplar: lista por variante, edição, movimentação com histórico,
   arquivamento e exclusão bloqueada por dependentes (FR-028, FR-091).
-- Nada além disso: busca/filtros, coleções, desejos, financeiro, relatórios/backup e
-  reconhecimento ainda não têm tela.
+- Aquisição editável e avaliações append-only no detalhe do exemplar (US8 parcial): o
+  painel já reflete investido e estimado reais.
+- Nada além disso: busca/filtros, coleções, desejos, agregações financeiras, relatórios/
+  backup e reconhecimento ainda não têm tela.
 
 ## 2. Pré-requisitos
 
@@ -54,7 +56,7 @@ sdk.dir=/caminho/para/Android/Sdk
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-Resultado de referência em 2026-11-18: 87 unitários e 20 instrumentados, 0 falhas;
+Resultado de referência em 2026-11-18: 90 unitários e 21 instrumentados, 0 falhas;
 lint com 0 erros e 7 avisos.
 
 ## 4. Decisões já tomadas (não reabrir sem motivo)
@@ -67,6 +69,10 @@ lint com 0 erros e 7 avisos.
   mas aquisição, fotos, movimentações e auditoria continuam no banco (Art. I.7).
 - **Exclusão física de exemplar** só sem dependentes; com qualquer vínculo o domínio
   devolve `DomainError.Blocked` e a tela oferece arquivar.
+- **Aquisição é upsert por exemplar**: editar não cria segunda aquisição; id e
+  `created_at` originais são preservados.
+- **Avaliação é append-only**: cada valor/dia é uma linha; valor atual = avaliação mais
+  recente (FR-083–FR-084).
 - **T048** lista modelo sem variante e variante sem cor/ano; complementar a variante exige
   tela de edição que ainda não existe.
 - **T131 parcial**: rótulos estão em `strings.xml`; mensagens de snackbar dos ViewModels e
@@ -74,9 +80,8 @@ lint com 0 erros e 7 avisos.
 
 ## 5. Próximos passos sugeridos
 
-1. **Avaliação e aquisição (US8 parcial)**: editar a aquisição a partir do exemplar e
-   registrar avaliações (valor, data, fonte), com o rótulo «estimativa do colecionador».
-   Hoje o painel mostra «Estimado» sempre zerado.
+1. **Restante de US8**: forma de pagamento/moeda na aquisição, agregações por período/
+   série/fabricante, custo médio e tela de finanças (T092, T094–T098).
 2. **US4**: busca FTS4 (a tabela já existe), filtros combináveis e visualizações.
 3. **Backup/exportação mínima (US10)**: a coleção vive num único SQLite no aparelho.
 4. **Variante**: exclusão/arquivamento com o mesmo padrão do exemplar e união/separação

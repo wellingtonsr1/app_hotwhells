@@ -53,7 +53,7 @@ export ANDROID_AVD_HOME="$PWD/.tools/avd"
 # saída: app/build/outputs/apk/debug/app-debug.apk
 ```
 
-O lint reprova o build com qualquer achado; o relatório fica em
+O lint reprova o build com erro (avisos não bloqueiam); o relatório fica em
 `app/build/reports/lint-results-debug.txt`.
 
 ## Estado atual
@@ -63,13 +63,13 @@ O lint reprova o build com qualquer achado; o relatório fica em
 - **Ciclo de vida do exemplar**: lista por variante, edição de condição/embalagem/
   observações, movimentação com histórico e arquivamento. Exclusão física só sem vínculos,
   com bloqueio explicado e arquivamento como alternativa (FR-028, FR-091).
-- **Fases 6–15** não iniciadas, com uma exceção pontual: a movimentação de T103 (US9) já
-  é entregue dentro do detalhe do exemplar.
-- Verificação de 2026-11-18: **87 testes unitários** e **20 instrumentados**, 0 falhas;
+- **Aquisição e avaliações (US8 parcial)**: a aquisição é editável no detalhe do exemplar
+  (preço, frete, desconto, data, loja, vendedor) e as avaliações são append-only, com a
+  mais recente como valor atual. O painel já reflete investido e estimado reais.
+- **Fases 6–15** não iniciadas, com exceções pontuais: a movimentação de T103 (US9) e a
+  edição de aquisição/avaliação de US8 já são entregues dentro do detalhe do exemplar.
+- Verificação de 2026-11-18: **90 testes unitários** e **21 instrumentados**, 0 falhas;
   lint com 0 erros e 7 avisos pré-existentes. Detalhes em `tasks.md`.
-
-Os números do painel usam `acquisition` e `valuation`. Editar a aquisição e registrar
-avaliações é o próximo passo — hoje o valor estimado aparece sempre zerado.
 
 Nenhum dado sai do aparelho: sem conta, sem telemetria, sem permissão ampla de
 armazenamento (importação e backup usam Storage Access Framework).

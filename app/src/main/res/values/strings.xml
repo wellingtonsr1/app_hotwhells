@@ -202,4 +202,22 @@
     <string name="packaging_damaged">Danificada</string>
     <string name="packaging_none">Sem embalagem</string>
     <string name="packaging_unknown">Não informada</string>
+
+    <!-- Aquisição e avaliações (FR-074–FR-086). -->
+    <string name="acquisition_section">Aquisição</string>
+    <string name="acquisition_none">Nenhuma aquisição registrada.</string>
+    <string name="acquisition_without_value">Aquisição registrada sem valor informado.</string>
+    <string name="acquisition_total">Custo total: R$ %1$s</string>
+    <string name="acquisition_seller">Vendedor</string>
+    <string name="acquisition_save">Salvar aquisição</string>
+    <string name="valuation_section">Avaliações</string>
+    <string name="valuation_hint">Estimativa do colecionador — não é preço de mercado.</string>
+    <string name="valuation_current_value">Valor estimado atual: R$ %1$s</string>
+    <string name="valuation_none">Nenhuma avaliação registrada.</string>
+    <string name="valuation_on_date">em %1$s</string>
+    <string name="valuation_value">Valor estimado (R$)</string>
+    <string name="valuation_date">Data da avaliação</string>
+    <string name="valuation_source">Fonte (ex: colecionador, loja)</string>
+    <string name="valuation_notes">Observações da avaliação</string>
+    <string name="valuation_add">Registrar avaliação</string>
 </resources>

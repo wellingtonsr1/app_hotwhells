@@ -681,18 +681,44 @@ Decisões registradas nesta entrega:
 ### Tests for User Story 8
 
 - [ ] T089 [P] [US8] Teste de custo (`preço + frete − desconto`), total investido e custo médio com exclusão de itens sem valor (FR-075, FR-081) em `core/domain/src/test/kotlin/br/com/hotwheelscollector/domain/usecase/FinanceTotalsTest.kt`
-- [ ] T090 [P] [US8] Teste de "avaliação mais recente = valor atual" e histórico completo preservado (FR-083–FR-084) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/ValuationRepositoryTest.kt`
+- [X] T090 [P] [US8] Teste de "avaliação mais recente = valor atual" e histórico completo preservado (FR-083–FR-084) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/FinancialRepositoryTest.kt`
 - [ ] T091 [P] [US8] Teste Compose do fluxo financeiro com rótulo de estimativa visível em `app/src/androidTest/java/br/com/hotwheelscollector/feature/finance/FinanceScreenTest.kt`
 
 ### Implementation for User Story 8
 
-- [ ] T092 [US8] Implementar formulário de aquisição (data, preço, frete, desconto, loja, vendedor, forma, moeda) em `app/.../feature/finance/AcquisitionFormScreen.kt`
-- [ ] T093 [US8] Implementar tela de avaliação com valor, data, fonte e histórico de avaliações em `app/.../feature/finance/ValuationScreen.kt`
+- [ ] T092 [US8] Formulário de aquisição (data, preço, frete, desconto, loja, vendedor, forma, moeda) — **parcial**: data, preço, frete, desconto, loja, vendedor e observações já editáveis em `ExemplarDetailScreen`; falta forma de pagamento e moeda.
+- [X] T093 [US8] Tela de avaliação com valor, data, fonte e histórico de avaliações — entregue dentro de `app/src/main/java/br/com/hotwheelscollector/feature/catalog/ExemplarDetailScreen.kt`.
 - [ ] T094 [US8] Implementar agregações por período, série, fabricante e coleção (FR-078–FR-080) em `core/data/.../repository/FinanceRepositoryImpl.kt`
 - [ ] T095 [US8] Implementar tela de finanças com investido, estimado, diferença e custo médio (FR-077, FR-085) em `app/.../feature/finance/FinanceScreen.kt`
 - [ ] T096 [US8] Implementar rótulo obrigatório "estimativa do colecionador" com fonte e data em toda exibição de valor estimado (FR-086) em `app/.../feature/finance/EstimateLabel.kt`
 - [ ] T097 [US8] Implementar histórico financeiro separando vendas/trocas do investimento (FR-087) em `core/domain/.../usecase/FinancialHistoryUseCase.kt`
 - [ ] T098 [US8] Implementar formatação pt-BR de moeda (centavos) e data centralizada em `core/ui/src/main/kotlin/br/com/hotwheelscollector/ui/format/Formatters.kt`
+
+### Evidências — aquisição e avaliações (US8 parcial, 2026-11-18)
+
+Entrega: a aquisição do exemplar passou a ser editável (upsert por `exemplar_id`, nunca
+uma segunda compra para a mesma unidade) e as avaliações são registradas com valor, data,
+fonte e observações, com histórico preservado. A avaliação mais recente é o valor atual.
+
+| Verificação | Comando | Resultado |
+| --- | --- | --- |
+| Unitários | `:core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest` | 90 testes, 0 falhas (3 novos em `FinancialRepositoryTest`) |
+| Instrumentados | `:app:connectedDebugAndroidTest` (API 36, Pixel 5) | 21 testes, 0 falhas (1 novo `ExemplarDetailScreenTest`) |
+| Lint | `:app:lintDebug` | 0 erros, 7 avisos pré-existentes |
+
+Decisões registradas:
+
+- `AcquisitionRepository.save` devolve o registro existente quando já há uma aquisição
+  para o exemplar: id e `created_at` são preservados; só `updated_at` muda.
+- `observeTotalInvested` e `observeCurrentEstimated` devolvem `Long` cru, porque são somas
+  do acervo e podem passar do limite de um item (FR-076).
+- A tela do exemplar mostra o custo total calculado (`preço + frete − desconto`) e o valor
+  estimado sempre com o rótulo «estimativa do colecionador» (FR-086).
+- O painel passa a refletir avaliações reais; antes o «Estimado» era sempre zero.
+
+Pendências de US8: T089 (custo médio e exclusões), T091 (teste do fluxo financeiro
+completo), T092 (forma de pagamento e moeda), T094 (agregações por período/série/fabricante),
+T095 (tela de finanças), T096 (rótulo em todas as exibições), T097 e T098.
 
 **Checkpoint**: US8 entrega o módulo de maior valor de longo prazo
 

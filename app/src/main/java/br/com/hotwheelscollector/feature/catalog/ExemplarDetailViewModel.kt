@@ -4,16 +4,25 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.hotwheelscollector.domain.error.DomainError
+import br.com.hotwheelscollector.domain.model.Acquisition
 import br.com.hotwheelscollector.domain.model.Condition
 import br.com.hotwheelscollector.domain.model.ExemplarStatus
+import br.com.hotwheelscollector.domain.model.IsoDate
 import br.com.hotwheelscollector.domain.model.Location
+import br.com.hotwheelscollector.domain.model.MoneyCents
 import br.com.hotwheelscollector.domain.model.Movement
 import br.com.hotwheelscollector.domain.model.PackagingCondition
+import br.com.hotwheelscollector.domain.model.Valuation
+import br.com.hotwheelscollector.domain.repository.AcquisitionRepository
 import br.com.hotwheelscollector.domain.repository.ExemplarDependents
 import br.com.hotwheelscollector.domain.repository.ExemplarRepository
 import br.com.hotwheelscollector.domain.repository.LocationRepository
+import br.com.hotwheelscollector.domain.repository.ValuationRepository
 import br.com.hotwheelscollector.navigation.RouteArgs
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.Clock
+import java.time.Instant
+import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,11 +56,33 @@ public data class ExemplarDetailUiState(
     val notFound: Boolean = false,
     val message: String? = null,
     val finished: Boolean = false,
+
+    // Aquisição (FR-074–FR-076): editável aqui, uma linha por exemplar.
+    val acquisition: Acquisition? = null,
+    val acquisitionPrice: String = "",
+    val acquisitionShipping: String = "",
+    val acquisitionDiscount: String = "",
+    val acquisitionDate: String = "",
+    val acquisitionStore: String = "",
+    val acquisitionSeller: String = "",
+    val acquisitionNotes: String = "",
+    val savingAcquisition: Boolean = false,
+
+    // Avaliações (FR-082–FR-084): append-only, mais recente primeiro.
+    val valuations: List<Valuation> = emptyList(),
+    val valuationValue: String = "",
+    val valuationDate: String = "",
+    val valuationSource: String = "",
+    val valuationNotes: String = "",
+    val savingValuation: Boolean = false,
 ) {
     public val isArchived: Boolean get() = status == ExemplarStatus.ARCHIVED
 
     /** O botão de excluir só habilita sem vínculos; com qualquer um, a tela oferece arquivar. */
     public val canDelete: Boolean get() = !loading && !notFound && !dependents.hasAny
+
+    /** Avaliação mais recente = valor atual (FR-083). */
+    public val currentValuation: Valuation? get() = valuations.firstOrNull()
 }
 
 @HiltViewModel
@@ -59,15 +90,26 @@ public class ExemplarDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val exemplarRepository: ExemplarRepository,
     locationRepository: LocationRepository,
+    private val acquisitionRepository: AcquisitionRepository,
+    private val valuationRepository: ValuationRepository,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val exemplarId: String = savedStateHandle[RouteArgs.EXEMPLAR_ID] ?: ""
+    private val today: String = IsoDate.today(clock).formatPtBr()
 
-    private val _state = MutableStateFlow(ExemplarDetailUiState(exemplarId = exemplarId))
+    private val _state = MutableStateFlow(
+        ExemplarDetailUiState(
+            exemplarId = exemplarId,
+            acquisitionDate = today,
+            valuationDate = today,
+        ),
+    )
     public val state: StateFlow<ExemplarDetailUiState> = _state.asStateFlow()
 
     init {
         refresh()
+        loadAcquisition()
         viewModelScope.launch {
             locationRepository.observeActive().collect { locations ->
                 _state.update { it.copy(locations = locations) }
@@ -76,6 +118,11 @@ public class ExemplarDetailViewModel @Inject constructor(
         viewModelScope.launch {
             locationRepository.movements(exemplarId).collect { movements ->
                 _state.update { it.copy(movements = movements) }
+            }
+        }
+        viewModelScope.launch {
+            valuationRepository.observeByExemplar(exemplarId).collect { valuations ->
+                _state.update { it.copy(valuations = valuations) }
             }
         }
     }
@@ -93,6 +140,141 @@ public class ExemplarDetailViewModel @Inject constructor(
     public fun onMoveNoteChange(value: String) = _state.update { it.copy(moveNote = value) }
 
     public fun onMessageShown() = _state.update { it.copy(message = null) }
+
+    // ---- Aquisição ----------------------------------------------------------------
+
+    public fun onAcquisitionPriceChange(value: String) =
+        _state.update { it.copy(acquisitionPrice = value) }
+
+    public fun onAcquisitionShippingChange(value: String) =
+        _state.update { it.copy(acquisitionShipping = value) }
+
+    public fun onAcquisitionDiscountChange(value: String) =
+        _state.update { it.copy(acquisitionDiscount = value) }
+
+    public fun onAcquisitionDateChange(value: String) =
+        _state.update { it.copy(acquisitionDate = value) }
+
+    public fun onAcquisitionStoreChange(value: String) =
+        _state.update { it.copy(acquisitionStore = value) }
+
+    public fun onAcquisitionSellerChange(value: String) =
+        _state.update { it.copy(acquisitionSeller = value) }
+
+    public fun onAcquisitionNotesChange(value: String) =
+        _state.update { it.copy(acquisitionNotes = value) }
+
+    public fun onSaveAcquisition() {
+        val current = _state.value
+        if (current.savingAcquisition || current.loading || current.notFound) return
+
+        val price = parseMoney(current.acquisitionPrice)
+        val shipping = parseMoney(current.acquisitionShipping)
+        val discount = parseMoney(current.acquisitionDiscount)
+        if (price.isInvalid || shipping.isInvalid || discount.isInvalid) {
+            _state.update { it.copy(message = "Valor inválido. Use, por exemplo, 59,90.") }
+            return
+        }
+        val date = IsoDate.parsePtBrOrNull(current.acquisitionDate)
+        if (date == null) {
+            _state.update { it.copy(message = "Data inválida. Use dd/mm/aaaa.") }
+            return
+        }
+
+        val existing = current.acquisition
+        val now = Instant.now(clock)
+        val acquisition = Acquisition(
+            id = existing?.id ?: UUID.randomUUID().toString(),
+            exemplarId = exemplarId,
+            date = date,
+            price = price.value,
+            shipping = shipping.value,
+            discount = discount.value,
+            store = current.acquisitionStore.trim().ifBlank { null },
+            seller = current.acquisitionSeller.trim().ifBlank { null },
+            notes = current.acquisitionNotes.trim().ifBlank { null },
+            createdAt = existing?.createdAt ?: now,
+            updatedAt = now,
+        )
+
+        _state.update { it.copy(savingAcquisition = true) }
+        viewModelScope.launch {
+            acquisitionRepository.save(acquisition).fold(
+                onSuccess = { saved ->
+                    _state.update { it.copy(savingAcquisition = false, message = "Aquisição salva.") }
+                    applyAcquisition(saved)
+                },
+                onFailure = { error ->
+                    _state.update {
+                        it.copy(savingAcquisition = false, message = error.toMessage())
+                    }
+                },
+            )
+        }
+    }
+
+    // ---- Avaliações ---------------------------------------------------------------
+
+    public fun onValuationValueChange(value: String) =
+        _state.update { it.copy(valuationValue = value) }
+
+    public fun onValuationDateChange(value: String) =
+        _state.update { it.copy(valuationDate = value) }
+
+    public fun onValuationSourceChange(value: String) =
+        _state.update { it.copy(valuationSource = value) }
+
+    public fun onValuationNotesChange(value: String) =
+        _state.update { it.copy(valuationNotes = value) }
+
+    public fun onAddValuation() {
+        val current = _state.value
+        if (current.savingValuation || current.loading || current.notFound) return
+
+        val value = parseMoney(current.valuationValue)
+        if (value.isInvalid || value.value == null || value.value.cents <= 0L) {
+            _state.update { it.copy(message = "Informe o valor da avaliação.") }
+            return
+        }
+        val date = IsoDate.parsePtBrOrNull(current.valuationDate)
+        if (date == null) {
+            _state.update { it.copy(message = "Data inválida. Use dd/mm/aaaa.") }
+            return
+        }
+
+        val valuation = Valuation(
+            id = UUID.randomUUID().toString(),
+            exemplarId = exemplarId,
+            date = date,
+            value = value.value,
+            source = current.valuationSource.trim().ifBlank { null },
+            notes = current.valuationNotes.trim().ifBlank { null },
+            createdAt = Instant.now(clock),
+        )
+
+        _state.update { it.copy(savingValuation = true) }
+        viewModelScope.launch {
+            valuationRepository.add(valuation).fold(
+                onSuccess = {
+                    _state.update {
+                        it.copy(
+                            savingValuation = false,
+                            valuationValue = "",
+                            valuationSource = "",
+                            valuationNotes = "",
+                            valuationDate = today,
+                            message = "Avaliação registrada.",
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    _state.update { it.copy(savingValuation = false, message = error.toMessage()) }
+                },
+            )
+        }
+    }
+
+    // ---- Exemplar, movimentação e arquivamento ------------------------------------
 
     public fun onSaveDetails() {
         val current = _state.value
@@ -219,6 +401,33 @@ public class ExemplarDetailViewModel @Inject constructor(
         }
     }
 
+    private fun loadAcquisition() {
+        viewModelScope.launch {
+            applyAcquisition(acquisitionRepository.findByExemplar(exemplarId))
+        }
+    }
+
+    private fun applyAcquisition(acquisition: Acquisition?) {
+        _state.update {
+            it.copy(
+                acquisition = acquisition,
+                acquisitionPrice = acquisition?.price?.formatPtBr().orEmpty(),
+                acquisitionShipping = acquisition?.shipping?.formatPtBr().orEmpty(),
+                acquisitionDiscount = acquisition?.discount?.formatPtBr().orEmpty(),
+                acquisitionDate = acquisition?.date?.formatPtBr() ?: today,
+                acquisitionStore = acquisition?.store.orEmpty(),
+                acquisitionSeller = acquisition?.seller.orEmpty(),
+                acquisitionNotes = acquisition?.notes.orEmpty(),
+            )
+        }
+    }
+
+    private fun parseMoney(text: String): ParsedMoney {
+        if (text.isBlank()) return ParsedMoney(null, isInvalid = false)
+        val value = MoneyCents.parsePtBrOrNull(text)
+        return ParsedMoney(value, isInvalid = value == null)
+    }
+
     private fun Throwable.toMessage(): String = when (this) {
         is DomainError.Validation -> reason
         DomainError.Duplicate -> "Já existe um registro igual."
@@ -228,4 +437,6 @@ public class ExemplarDetailViewModel @Inject constructor(
         DomainError.NotFound -> "Exemplar não encontrado."
         else -> message ?: "Não foi possível concluir."
     }
+
+    private data class ParsedMoney(val value: MoneyCents?, val isInvalid: Boolean)
 }

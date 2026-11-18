@@ -121,14 +121,24 @@ public interface LocationRepository {
     public suspend fun movements(exemplarId: String): Flow<List<Movement>>
 }
 
+/**
+ * Aquisição do exemplar (FR-074–FR-076). `save` é upsert por exemplar: uma aquisição por
+ * unidade física, e editar não cria uma segunda linha.
+ *
+ * O total investido sai em `Long` cru: é soma do acervo e pode passar do limite de um item
+ * (FR-076), diferente de [MoneyCents], que representa um valor.
+ */
 public interface AcquisitionRepository {
     public suspend fun findByExemplar(exemplarId: String): Acquisition?
     public suspend fun save(acquisition: Acquisition): DomainResult<Acquisition>
-    public fun observeTotalInvested(): Flow<MoneyCents>
+    public fun observeTotalInvested(): Flow<Long>
 }
 
+/** Avaliações em ordem decrescente: a primeira é o valor atual (FR-083–FR-084). */
 public interface ValuationRepository {
     public fun observeByExemplar(exemplarId: String): Flow<List<Valuation>>
     public suspend fun add(valuation: Valuation): DomainResult<Valuation>
-    public fun observeCurrentEstimated(): Flow<MoneyCents>
+
+    /** Soma das avaliações mais recentes dos exemplares possuídos, em centavos (FR-085). */
+    public fun observeCurrentEstimated(): Flow<Long>
 }
