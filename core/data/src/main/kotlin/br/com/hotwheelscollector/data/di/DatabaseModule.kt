@@ -17,6 +17,7 @@ import br.com.hotwheelscollector.data.repository.SearchRepositoryImpl
 import br.com.hotwheelscollector.data.repository.SeriesRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ValuationRepositoryImpl
 import br.com.hotwheelscollector.data.repository.VariantRepositoryImpl
+import br.com.hotwheelscollector.data.repository.WishlistRepositoryImpl
 import br.com.hotwheelscollector.data.storage.FileImageStore
 import br.com.hotwheelscollector.data.storage.ImageStore
 import br.com.hotwheelscollector.domain.repository.AcquisitionRepository
@@ -33,6 +34,7 @@ import br.com.hotwheelscollector.domain.repository.SearchRepository
 import br.com.hotwheelscollector.domain.repository.SeriesRepository
 import br.com.hotwheelscollector.domain.repository.ValuationRepository
 import br.com.hotwheelscollector.domain.repository.VariantRepository
+import br.com.hotwheelscollector.domain.repository.WishlistRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -168,4 +170,8 @@ public abstract class RepositoryModule {
     @Binds
     @Singleton
     public abstract fun bindSearchRepository(impl: SearchRepositoryImpl): SearchRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindWishlistRepository(impl: WishlistRepositoryImpl): WishlistRepository
 }

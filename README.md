@@ -70,11 +70,17 @@ O lint reprova o build com erro (avisos não bloqueiam); o relatório fica em
   (T097), que depende de US7.
 - **Busca e filtros (US4)**: tela própria (`catalog/search`) com busca textual tolerante
   a acentos e ordem (índice FTS4), 13 dimensões de filtro combináveis, chips de filtros
-  ativos, contagem de resultados e visualizações em grade, lista e agrupadas por coleção,
-  fabricante ou série. A galeria fotográfica no resultado ainda falta.
-- **Fases 7–15** não iniciadas, com exceções pontuais: a movimentação de T103 (US9) e o
-  financeiro de US8 já estão entregues.
-- Verificação de 2026-11-18: **112 testes unitários** e **27 instrumentados**, 0 falhas;
+  ativos, contagem de resultados e visualizações em grade, lista, galeria fotográfica e
+  agrupadas por coleção, fabricante ou série.
+- **Lista de desejos (US6)**: formulário com prioridade, valores máximo e encontrado,
+  loja, link e observações; vínculo opcional com variante do catálogo; lista ordenada por
+  status e prioridade. «Comprei» cria o exemplar e a aquisição quando há variante e
+  preserva prioridade, valores e data do desejo; «Desistir» mantém o histórico.
+- **Ajustes**: Sobre (versão e pacote lidos da instalação) e política de privacidade
+  offline. Backup e importação continuam na US10.
+- **Fases 7–15** parcialmente entregues: além das fases 1–5, já estão prontas a busca
+  (US4), o financeiro (US8), a lista de desejos (US6) e a movimentação de T103 (US9).
+- Verificação de 2026-11-18: **117 testes unitários** e **32 instrumentados**, 0 falhas;
   lint com 0 erros e 6 avisos pré-existentes. Detalhes em `tasks.md`.
 
 Nenhum dado sai do aparelho: sem conta, sem telemetria, sem permissão ampla de

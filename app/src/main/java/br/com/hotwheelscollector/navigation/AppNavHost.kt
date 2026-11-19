@@ -1,12 +1,7 @@
 package br.com.hotwheelscollector.navigation
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
@@ -15,19 +10,15 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -48,6 +39,11 @@ import br.com.hotwheelscollector.feature.catalog.VariantFormScreen
 import br.com.hotwheelscollector.feature.dashboard.DashboardScreen
 import br.com.hotwheelscollector.feature.finance.FinanceScreen
 import br.com.hotwheelscollector.feature.search.SearchScreen
+import br.com.hotwheelscollector.feature.settings.AboutScreen
+import br.com.hotwheelscollector.feature.settings.PrivacyPolicyScreen
+import br.com.hotwheelscollector.feature.settings.SettingsScreen
+import br.com.hotwheelscollector.feature.wishlist.WishlistFormScreen
+import br.com.hotwheelscollector.feature.wishlist.WishlistScreen
 
 /**
  * Rotas do aplicativo.
@@ -100,9 +96,21 @@ public sealed class Destination(public val route: String) {
     public data object ExemplarDetail : Destination("exemplar/{${RouteArgs.EXEMPLAR_ID}}") {
         public fun routeFor(exemplarId: String): String = "exemplar/$exemplarId"
     }
+    /** Lista de desejos (US6). */
     public data object Wishlist : Destination("wishlist")
+
+    /** Formulário de desejo; sem argumento cria um novo, com argumento edita o existente. */
+    public data object WishlistForm : Destination("wishlist/form?${RouteArgs.WISHLIST_ITEM_ID}={${RouteArgs.WISHLIST_ITEM_ID}}") {
+        public fun routeFor(itemId: String? = null): String =
+            if (itemId == null) "wishlist/form" else "wishlist/form?${RouteArgs.WISHLIST_ITEM_ID}=$itemId"
+    }
+
     public data object Finance : Destination("finance")
+
+    /** Ajustes: hub das opções do app (T132, T133). */
     public data object Settings : Destination("settings")
+    public data object SettingsAbout : Destination("settings/about")
+    public data object SettingsPrivacy : Destination("settings/privacy")
 }
 
 /** Nomes dos argumentos de navegação, iguais às chaves lidas do `SavedStateHandle`. */
@@ -111,6 +119,7 @@ public object RouteArgs {
     public const val VARIANT_ID: String = "variantId"
     public const val MODEL_ID: String = "modelId"
     public const val PHOTO_ID: String = "photoId"
+    public const val WISHLIST_ITEM_ID: String = "itemId"
 }
 
 /** Aba da barra inferior: rota, rótulo e ícone. Só rotas de primeiro nível entram aqui. */
@@ -258,47 +267,40 @@ public fun AppNavHost(
                 )
             }
             composable(Destination.Wishlist.route) {
-                PlaceholderScreen(
-                    title = stringResource(R.string.placeholder_wishlist),
-                    message = stringResource(R.string.placeholder_wishlist_body),
+                WishlistScreen(
+                    onAdd = { navController.navigate(Destination.WishlistForm.routeFor()) },
+                    onEdit = { itemId ->
+                        navController.navigate(Destination.WishlistForm.routeFor(itemId))
+                    },
                 )
+            }
+            composable(
+                route = Destination.WishlistForm.route,
+                arguments = listOf(
+                    navArgument(RouteArgs.WISHLIST_ITEM_ID) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+            ) {
+                WishlistFormScreen(onSaved = { navController.popBackStack() })
             }
             composable(Destination.Finance.route) {
                 FinanceScreen()
             }
             composable(Destination.Settings.route) {
-                PlaceholderScreen(
-                    title = stringResource(R.string.placeholder_settings),
-                    message = stringResource(R.string.placeholder_settings_body),
+                SettingsScreen(
+                    onAbout = { navController.navigate(Destination.SettingsAbout.route) },
+                    onPrivacy = { navController.navigate(Destination.SettingsPrivacy.route) },
                 )
             }
+            composable(Destination.SettingsAbout.route) {
+                AboutScreen()
+            }
+            composable(Destination.SettingsPrivacy.route) {
+                PrivacyPolicyScreen()
+            }
         }
-    }
-}
-
-/**
- * Tela ainda não implementada, mas alcançável pela barra: diz o nome da área e o que já
- * funciona no lugar dela. Placeholder mudo faria a aba parecer quebrada.
- */
-@Composable
-private fun PlaceholderScreen(title: String, message: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-        )
     }
 }

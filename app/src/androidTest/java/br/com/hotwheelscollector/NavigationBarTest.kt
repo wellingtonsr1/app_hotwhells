@@ -15,9 +15,9 @@ import org.junit.runner.RunWith
 /**
  * Barra de navegação com o app de verdade (T050).
  *
- * As quatro áreas que antes eram `PlaceholderScreen` inalcançáveis ganharam aba: o teste
- * percorre as cinco e confere que cada uma tem conteúdo próprio. Também garante que o app
- * abre no painel e que o acervo continua a um toque de distância.
+ * As cinco áreas ganharam aba e conteúdo próprio: o teste percorre todas e confere o
+ * estado vazio ou o conteúdo inicial de cada uma. Também garante que o app abre no painel
+ * e que o acervo continua a um toque de distância.
  */
 @RunWith(AndroidJUnit4::class)
 class NavigationBarTest {
@@ -39,17 +39,17 @@ class NavigationBarTest {
         composeRule.onNodeWithText("Catálogo").performClick()
         waitForText("+ Mini")
 
-        // 3. Desejos: a área existe e avisa o que já funciona no lugar dela.
+        // 3. Desejos: sem registros, a lista explica o que cadastrar.
         composeRule.onNodeWithText("Desejos").performClick()
-        waitForText("O painel já mostra quantos itens", substring = true)
+        waitForText("Nada na lista de desejos")
 
         // 4. Financeiro: resumo e agrupamentos calculados a partir das aquisições.
         composeRule.onNodeWithText("Financeiro").performClick()
         waitForText("Gastos por fabricante")
 
-        // 5. Ajustes: assume o que ainda não existe, em vez de fingir uma tela.
+        // 5. Ajustes: hub com Sobre e privacidade offline.
         composeRule.onNodeWithText("Ajustes").performClick()
-        waitForText("Localizações, backup e preferências", substring = true)
+        waitForText("Sobre o app")
 
         // 6. E dá para voltar ao painel pela barra.
         composeRule.onNodeWithText("Painel").performClick()

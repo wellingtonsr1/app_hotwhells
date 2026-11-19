@@ -108,11 +108,53 @@
     <string name="finance_tab">Financeiro</string>
     <string name="settings_tab">Ajustes</string>
 
-    <!-- Áreas ainda sem tela: a aba existe e diz o que já funciona no lugar. -->
-    <string name="placeholder_wishlist">Lista de desejos</string>
-    <string name="placeholder_wishlist_body">Esta área ainda não tem tela. O painel já mostra quantos itens estão em aberto na lista de desejos.</string>
-    <string name="placeholder_settings">Ajustes</string>
-    <string name="placeholder_settings_body">Esta área ainda não tem tela. Localizações, backup e preferências entram nas próximas etapas.</string>
+    <!-- Lista de desejos (US6, FR-057–FR-064). -->
+    <string name="wishlist_title">Lista de desejos</string>
+    <string name="wishlist_add">Novo desejo</string>
+    <string name="wishlist_loading">Carregando desejos…</string>
+    <string name="wishlist_empty_title">Nada na lista de desejos</string>
+    <string name="wishlist_empty_hint">Registre o que você procura para encontrar depois, com valor máximo e link de referência.</string>
+    <string name="wishlist_untitled">Desejo sem título</string>
+    <string name="wishlist_priority_high">Alta</string>
+    <string name="wishlist_priority_medium">Média</string>
+    <string name="wishlist_priority_low">Baixa</string>
+    <string name="wishlist_status_wanted">Em aberto</string>
+    <string name="wishlist_status_acquired">Adquirido</string>
+    <string name="wishlist_status_dismissed">Desistido</string>
+    <string name="wishlist_store_value">Loja: %1$s</string>
+    <string name="wishlist_prices_both">Máximo %1$s · encontrado %2$s</string>
+    <string name="wishlist_price_max">Máximo %1$s</string>
+    <string name="wishlist_price_found">Encontrado por %1$s</string>
+    <string name="wishlist_buy">Comprei</string>
+    <string name="wishlist_open_link">Abrir link</string>
+    <string name="wishlist_dismiss">Desistir</string>
+    <string name="wishlist_form_title">Novo desejo</string>
+    <string name="wishlist_form_edit_title">Editar desejo</string>
+    <string name="wishlist_form_free_text">O que você procura</string>
+    <string name="wishlist_form_variant_search">Buscar variante no catálogo</string>
+    <string name="wishlist_form_variant_selected">Variante: %1$s</string>
+    <string name="wishlist_form_clear_variant">Remover vínculo</string>
+    <string name="wishlist_form_priority">Prioridade</string>
+    <string name="wishlist_form_max_price">Valor máximo</string>
+    <string name="wishlist_form_found_price">Valor encontrado</string>
+    <string name="wishlist_form_store">Loja</string>
+    <string name="wishlist_form_link">Link de referência</string>
+    <string name="wishlist_form_notes">Observações</string>
+    <string name="wishlist_form_save">Salvar desejo</string>
+
+    <!-- Ajustes, Sobre e privacidade (T132, T133, FR-171, FR-172). -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_about">Sobre o app</string>
+    <string name="settings_about_subtitle">Versão instalada, código de build e pacote</string>
+    <string name="settings_about_body">Hot Wheels Collector organiza o acervo de miniaturas inteiramente no aparelho: catálogo, fotos, desejos e finanças.</string>
+    <string name="settings_privacy">Política de privacidade</string>
+    <string name="settings_privacy_subtitle">O que fica no aparelho e o que nunca é enviado</string>
+    <string name="settings_offline_note">Este app funciona sem conta e sem internet. Nada do acervo sai do aparelho.</string>
+    <string name="about_title">Sobre</string>
+    <string name="about_version">Versão %1$s (build %2$s)</string>
+    <string name="about_package">Pacote: %1$s</string>
+    <string name="privacy_title">Privacidade</string>
+    <string name="privacy_body">Seus dados ficam apenas neste aparelho. O app não tem cadastro, login, anúncio, telemetria nem chamada de rede para servidores próprios.\n\nO catálogo, as fotos, a lista de desejos e os valores financeiros são gravados no banco local e nas imagens do próprio app. Desinstalar o app remove esses dados, a menos que o backup do sistema Android esteja ativo.\n\nA câmera só é usada quando você escolhe tirar ou anexar uma foto, e o link de referência de um desejo só abre em outro app quando você toca em «Abrir link». Nenhuma localização, contato ou identificador de publicidade é lido.</string>
 
     <!-- Painel do estado da coleção (US3, FR-001–FR-011). -->
     <string name="dashboard_title">Painel</string>

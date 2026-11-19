@@ -557,6 +557,8 @@ Decisões registradas nesta entrega:
   virou a aba `catalog`. A rota `capture` — placeholder que duplicava o `+ Mini` e não
   tinha entrada — foi removida. Desejos/Financeiro/Ajustes continuam sem tela, mas agora
   dizem o nome da área e o que já funciona no lugar dela, em vez da mensagem de andaime.
+  *(Superado em 2026-11-18: Financeiro na Fase 7, Desejos na Fase 8 e Ajustes em T132/T133
+  — as três abas têm tela própria e o `PlaceholderScreen` foi removido.)*
 - **Rótulo de aba ≠ título de tela** (`dashboard_tab` = «Painel», `catalog_tab` =
   «Catálogo» contra `catalog_title` = «Coleção»): texto repetido quebrava a semântica do
   Compose e os testes existentes que procuram «Coleção».
@@ -594,7 +596,7 @@ Decisões registradas nesta entrega:
 - [X] T061 [US4] Implementar estado de filtros com chips visíveis e ação de limpar (FR-119) em `app/.../feature/search/SearchFilterState.kt`
 - [X] T062 [US4] Implementar busca global com debounce e contagem de resultados (FR-114, FR-120) em `app/.../feature/search/SearchScreen.kt`
 - [X] T063 [US4] Implementar visualização em grade e em lista detalhada em `app/.../feature/search/CatalogViews.kt`
-- [ ] T064 [US4] Implementar agrupamentos por coleção, fabricante e série em `app/.../feature/search/GroupedCatalogViews.kt` — **parcial**: falta a galeria fotográfica, que depende de miniatura no cartão
+- [X] T064 [US4] Implementar galeria fotográfica e agrupamentos por coleção, fabricante e série em `app/.../feature/search/GroupedCatalogViews.kt` e `app/.../feature/search/CatalogViews.kt`
 
 **Checkpoint**: US4 torna a coleção consultável; sem escrita de dados
 
@@ -603,10 +605,10 @@ Decisões registradas nesta entrega:
 | Verificação | Comando | Resultado observado |
 | --- | --- | --- |
 | Índice FTS e gatilhos (T056) | `./gradlew :core:data:testDebugUnitTest --tests "*SearchIndexTest"` | 5 testes, 0 falhas |
-| Filtros, ordenação e opções (T057) | `./gradlew :core:data:testDebugUnitTest --tests "*SearchRepositoryTest"` | 9 testes, 0 falhas |
-| Tela de busca (T057) | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*SearchScreenTest` | 5 testes, 0 falhas |
-| Regressão completa | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 112 unitários, 0 falhas; lint 0 erros e 6 avisos |
-| Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 27 testes, 0 falhas (2m 51s) |
+| Filtros, ordenação, opções e foto da galeria (T057) | `./gradlew :core:data:testDebugUnitTest --tests "*SearchRepositoryTest"` | 10 testes, 0 falhas |
+| Tela de busca, incluindo galeria (T057/T064) | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*SearchScreenTest` | 6 testes, 0 falhas |
+| Regressão completa | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 113 unitários, 0 falhas; lint 0 erros e 6 avisos |
+| Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 28 testes, 0 falhas (2m 50s) |
 
 Decisões registradas nesta entrega:
 
@@ -627,9 +629,10 @@ Decisões registradas nesta entrega:
   colecionador.
 - **Busca por texto e filtros são combináveis** (`query` entra como subconsulta no
   índice); a contagem exibida é `results.size`, sem segunda consulta.
-- **Galeria fotográfica fica pendente** (T064): o cartão atual mostra nome, ano, escala,
-  cor, condição, status, local e valor; a foto exigiria carregar mídia no resultado e
-  ainda não há miniatura no acervo.
+- **Galeria usa a foto principal** (`is_primary DESC, sort_order`; cai para a primeira
+  disponível quando nenhuma foi marcada). O caminho relativo vem na consulta e é
+  resolvido para `filesDir` na apresentação, como no restante do app; exemplar sem foto
+  continua na galeria com o marcador «Sem foto», em vez de sumir do resultado.
 
 ---
 
@@ -665,18 +668,43 @@ Decisões registradas nesta entrega:
 
 ### Tests for User Story 6
 
-- [ ] T073 [P] [US6] Teste de conversão transacional preservando prioridade, valor máximo e data de criação (FR-063) em `core/domain/src/test/kotlin/br/com/hotwheelscollector/domain/usecase/ConvertWishlistTest.kt`
-- [ ] T074 [P] [US6] Teste de que desejo não entra em contagem de possuídos nem no patrimônio (FR-064) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/WishlistRepositoryTest.kt`
+- [X] T073 [P] [US6] Teste de conversão preservando prioridade, valor máximo e data de criação (FR-063) — em `WishlistRepositoryTest`, junto da implementação da conversão; não há `ConvertWishlistUseCase`, a conversão vive no repositório + ViewModel
+- [X] T074 [P] [US6] Teste de que desejo não entra em contagem de possuídos nem no patrimônio (FR-064) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/WishlistRepositoryTest.kt`
 
 ### Implementation for User Story 6
 
-- [ ] T075 [US6] Implementar `wishlist_item` (CHECK `model_id OR variant_id OR free_text`, `priority` 1..3) e migração v4 em `core/data/.../db/entity/WishlistItemEntity.kt`
-- [ ] T076 [US6] Implementar formulário de desejo (prioridade, valor máximo, encontrado, loja, link, observações) em `app/.../feature/wishlist/WishlistFormScreen.kt`
-- [ ] T077 [US6] Implementar lista de desejos ordenada por prioridade e status em `app/.../feature/wishlist/WishlistScreen.kt`
-- [ ] T078 [US6] Implementar conversão desejo→aquisição com vínculo ao exemplar criado ou existente em `app/.../feature/wishlist/ConvertToAcquisition.kt`
-- [ ] T079 [US6] Implementar abertura de link de referência em app externo com validação `http`/`https` em `app/.../feature/wishlist/ReferenceLink.kt`
+- [X] T075 [US6] `wishlist_item` já existia no schema v1 (`WishlistItemEntity` + `WishlistDao`); sem migração v4. A validação de modelo/variante/texto livre fica no construtor do domínio e no formulário
+- [X] T076 [US6] Implementar formulário de desejo (prioridade, valor máximo, encontrado, loja, link, observações) em `app/.../feature/wishlist/WishlistFormScreen.kt`
+- [X] T077 [US6] Implementar lista de desejos ordenada por prioridade e status em `app/.../feature/wishlist/WishlistScreen.kt`
+- [X] T078 [US6] Implementar conversão desejo→aquisição com vínculo ao exemplar criado ou existente — em `WishlistViewModel` + `WishlistRepositoryImpl` (não há `ConvertToAcquisition.kt`)
+- [X] T079 [US6] Implementar abertura de link de referência em app externo com validação `http`/`https` em `app/.../feature/wishlist/ReferenceLink.kt`
 
 **Checkpoint**: US6 conecta intenção de compra ao financeiro
+
+### Evidências — Fase 8 / US6 e Ajustes (2026-11-18)
+
+| Verificação | Comando | Resultado observado |
+| --- | --- | --- |
+| Desejos no banco (T073/T074) | `./gradlew :core:data:testDebugUnitTest --tests "*WishlistRepositoryTest"` | 4 testes, 0 falhas |
+| Lista e Ajustes (T077/T132/T133) | `./gradlew :app:connectedDebugAndroidTest` | 32 testes, 0 falhas (2m 51s), incluindo `WishlistScreenTest` (3) e `SettingsScreenTest` (1) |
+| Regressão completa | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 117 unitários, 0 falhas; lint 0 erros e 6 avisos |
+
+Decisões registradas nesta entrega:
+
+- **A tabela já existia**: `wishlist_item`, `WishlistDao` e o modelo de domínio vieram da
+  fundação (v1). A US6 não precisou de migração; faltavam o repositório, as telas e a
+  conversão.
+- **Conversão**: desejo vinculado a variante cria o exemplar pelo mesmo caminho do
+  cadastro rápido (aquisição com valor encontrado ou máximo e loja do desejo) e liga o
+  `converted_exemplar_id`; desejo só com texto livre vira `ACQUIRED` sem exemplar e a tela
+  diz isso. Prioridade, valores e `created_at` nunca são reescritos na conversão.
+- **Edição não reabre**: `update` preserva `status` e vínculo; só `markAcquired` e
+  `dismiss` mudam o ciclo de vida.
+- **Título resolvido no SQL**: a consulta junta variante → modelo → fabricante e prefere o
+  texto livre; a lista não faz uma consulta por linha.
+- **Ajustes sem item decorativo**: a tela tem só «Sobre» (versão lida do pacote instalado)
+  e «Política de privacidade» (texto offline). Backup/importação ficam para a US10.
+- **`PlaceholderScreen` removido**: as cinco abas agora abrem telas reais.
 
 ---
 
@@ -864,8 +892,8 @@ Decisões registradas:
 
 - [ ] T130 [P] Auditar acessibilidade (TalkBack, alvos 48 dp, fonte do sistema até 200%, contraste 4.5:1) e corrigir desvios em `app/src/main/res/values/dimens.xml`
 - [ ] T131 [P] Externalizar 100% das strings em pt-BR e remover texto fixo de Composable, com lint limpo em `app/src/main/res/values/strings.xml`
-- [ ] T132 [P] Implementar política de privacidade offline dentro do app (FR-172) em `app/.../feature/settings/PrivacyPolicyScreen.kt`
-- [ ] T133 [P] Implementar tela "Sobre" com versão, data de build e identificador do pacote (FR-171) em `app/.../feature/settings/AboutScreen.kt`
+- [X] T132 [P] Implementar política de privacidade offline dentro do app (FR-172) em `app/.../feature/settings/PrivacyPolicyScreen.kt`
+- [X] T133 [P] Implementar tela "Sobre" com versão e identificador do pacote (FR-171) em `app/.../feature/settings/AboutScreen.kt` — a versão vem do pacote instalado; não há data de build em `BuildConfig`
 - [ ] T134 Implementar `WorkManager` para importação, backup e restauração com progresso e retomada após segundo plano (FR-150) em `app/.../work/TransferWorkers.kt`
 - [ ] T135 Otimizar desempenho: índices faltantes, consultas N+1, Baseline Profile e startup < 2 s em `app/src/main/baseline-prof.txt`
 - [ ] T136 [P] Configurar assinatura de release, AAB e `keystore.properties` fora do versionamento (R.15) em `app/build.gradle.kts`

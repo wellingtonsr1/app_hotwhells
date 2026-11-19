@@ -107,6 +107,7 @@ private fun GalleryTile(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val photoPath = item.primaryPhotoPath
     Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
         Column {
             Box(
@@ -114,9 +115,9 @@ private fun GalleryTile(
                     .fillMaxWidth()
                     .aspectRatio(1f),
             ) {
-                if (item.primaryPhotoPath != null) {
+                if (photoPath != null) {
                     AsyncImage(
-                        model = File(context.filesDir, item.primaryPhotoPath),
+                        model = File(context.filesDir, photoPath),
                         contentDescription = stringResource(
                             R.string.search_gallery_photo,
                             item.modelName,

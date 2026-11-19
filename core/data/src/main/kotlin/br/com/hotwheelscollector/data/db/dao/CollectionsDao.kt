@@ -1,6 +1,8 @@
 package br.com.hotwheelscollector.data.db.dao
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
+import androidx.room.Embedded
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -44,11 +46,38 @@ public interface CollectionItemDao {
     public suspend fun update(entity: CollectionItemEntity)
 }
 
+/** Linha da lista de desejos com o título resolvido pelos vínculos (ou texto livre). */
+public data class WishlistRow(
+    @Embedded public val item: WishlistItemEntity,
+    @ColumnInfo(name = "title") public val title: String?,
+)
+
 @Dao
 public interface WishlistDao {
 
     @Query("SELECT * FROM wishlist_item WHERE status = 'WANTED' ORDER BY priority, created_at")
     public fun observeWanted(): Flow<List<WishlistItemEntity>>
+
+    /**
+     * Lista completa: o que está em aberto primeiro, depois o histórico, sempre por
+     * prioridade e data de criação. O título prefere o texto livre; sem ele, monta
+     * «Fabricante · Modelo» a partir da variante ou do modelo do desejo.
+     */
+    @Query(
+        """
+        SELECT w.*,
+            CASE
+                WHEN TRIM(COALESCE(w.free_text, '')) <> '' THEN TRIM(w.free_text)
+                ELSE COALESCE(mf.name || ' · ' || cm.name, cm.name, '')
+            END AS title
+        FROM wishlist_item w
+        LEFT JOIN variant v ON v.id = w.variant_id
+        LEFT JOIN car_model cm ON cm.id = COALESCE(w.model_id, v.model_id)
+        LEFT JOIN manufacturer mf ON mf.id = cm.manufacturer_id
+        ORDER BY CASE w.status WHEN 'WANTED' THEN 0 ELSE 1 END, w.priority, w.created_at
+        """,
+    )
+    public fun observeAllWithTitle(): Flow<List<WishlistRow>>
 
     @Query("SELECT * FROM wishlist_item WHERE id = :id")
     public suspend fun findById(id: String): WishlistItemEntity?
