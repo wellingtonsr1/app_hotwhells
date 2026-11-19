@@ -4,12 +4,18 @@ import br.com.hotwheelscollector.data.db.AuditLogWriter
 import br.com.hotwheelscollector.data.db.AppDatabase
 import br.com.hotwheelscollector.data.db.TransactionRunner
 import br.com.hotwheelscollector.data.db.entity.LocationEntity
+import br.com.hotwheelscollector.data.db.entity.MovementEntity
 import br.com.hotwheelscollector.data.db.entity.VariantEntity
 import br.com.hotwheelscollector.data.mapper.toDomain
 import br.com.hotwheelscollector.domain.error.DomainError
 import br.com.hotwheelscollector.domain.error.DomainResult
+import br.com.hotwheelscollector.domain.model.ExemplarStatus
 import br.com.hotwheelscollector.domain.model.HistoryEntry
+import br.com.hotwheelscollector.domain.model.InventoryItem
 import br.com.hotwheelscollector.domain.model.Location
+import br.com.hotwheelscollector.domain.model.LocationArchivePolicy
+import br.com.hotwheelscollector.domain.model.LocationNode
+import br.com.hotwheelscollector.domain.model.LocationTree
 import br.com.hotwheelscollector.domain.model.LocationType
 import br.com.hotwheelscollector.domain.model.Movement
 import br.com.hotwheelscollector.domain.model.Variant
@@ -23,6 +29,7 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 /** Variantes: a checagem de fingerprint é a implementação real de FR-040. */
@@ -131,10 +138,11 @@ public class VariantRepositoryImpl @Inject constructor(
     }
 }
 
-/** Localizações: arquivar com exemplares é bloqueado, nunca cascateado (FR-093). */
+/** Localizações: arquivar com exemplares exige decisão explícita, nunca cascata (FR-093). */
 @Singleton
 public class LocationRepositoryImpl @Inject constructor(
     private val database: AppDatabase,
+    private val transactionRunner: TransactionRunner,
     private val auditLogWriter: AuditLogWriter,
     private val clock: Clock,
 ) : LocationRepository {
@@ -142,8 +150,21 @@ public class LocationRepositoryImpl @Inject constructor(
     override fun observeActive(): Flow<List<Location>> =
         database.locationDao().observeActive().map { rows -> rows.map { it.toDomain() } }
 
+    override fun observeTree(): Flow<List<LocationNode>> = combine(
+        database.locationDao().observeActive(),
+        database.locationDao().observeOwnedCounts(),
+    ) { rows, counts ->
+        LocationTree.build(
+            locations = rows.map { it.toDomain() },
+            counts = counts.associate { it.locationId to it.total },
+        )
+    }
+
     override suspend fun children(parentId: String): List<Location> =
         database.locationDao().findChildren(parentId).map { it.toDomain() }
+
+    override suspend fun findById(id: String): Location? =
+        database.locationDao().findById(id)?.toDomain()
 
     override suspend fun add(
         type: LocationType,
@@ -152,6 +173,9 @@ public class LocationRepositoryImpl @Inject constructor(
     ): DomainResult<Location> {
         if (name.isBlank()) {
             return Result.failure(DomainError.Validation("Nome da localização é obrigatório."))
+        }
+        if (parentId != null && database.locationDao().findById(parentId) == null) {
+            return Result.failure(DomainError.NotFound)
         }
         val now = Instant.now(clock).toEpochMilli()
         val entity = LocationEntity(
@@ -189,21 +213,118 @@ public class LocationRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun archive(id: String): DomainResult<Unit> {
-        val inUse = database.locationDao().countExemplars(id)
-        if (inUse > 0) {
-            return Result.failure(
-                DomainError.Blocked(
-                    "Esta localização tem $inUse exemplar(es). Mova-os ou arquive-os antes.",
-                ),
+    override suspend fun archive(
+        id: String,
+        policy: LocationArchivePolicy,
+    ): DomainResult<Int> = try {
+        val handled = transactionRunner.inTransaction {
+            val current = database.locationDao().findById(id) ?: throw DomainError.NotFound
+            if (current.archivedAt != null) return@inTransaction 0
+
+            val children = database.locationDao().findChildren(id)
+            if (children.isNotEmpty()) {
+                throw DomainError.Blocked(
+                    "Esta localização tem ${children.size} sublocalização(ões) ativa(s). " +
+                        "Organize ou exclua as sublocalizações antes.",
+                )
+            }
+
+            val exemplarIds = database.locationDao().findExemplarIdsAt(id)
+            val now = Instant.now(clock)
+            val millis = now.toEpochMilli()
+
+            when (policy) {
+                LocationArchivePolicy.None -> if (exemplarIds.isNotEmpty()) {
+                    throw DomainError.Blocked(
+                        "Esta localização tem ${exemplarIds.size} exemplar(es). " +
+                            "Escolha mover para outra localização ou arquivar os exemplares.",
+                    )
+                }
+
+                is LocationArchivePolicy.MoveTo -> {
+                    if (policy.targetLocationId == id) {
+                        throw DomainError.Validation("Escolha outra localização de destino.")
+                    }
+                    val target = database.locationDao().findById(policy.targetLocationId)
+                        ?: throw DomainError.NotFound
+                    if (target.archivedAt != null) {
+                        throw DomainError.Validation("A localização de destino está arquivada.")
+                    }
+                    exemplarIds.forEach { exemplarId ->
+                        database.exemplarDao().setLocation(exemplarId, target.id, millis)
+                        database.movementDao().insert(
+                            MovementEntity(
+                                id = UUID.randomUUID().toString(),
+                                exemplarId = exemplarId,
+                                at = millis,
+                                fromLocationId = id,
+                                toLocationId = target.id,
+                                note = "Movimentação ao excluir a localização",
+                            ),
+                        )
+                        auditLogWriter.record(
+                            entityType = "exemplar",
+                            entityId = exemplarId,
+                            field = "location_id",
+                            oldValue = id,
+                            newValue = target.id,
+                            source = "app",
+                            at = now,
+                        )
+                    }
+                }
+
+                LocationArchivePolicy.ArchiveExemplars -> exemplarIds.forEach { exemplarId ->
+                    database.exemplarDao().setStatus(
+                        exemplarId,
+                        ExemplarStatus.ARCHIVED.name,
+                        millis,
+                    )
+                    database.movementDao().insert(
+                        MovementEntity(
+                            id = UUID.randomUUID().toString(),
+                            exemplarId = exemplarId,
+                            at = millis,
+                            fromLocationId = id,
+                            toLocationId = null,
+                            note = "Exemplar arquivado com a localização",
+                        ),
+                    )
+                    auditLogWriter.record(
+                        entityType = "exemplar",
+                        entityId = exemplarId,
+                        field = "status",
+                        oldValue = ExemplarStatus.OWNED.name,
+                        newValue = ExemplarStatus.ARCHIVED.name,
+                        source = "app",
+                        at = now,
+                    )
+                }
+            }
+
+            database.locationDao().archive(id, millis)
+            auditLogWriter.record(
+                entityType = "location",
+                entityId = id,
+                field = "archived",
+                oldValue = null,
+                newValue = current.name,
+                source = "app",
+                at = now,
             )
+            exemplarIds.size
         }
-        database.locationDao().archive(id, Instant.now(clock).toEpochMilli())
-        return Result.success(Unit)
+        Result.success(handled)
+    } catch (error: Throwable) {
+        Result.failure(if (error is DomainError) error else DomainError.Storage(error.message ?: "Falha ao excluir localização."))
     }
 
     override suspend fun movements(exemplarId: String): Flow<List<Movement>> =
         database.movementDao().observeByExemplar(exemplarId)
+            .map { rows -> rows.map { it.toDomain() } }
+
+    override fun observeContents(locationId: String): Flow<List<InventoryItem>> =
+        database.locationDao().observeContents(locationId)
             .map { rows -> rows.map { it.toDomain() } }
 }
 

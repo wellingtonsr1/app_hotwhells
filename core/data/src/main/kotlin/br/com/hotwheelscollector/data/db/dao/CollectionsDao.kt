@@ -23,12 +23,33 @@ public interface CollectionDao {
     @Query("SELECT * FROM collection WHERE id = :id")
     public suspend fun findById(id: String): CollectionEntity?
 
+    @Query("SELECT COUNT(*) FROM collection WHERE parent_id = :parentId AND archived_at IS NULL")
+    public suspend fun countActiveChildren(parentId: String): Int
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun insert(entity: CollectionEntity)
 
     @Update
     public suspend fun update(entity: CollectionEntity)
 }
+
+/**
+ * Item de coleção com o rótulo resolvido e a contagem de exemplares possuídos.
+ *
+ * `owned` soma os exemplares da variante apontada e, quando o item é de modelo, os
+ * exemplares de todas as variantes daquele modelo — sempre `status = 'OWNED'`, porque
+ * vendido/arquivado continua no banco mas não conta como possuído (FR-044).
+ */
+public data class CollectionItemRow(
+    @ColumnInfo(name = "id") val id: String,
+    @ColumnInfo(name = "collection_id") val collectionId: String,
+    @ColumnInfo(name = "variant_id") val variantId: String?,
+    @ColumnInfo(name = "model_id") val modelId: String?,
+    @ColumnInfo(name = "expected") val expected: Int,
+    @ColumnInfo(name = "non_collectible") val nonCollectible: Int,
+    @ColumnInfo(name = "label") val label: String,
+    @ColumnInfo(name = "owned") val owned: Int,
+)
 
 @Dao
 public interface CollectionItemDao {
@@ -39,11 +60,56 @@ public interface CollectionItemDao {
     @Query("SELECT * FROM collection_item WHERE collection_id = :collectionId AND variant_id = :variantId LIMIT 1")
     public suspend fun findByVariant(collectionId: String, variantId: String): CollectionItemEntity?
 
+    @Query("SELECT * FROM collection_item WHERE collection_id = :collectionId AND model_id = :modelId LIMIT 1")
+    public suspend fun findByModel(collectionId: String, modelId: String): CollectionItemEntity?
+
+    @Query("SELECT * FROM collection_item WHERE id = :id")
+    public suspend fun findById(id: String): CollectionItemEntity?
+
+    /**
+     * Todos os itens ativos, com rótulo e possuídos. Uma consulta só: a lista de coleções
+     * agrupa em memória, em vez de disparar uma consulta por coleção.
+     */
+    @Query(
+        """
+        SELECT i.id AS id,
+               i.collection_id AS collection_id,
+               i.variant_id AS variant_id,
+               i.model_id AS model_id,
+               i.expected AS expected,
+               i.non_collectible AS non_collectible,
+               COALESCE(
+                   mf.name || ' · ' || cm.name || COALESCE(' · ' || c.name, ''),
+                   cm.name,
+                   ''
+               ) AS label,
+               (SELECT COUNT(*) FROM exemplar e
+                WHERE e.status = 'OWNED' AND e.variant_id = i.variant_id)
+             + (SELECT COUNT(*) FROM exemplar e
+                JOIN variant v ON v.id = e.variant_id
+                WHERE e.status = 'OWNED' AND v.model_id = i.model_id) AS owned
+        FROM collection_item i
+        JOIN collection col ON col.id = i.collection_id AND col.archived_at IS NULL
+        LEFT JOIN variant v ON v.id = i.variant_id
+        LEFT JOIN car_model cm ON cm.id = COALESCE(i.model_id, v.model_id)
+        LEFT JOIN manufacturer mf ON mf.id = cm.manufacturer_id
+        LEFT JOIN color c ON c.id = v.primary_color_id
+        ORDER BY label COLLATE NOCASE
+        """,
+    )
+    public fun observeAllWithOwned(): Flow<List<CollectionItemRow>>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun insert(entity: CollectionItemEntity)
 
     @Update
     public suspend fun update(entity: CollectionItemEntity)
+
+    @Query("UPDATE collection_item SET non_collectible = :flag WHERE id = :id")
+    public suspend fun setNonCollectible(id: String, flag: Int)
+
+    @Query("DELETE FROM collection_item WHERE id = :id")
+    public suspend fun deleteById(id: String)
 }
 
 /** Linha da lista de desejos com o título resolvido pelos vínculos (ou texto livre). */

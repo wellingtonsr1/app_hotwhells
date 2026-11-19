@@ -644,19 +644,73 @@ Decisões registradas nesta entrega:
 
 ### Tests for User Story 5
 
-- [ ] T065 [P] [US5] Teste de progresso (`possuídos / (esperados − não colecionáveis)`) e lista de faltantes em `core/domain/src/test/kotlin/br/com/hotwheelscollector/domain/usecase/CollectionProgressTest.kt`
-- [ ] T066 [P] [US5] Teste Compose da tela de coleção (percentual, faltantes, adquiridos) em `app/src/androidTest/java/br/com/hotwheelscollector/feature/organization/CollectionDetailTest.kt`
+- [X] T065 [P] [US5] Teste de progresso (`possuídos / (esperados − não colecionáveis)`) e lista de faltantes em `core/domain/src/test/kotlin/br/com/hotwheelscollector/domain/usecase/CollectionProgressTest.kt` — **verde**, 7 testes; a consulta real é coberta por `CollectionRepositoryTest` (7 testes)
+- [X] T066 [P] [US5] Teste Compose da tela de coleção (percentual, faltantes, adquiridos) em `app/src/androidTest/java/br/com/hotwheelscollector/feature/organization/CollectionDetailTest.kt` — **verde**, 3 testes no emulador API 36
 
 ### Implementation for User Story 5
 
-- [ ] T067 [US5] Implementar entidades `series`, `collection`, `collection_item` com CHECK de exatamente um entre `variant_id`/`model_id` em `core/data/.../db/entity/OrganizationEntities.kt`
-- [ ] T068 [US5] Migração v3 criando as três tabelas, hierarquias e índices únicos parciais em `core/data/.../db/migration/Migration_3_Organization.kt`
-- [ ] T069 [US5] Implementar `CollectionProgressUseCase` e `MissingItemsUseCase` (FR-052–FR-054) em `core/domain/.../usecase/CollectionProgressUseCase.kt`
-- [ ] T070 [US5] Implementar CRUD de série e coleção com hierarquia e proteção contra ciclo em `app/.../feature/organization/CollectionFormScreen.kt`
-- [ ] T071 [US5] Implementar tela de coleção com percentual, faltantes e itens não colecionáveis em `app/.../feature/organization/CollectionDetailScreen.kt`
-- [ ] T072 [US5] Implementar marcação "não colecionável" e renomear/reorganizar sem perder vínculos (FR-055, FR-056) em `app/.../feature/organization/CollectionItemsScreen.kt`
+- [X] T067 [US5] **Obsoleta (2026-11-19).** `SeriesEntity`, `CollectionEntity` e `CollectionItemEntity` já existem no schema v1 — `OrganizationEntities.kt` nunca foi necessário. A separação exata entre `variant_id`/`model_id` não é CHECK no SQLite: é regra de domínio, registrada no comentário de `CollectionItemEntity`
+- [X] T068 [US5] **Obsoleta (2026-11-19).** Não há migração v3: `AppDatabase` está em `version = 1` e o `1.json` exportado já contém as três tabelas com hierarquia (`parent_id`) e índices. Não existe pasta `db/migration/`
+- [X] T069 [US5] Implementar `CollectionProgressUseCase` e `MissingItemsUseCase` (FR-052–FR-054) — os dois estão em `core/domain/.../usecase/CollectionUseCases.kt`; a regra em si vive em `CollectionProgressCalculator` (`domain/model/CollectionProgress.kt`), usada pelo painel e pela tela de coleção
+- [X] T070 [US5] Implementar CRUD de série e coleção com hierarquia e proteção contra ciclo — coleções em `app/.../feature/organization/CollectionFormScreen.kt` (`CollectionsScreen`, `CollectionDetailScreen`) e séries em `SeriesScreen.kt`; a proteção contra ciclo é do repositório (`update` sobe a cadeia de pais)
+- [X] T071 [US5] Implementar tela de coleção com percentual, faltantes e itens não colecionáveis em `app/.../feature/organization/CollectionDetailScreen.kt` — inclui o seletor de item (`CollectionItemPicker.kt`), com abas de variante e modelo
+- [X] T072 [US5] Implementar marcação "não colecionável" e renomear/reorganizar sem perder vínculos (FR-055, FR-056) — a marcação fica na linha do item em `CollectionDetailScreen.kt`; renomear/mover é `CollectionRepository.update`, que audita nome e `parent_id` e recusa ciclo. Arquivar com subcoleção ativa é bloqueado, não cascateado
 
 **Checkpoint**: US5 fecha o ciclo de "o que falta comprar"
+
+### Situação real — Fase 7 / US5 (2026-11-19)
+
+Verificado no código antes de abrir a fase: **US5 não precisa de schema novo**.
+
+- `SeriesEntity`, `CollectionEntity` e `CollectionItemEntity` já estão em `AppDatabase`
+  (23 entidades, `version = 1`) e no `1.json` exportado; não existe pasta `db/migration/`.
+- `CollectionDao` e `CollectionItemDao` (`core/data/.../db/dao/CollectionsDao.kt`) já cobrem
+  lista ativa, busca por id, inserção/atualização de coleção, itens por coleção e busca por
+  variante.
+- O painel já calcula progresso de coleção (`DashboardDao.observeCollectionProgress`) e
+  conta coleções ativas, mas **nada no app cria uma coleção** — por isso a visão «Coleção»
+  da busca só mostra «Sem coleção».
+- A regra «exatamente um entre `variant_id` e `model_id`» em `collection_item` não é CHECK
+  no SQLite: fica na validação de domínio (comentário registrado na entidade).
+
+**O que falta de fato:** T065, T066 e T069–T072 — repositório, use cases de progresso e
+faltantes, CRUD de série/coleção, telas de coleção e marcação de não colecionável.
+
+### Evidências — Fase 7 / US5 (2026-11-19)
+
+Entrega: repositório e cálculo de progresso, telas de coleção (lista, detalhe, formulário),
+seletor de item por variante ou modelo, marcação de não colecionável, CRUD de séries e
+proteção contra ciclo. **Nenhuma alteração de schema** — tudo usa as tabelas do v1.
+
+| Verificação | Comando | Resultado |
+| --- | --- | --- |
+| Progresso e faltantes (T065) | `./gradlew :core:domain:test` | `CollectionProgressTest`: 7 testes, 0 falhas (39 no módulo) |
+| Coleção no banco | `./gradlew :core:data:testDebugUnitTest` | `CollectionRepositoryTest`: 7 testes, 0 falhas (68 no módulo) |
+| Tela de coleção (T066) | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*CollectionDetailTest` | `CollectionDetailTest`: 3 testes, 0 falhas (emulador `hw_test`, API 36) |
+| Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 35 testes, 0 falhas (2m 41s) |
+| Compilação, APK e lint | `./gradlew :app:assembleDebug :app:lintDebug` | `BUILD SUCCESSFUL`, `0 errors, 8 warnings` |
+
+Regras registradas nesta entrega:
+
+- **Progresso é por unidade, não por linha**: um item com `expected = 2` pesa dois no
+  denominador e `min(possuídos, esperado)` no numerador. Com o padrão `expected = 1`, o
+  número coincide com a consulta do painel; a diferença só aparece quando o colecionador
+  pede mais de uma unidade do mesmo item.
+- **Item não colecionável sai dos dois lados** da fração, não da coleção: continua listado
+  e pode ser revertido.
+- **Uma regra só**: `CollectionProgressCalculator` é usado pela lista de coleções e pelo
+  detalhe; o painel mantém a consulta SQL que já existia e que coincide no caso padrão.
+- **`owned` conta só `status = 'OWNED'`**, igual ao painel: vendido e arquivado continuam
+  no banco mas não são progresso.
+- **Ciclo é recusado na escrita**, não na leitura: `update` sobe a cadeia de pais e
+  devolve `Validation` quando o novo pai é descendente da própria coleção.
+- **Arquivar coleção com subcoleção ativa é bloqueado** (`Blocked`), sem cascata; itens da
+  coleção arquivada continuam guardados.
+- **Séries**: criar, renomear e arquivar por fabricante. Arquivar não apaga a série nem
+  mexe nas variantes que a apontam.
+- **Limite conhecido**: a edição dos itens cobre quantidade esperada apenas na criação via
+  repositório; a tela adiciona com `expected = 1` e oferece marcar não colecionável e
+  remover. Editar a quantidade pela interface continua aberto.
 
 ---
 
@@ -722,7 +776,7 @@ Decisões registradas nesta entrega:
 
 ### Implementation for User Story 7
 
-- [ ] T082 [US7] Implementar `negotiation` e `negotiation_event` com índice parcial único em `OPEN`/`RESERVED` e migração v5 em `core/data/.../db/entity/NegotiationEntities.kt`
+- [X] T082 [US7] **Obsoleta (2026-11-19).** `negotiation` e `negotiation_event` já nascem no schema v1 (`NegotiationEntity`/`NegotiationEventEntity`, DAOs em `CollectionsDao.kt`); não há migração v5 nem `NegotiationEntities.kt`. O índice parcial único de `OPEN`/`RESERVED` **não** existe: a unicidade de negociação ativa fica na transação do repositório, coberta por T081/T085
 - [ ] T083 [US7] Implementar consulta `GetDuplicatesUseCase` agrupada por variante com contagem (FR-065) em `core/domain/.../usecase/GetDuplicatesUseCase.kt`
 - [ ] T084 [US7] Implementar marcação de disponibilidade (troca, venda, ambos, indisponível) com condição e valor pretendido em `app/.../feature/duplicates/DuplicateActionsSheet.kt`
 - [ ] T085 [US7] Implementar reserva com bloqueio de segunda negociação ativa em `app/.../feature/duplicates/NegotiationScreen.kt`
@@ -731,6 +785,25 @@ Decisões registradas nesta entrega:
 - [ ] T088 [US7] Implementar cancelamento que devolve estado anterior e mantém `negotiation_event` imutável (FR-072–FR-073) em `app/.../feature/duplicates/NegotiationHistoryScreen.kt`
 
 **Checkpoint**: US7 evita vender o exemplar errado e mantém rastro da negociação
+
+### Situação real — Fase 9 / US7 (2026-11-19)
+
+Como em US5, as tabelas vieram da fundação: `negotiation` e `negotiation_event` estão no
+`AppDatabase` v1, com `NegotiationDao` e `NegotiationEventDao` (lista por exemplar, busca de
+negociação ativa, contagem por exemplar, histórico por negociação). O painel já exibe
+«Variantes repetidas» (`DashboardDao.observeVariantsWithDuplicates`), mas não há como agir
+sobre o número.
+
+**Duas ressalvas registradas na análise:**
+
+1. O índice parcial único descrito em T082 não existe — as entidades têm só índices não
+   únicos (`exemplar_id + status`, `status`). A garantia de «uma negociação ativa por
+   exemplar» tem de ser transacional no repositório, e é isso que T081 testa.
+2. A disponibilidade para troca/venda (T084) não tem coluna própria no schema: ou vira
+   `negotiation` do tipo correspondente, ou exige migração nova — decisão a tomar antes de
+   T084, não presumida aqui.
+
+**O que falta de fato:** T080, T081 e T083–T088.
 
 ---
 
@@ -822,14 +895,28 @@ Decisões registradas:
 
 ### Implementation for User Story 9
 
-- [ ] T101 [US9] Implementar `location` (tipos ENVIRONMENT…CUSTOM) e `movement` + migração v6 em `core/data/.../db/entity/LocationEntities.kt`
+- [X] T101 [US9] **Obsoleta (2026-11-19).** `LocationEntity` (com `type`), `MovementEntity` e os DAOs `LocationDao`/`MovementDao` já estão no schema v1 (`InventoryDao.kt`, `SearchDao.kt`); não há migração v6 nem `LocationEntities.kt`
 - [ ] T102 [US9] Implementar árvore de localização com criação de níveis e nomes personalizados em `app/.../feature/locations/LocationTreeScreen.kt`
-- [ ] T103 [US9] Implementar atribuição e movimentação com histórico em transação única (FR-090–FR-091) em `app/.../feature/locations/MoveExemplarSheet.kt`
+- [X] T103 [US9] Implementar atribuição e movimentação com histórico em transação única (FR-090–FR-091) — **entregue dentro de `app/src/main/java/br/com/hotwheelscollector/feature/catalog/ExemplarDetailScreen.kt`**, não em `MoveExemplarSheet.kt`: localização, movimentação com observação e histórico saem do mesmo `SupportRepositories`, em `transactionRunner.inTransaction`
 - [ ] T104 [US9] Implementar diálogo de exclusão com decisão explícita (mover ou arquivar), sem cascata em `app/.../feature/locations/DeleteLocationDialog.kt`
 - [ ] T105 [US9] Implementar consulta e filtro por localização em qualquer nível da hierarquia (FR-094) em `app/.../feature/locations/LocationContentsScreen.kt`
 - [ ] T106 [US9] Implementar inventário por localização (FR-095) em `app/.../feature/locations/LocationInventoryScreen.kt`
 
 **Checkpoint**: US9 resolve "não sei onde guardei"
+
+### Situação real — Fase 11 / US9 (2026-11-19)
+
+A fase está **meio entregue**, e não do jeito que o plano previa:
+
+- T101 é obsoleta — as tabelas `location` e `movement` vieram da fundação.
+- **T103 está entregue**, mas dentro de `ExemplarDetailScreen` (movimentação com histórico
+  em transação única, via `SupportRepositories`), e não em `MoveExemplarSheet.kt`.
+- `LocationRepository` já existe em `SupportRepositories.kt`, incluindo a lista usada pelo
+  cadastro de exemplar (`AddExemplarScreen`).
+
+**O que falta de fato:** T099, T100, T102 e T104–T106. Sem a árvore de locais (T102), o
+usuário só escolhe entre as localizações que já existirem — não há como criar
+«Estante A > Prateleira 3» pela interface, que é justamente o Independent Test da fase.
 
 ---
 ## Phase 12: User Story 10 - Relatórios, importação, exportação e backup (Priority: P4)
@@ -914,11 +1001,12 @@ Saiu do Kotlin, nesta rodada:
   `catalog_exemplar_none`;
 - rótulos de ângulo de foto, «Galeria»/«Câmera» e «Ainda não salva» (rodada anterior).
 
-**Continua fora de `strings.xml`**, e por isso o checkbox segue aberto: as mensagens de
-snackbar dos ViewModels (`AddExemplarViewModel`, `CreateCatalogEntryViewModel`,
-`VariantFormViewModel`) e o texto do `PlaceholderScreen`, que ainda mostra a mensagem de
-andaime «Estrutura inicial criada…». Padronizar isso exige decidir se as mensagens de
-estado viram `@StringRes` no ViewModel ou códigos de erro resolvidos na tela.
+**Continua fora de `strings.xml`**, e por isso o checkbox segue aberto: **apenas** as
+mensagens de snackbar dos ViewModels (`AddExemplarViewModel`, `CreateCatalogEntryViewModel`,
+`VariantFormViewModel`). O texto do `PlaceholderScreen` não conta mais: a tela foi removida
+na Fase 8, quando Desejos e Ajustes ganharam tela própria. Padronizar o restante exige
+decidir se as mensagens de estado viram `@StringRes` no ViewModel ou códigos de erro
+resolvidos na tela.
 
 ---
 

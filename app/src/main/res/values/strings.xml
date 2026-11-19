@@ -325,4 +325,55 @@
         <item quantity="one">%1$d exemplar</item>
         <item quantity="other">%1$d exemplares</item>
     </plurals>
+
+    <!-- Coleções e séries (US5, FR-049–FR-056). -->
+    <string name="collections_title">Coleções</string>
+    <string name="collections_open">Coleções</string>
+    <string name="collections_add">+ Coleção</string>
+    <string name="collections_back">Voltar</string>
+    <string name="collections_series_action">Séries</string>
+    <string name="collections_loading">Carregando coleções…</string>
+    <string name="collections_empty_title">Nenhuma coleção ainda</string>
+    <string name="collections_empty_hint">Crie uma coleção para acompanhar o que já tem e o que falta comprar.</string>
+    <string name="collections_progress">%1$d de %2$d unidades</string>
+    <string name="collections_percent">%1$d%%</string>
+    <string name="collections_no_items">Sem itens ainda</string>
+    <string name="collection_form_title">Nova coleção</string>
+    <string name="collection_form_edit_title">Editar coleção</string>
+    <string name="collection_form_name">Nome da coleção</string>
+    <string name="collection_form_description">Descrição (opcional)</string>
+    <string name="collection_form_parent">Coleção superior</string>
+    <string name="collection_form_no_parent">Sem coleção superior</string>
+    <string name="collection_form_save">Salvar coleção</string>
+    <string name="collection_detail_missing_title">Faltando (%1$d)</string>
+    <string name="collection_detail_missing_empty">Nada faltando: todos os itens estão na estante.</string>
+    <string name="collection_detail_items_title">Itens da coleção</string>
+    <string name="collection_detail_items_empty">Nenhum item ainda. Toque em + Item para adicionar uma variante ou um modelo.</string>
+    <string name="collection_detail_add_item">+ Item</string>
+    <string name="collection_detail_edit">Editar</string>
+    <string name="collection_detail_archive">Arquivar</string>
+    <string name="collection_detail_archive_title">Arquivar coleção?</string>
+    <string name="collection_detail_archive_message">Ela sai da lista e das contagens. Os itens continuam guardados e as variantes não são afetadas.</string>
+    <string name="collection_detail_units">%1$d de %2$d</string>
+    <string name="collection_detail_mark_non_collectible">Não colecionável</string>
+    <string name="collection_detail_unmark_non_collectible">Colecionável</string>
+    <string name="collection_detail_remove">Remover</string>
+    <string name="collection_detail_not_found">Coleção não encontrada. Ela pode ter sido arquivada.</string>
+    <string name="collection_item_picker_title">Adicionar item</string>
+    <string name="collection_item_picker_variant">Variante</string>
+    <string name="collection_item_picker_model">Modelo</string>
+    <string name="collection_item_picker_search">Buscar…</string>
+    <string name="collection_item_picker_empty">Nenhuma opção encontrada.</string>
+    <string name="series_title">Séries</string>
+    <string name="series_add">+ Série</string>
+    <string name="series_manufacturer">Fabricante</string>
+    <string name="series_empty">Nenhuma série cadastrada para este fabricante.</string>
+    <string name="series_form_title">Nova série</string>
+    <string name="series_rename_title">Renomear série</string>
+    <string name="series_name">Nome da série</string>
+    <string name="series_parent">Série superior</string>
+    <string name="series_no_parent">Sem série superior</string>
+    <string name="series_save">Salvar série</string>
+    <string name="series_archive">Arquivar série?</string>
+    <string name="series_archive_message">As variantes continuam existindo; elas só perdem o agrupamento por série.</string>
 </resources>

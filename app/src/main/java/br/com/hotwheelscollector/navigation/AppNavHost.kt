@@ -38,6 +38,10 @@ import br.com.hotwheelscollector.feature.catalog.IncompleteEntriesScreen
 import br.com.hotwheelscollector.feature.catalog.VariantFormScreen
 import br.com.hotwheelscollector.feature.dashboard.DashboardScreen
 import br.com.hotwheelscollector.feature.finance.FinanceScreen
+import br.com.hotwheelscollector.feature.organization.CollectionDetailScreen
+import br.com.hotwheelscollector.feature.organization.CollectionFormScreen
+import br.com.hotwheelscollector.feature.organization.CollectionsScreen
+import br.com.hotwheelscollector.feature.organization.SeriesScreen
 import br.com.hotwheelscollector.feature.search.SearchScreen
 import br.com.hotwheelscollector.feature.settings.AboutScreen
 import br.com.hotwheelscollector.feature.settings.PrivacyPolicyScreen
@@ -96,6 +100,29 @@ public sealed class Destination(public val route: String) {
     public data object ExemplarDetail : Destination("exemplar/{${RouteArgs.EXEMPLAR_ID}}") {
         public fun routeFor(exemplarId: String): String = "exemplar/$exemplarId"
     }
+    /** Coleções com progresso (US5): abertas do cabeçalho do catálogo. */
+    public data object Collections : Destination("catalog/collections")
+
+    /** Detalhe da coleção: percentual, faltantes e itens. */
+    public data object CollectionDetail :
+        Destination("collections/{${RouteArgs.COLLECTION_ID}}") {
+        public fun routeFor(collectionId: String): String = "collections/$collectionId"
+    }
+
+    /** Formulário de coleção; sem argumento cria, com argumento edita. */
+    public data object CollectionForm :
+        Destination("collections/form?${RouteArgs.COLLECTION_ID}={${RouteArgs.COLLECTION_ID}}") {
+        public fun routeFor(collectionId: String? = null): String =
+            if (collectionId == null) {
+                "collections/form"
+            } else {
+                "collections/form?${RouteArgs.COLLECTION_ID}=$collectionId"
+            }
+    }
+
+    /** Séries do fabricante, com criação, renomeação e arquivamento (FR-048–FR-049). */
+    public data object Series : Destination("catalog/series")
+
     /** Lista de desejos (US6). */
     public data object Wishlist : Destination("wishlist")
 
@@ -120,6 +147,7 @@ public object RouteArgs {
     public const val MODEL_ID: String = "modelId"
     public const val PHOTO_ID: String = "photoId"
     public const val WISHLIST_ITEM_ID: String = "itemId"
+    public const val COLLECTION_ID: String = "collectionId"
 }
 
 /** Aba da barra inferior: rota, rótulo e ícone. Só rotas de primeiro nível entram aqui. */
@@ -197,7 +225,46 @@ public fun AppNavHost(
                     onCreateEntry = { navController.navigate(Destination.CreateEntry.route) },
                     onOpenIncomplete = { navController.navigate(Destination.Incomplete.route) },
                     onOpenSearch = { navController.navigate(Destination.Search.route) },
+                    onOpenCollections = { navController.navigate(Destination.Collections.route) },
                 )
+            }
+            composable(Destination.Collections.route) {
+                CollectionsScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenCollection = { collectionId ->
+                        navController.navigate(Destination.CollectionDetail.routeFor(collectionId))
+                    },
+                    onCreate = { navController.navigate(Destination.CollectionForm.routeFor()) },
+                    onOpenSeries = { navController.navigate(Destination.Series.route) },
+                )
+            }
+            composable(
+                route = Destination.CollectionDetail.route,
+                arguments = listOf(
+                    navArgument(RouteArgs.COLLECTION_ID) { type = NavType.StringType },
+                ),
+            ) { entry ->
+                CollectionDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onEdit = { collectionId ->
+                        navController.navigate(Destination.CollectionForm.routeFor(collectionId))
+                    },
+                )
+            }
+            composable(
+                route = Destination.CollectionForm.route,
+                arguments = listOf(
+                    navArgument(RouteArgs.COLLECTION_ID) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+            ) {
+                CollectionFormScreen(onDone = { navController.popBackStack() })
+            }
+            composable(Destination.Series.route) {
+                SeriesScreen(onBack = { navController.popBackStack() })
             }
             composable(Destination.Search.route) {
                 SearchScreen(

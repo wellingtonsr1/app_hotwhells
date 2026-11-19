@@ -236,6 +236,37 @@ public class SeriesRepositoryImpl @Inject constructor(
         database.seriesDao().observeByManufacturer(manufacturerId)
             .map { rows -> rows.map { it.toDomain() } }
 
+    override suspend fun findById(id: String): Series? =
+        database.seriesDao().findById(id)?.toDomain()
+
+    override suspend fun rename(id: String, name: String): DomainResult<Unit> {
+        val current = database.seriesDao().findById(id)
+            ?: return Result.failure(DomainError.NotFound)
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) {
+            return Result.failure(DomainError.Validation("Informe o nome da série."))
+        }
+        return try {
+            database.seriesDao().update(
+                current.copy(name = trimmed, updatedAt = Instant.now(clock).toEpochMilli()),
+            )
+            Result.success(Unit)
+        } catch (error: Throwable) {
+            Result.failure(DomainError.Storage(error.message ?: "Falha ao renomear série."))
+        }
+    }
+
+    override suspend fun archive(id: String): DomainResult<Unit> {
+        database.seriesDao().findById(id)
+            ?: return Result.failure(DomainError.NotFound)
+        return try {
+            database.seriesDao().archive(id, Instant.now(clock).toEpochMilli())
+            Result.success(Unit)
+        } catch (error: Throwable) {
+            Result.failure(DomainError.Storage(error.message ?: "Falha ao arquivar série."))
+        }
+    }
+
     override suspend fun add(
         manufacturerId: String,
         name: String,

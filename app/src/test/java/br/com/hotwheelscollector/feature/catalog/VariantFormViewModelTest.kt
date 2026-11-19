@@ -372,6 +372,13 @@ private class FakeSeriesRepository : SeriesRepository {
     override fun observeByManufacturer(manufacturerId: String): Flow<List<Series>> =
         flowOf(emptyList())
 
+    override suspend fun findById(id: String): Series? = null
+
+    override suspend fun rename(id: String, name: String): DomainResult<Unit> =
+        Result.success(Unit)
+
+    override suspend fun archive(id: String): DomainResult<Unit> = Result.success(Unit)
+
     override suspend fun add(
         manufacturerId: String,
         name: String,

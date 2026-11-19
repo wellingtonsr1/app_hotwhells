@@ -5,6 +5,7 @@ import androidx.room.Room
 import br.com.hotwheelscollector.data.db.AppDatabase
 import br.com.hotwheelscollector.data.repository.AcquisitionRepositoryImpl
 import br.com.hotwheelscollector.data.repository.CarModelRepositoryImpl
+import br.com.hotwheelscollector.data.repository.CollectionRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ColorRepositoryImpl
 import br.com.hotwheelscollector.data.repository.DashboardRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ExemplarRepositoryImpl
@@ -22,6 +23,7 @@ import br.com.hotwheelscollector.data.storage.FileImageStore
 import br.com.hotwheelscollector.data.storage.ImageStore
 import br.com.hotwheelscollector.domain.repository.AcquisitionRepository
 import br.com.hotwheelscollector.domain.repository.CarModelRepository
+import br.com.hotwheelscollector.domain.repository.CollectionRepository
 import br.com.hotwheelscollector.domain.repository.ColorRepository
 import br.com.hotwheelscollector.domain.repository.DashboardRepository
 import br.com.hotwheelscollector.domain.repository.ExemplarRepository
@@ -174,4 +176,10 @@ public abstract class RepositoryModule {
     @Binds
     @Singleton
     public abstract fun bindWishlistRepository(impl: WishlistRepositoryImpl): WishlistRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindCollectionRepository(
+        impl: CollectionRepositoryImpl,
+    ): CollectionRepository
 }

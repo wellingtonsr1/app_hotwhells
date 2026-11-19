@@ -149,6 +149,12 @@ public interface SeriesDao {
     @Query("SELECT * FROM series WHERE parent_id = :parentId AND archived_at IS NULL")
     public suspend fun findChildren(parentId: String): List<SeriesEntity>
 
+    @Query("SELECT * FROM series WHERE id = :id")
+    public suspend fun findById(id: String): SeriesEntity?
+
+    @Query("UPDATE series SET archived_at = :at, updated_at = :at WHERE id = :id")
+    public suspend fun archive(id: String, at: Long)
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun insert(entity: SeriesEntity)
 

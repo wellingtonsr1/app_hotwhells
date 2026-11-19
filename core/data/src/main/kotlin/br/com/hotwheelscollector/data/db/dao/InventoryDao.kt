@@ -1,5 +1,6 @@
 package br.com.hotwheelscollector.data.db.dao
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -10,6 +11,12 @@ import br.com.hotwheelscollector.data.db.entity.LocationEntity
 import br.com.hotwheelscollector.data.db.entity.MovementEntity
 import br.com.hotwheelscollector.data.db.entity.ValuationEntity
 import kotlinx.coroutines.flow.Flow
+
+/** Quantos exemplares possuídos estão em cada localização (para a árvore). */
+public data class LocationCountRow(
+    @ColumnInfo(name = "location_id") val locationId: String,
+    @ColumnInfo(name = "total") val total: Int,
+)
 
 @Dao
 public interface LocationDao {
@@ -26,6 +33,50 @@ public interface LocationDao {
     @Query("SELECT COUNT(*) FROM exemplar WHERE location_id = :locationId")
     public suspend fun countExemplars(locationId: String): Int
 
+    /** Contagem por localização em uma consulta; a árvore monta a soma em memória. */
+    @Query(
+        """
+        SELECT location_id AS location_id, COUNT(*) AS total
+        FROM exemplar
+        WHERE status = 'OWNED' AND location_id IS NOT NULL
+        GROUP BY location_id
+        """,
+    )
+    public fun observeOwnedCounts(): Flow<List<LocationCountRow>>
+
+    /** Todos os exemplares da localização, de qualquer status: a FK não distingue. */
+    @Query("SELECT id FROM exemplar WHERE location_id = :locationId")
+    public suspend fun findExemplarIdsAt(locationId: String): List<String>
+
+    /**
+     * Inventário da localização incluindo as sublocalizações (FR-094–FR-095).
+     * A CTE recursiva desce a hierarquia no próprio SQLite, sem uma consulta por nível.
+     */
+    @Query(
+        """
+        WITH RECURSIVE subtree(id) AS (
+            SELECT id FROM location WHERE id = :locationId
+            UNION ALL
+            SELECT l.id FROM location l JOIN subtree s ON l.parent_id = s.id
+        )
+        SELECT e.id AS exemplar_id,
+               e.variant_id AS variant_id,
+               m.name AS model_name,
+               mf.name AS manufacturer_name,
+               e.internal_code AS internal_code,
+               e.condition AS condition,
+               loc.name AS location_name
+        FROM exemplar e
+        JOIN variant v ON v.id = e.variant_id
+        JOIN car_model m ON m.id = v.model_id
+        JOIN manufacturer mf ON mf.id = m.manufacturer_id
+        LEFT JOIN location loc ON loc.id = e.location_id
+        WHERE e.status = 'OWNED' AND e.location_id IN (SELECT id FROM subtree)
+        ORDER BY mf.name COLLATE NOCASE, m.name COLLATE NOCASE, e.internal_code
+        """,
+    )
+    public fun observeContents(locationId: String): Flow<List<InventoryRow>>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun insert(entity: LocationEntity)
 
@@ -35,6 +86,17 @@ public interface LocationDao {
     @Query("UPDATE location SET archived_at = :at, updated_at = :at WHERE id = :id")
     public suspend fun archive(id: String, at: Long)
 }
+
+/** Linha do inventário por localização, com o título resolvido na consulta. */
+public data class InventoryRow(
+    @ColumnInfo(name = "exemplar_id") val exemplarId: String,
+    @ColumnInfo(name = "variant_id") val variantId: String,
+    @ColumnInfo(name = "model_name") val modelName: String,
+    @ColumnInfo(name = "manufacturer_name") val manufacturerName: String,
+    @ColumnInfo(name = "internal_code") val internalCode: String,
+    @ColumnInfo(name = "condition") val condition: String,
+    @ColumnInfo(name = "location_name") val locationName: String?,
+)
 
 @Dao
 public interface MovementDao {

@@ -4,8 +4,11 @@ import br.com.hotwheelscollector.domain.error.DomainResult
 import br.com.hotwheelscollector.domain.model.Acquisition
 import br.com.hotwheelscollector.domain.model.Condition
 import br.com.hotwheelscollector.domain.model.Exemplar
+import br.com.hotwheelscollector.domain.model.InventoryItem
 import br.com.hotwheelscollector.domain.model.IsoDate
 import br.com.hotwheelscollector.domain.model.Location
+import br.com.hotwheelscollector.domain.model.LocationArchivePolicy
+import br.com.hotwheelscollector.domain.model.LocationNode
 import br.com.hotwheelscollector.domain.model.LocationType
 import br.com.hotwheelscollector.domain.model.MoneyCents
 import br.com.hotwheelscollector.domain.model.Movement
@@ -111,14 +114,36 @@ public interface PhotoRepository {
     public suspend fun remove(photoId: String): DomainResult<Unit>
 }
 
-/** Localizações hierárquicas; arquivar com exemplares é bloqueado (FR-093). */
+/**
+ * Localizações hierárquicas (FR-088–FR-095).
+ *
+ * Arquivar nunca cascateia: com exemplares dentro, a exclusão exige uma
+ * [LocationArchivePolicy] explícita, e com sublocalização ativa é recusada.
+ */
 public interface LocationRepository {
     public fun observeActive(): Flow<List<Location>>
+
+    /** Árvore montada na leitura, com a contagem de exemplares por localização. */
+    public fun observeTree(): Flow<List<LocationNode>>
+
     public suspend fun children(parentId: String): List<Location>
+    public suspend fun findById(id: String): Location?
     public suspend fun add(type: LocationType, name: String, parentId: String? = null): DomainResult<Location>
     public suspend fun rename(id: String, name: String): DomainResult<Unit>
-    public suspend fun archive(id: String): DomainResult<Unit>
+
+    /**
+     * Arquiva a localização devolvendo quantos exemplares foram tratados (FR-093).
+     * Falha com `Blocked` quando há sublocalização ativa ou exemplares sem política.
+     */
+    public suspend fun archive(
+        id: String,
+        policy: LocationArchivePolicy = LocationArchivePolicy.None,
+    ): DomainResult<Int>
+
     public suspend fun movements(exemplarId: String): Flow<List<Movement>>
+
+    /** Inventário da localização **e das sublocalizações** (FR-094–FR-095). */
+    public fun observeContents(locationId: String): Flow<List<InventoryItem>>
 }
 
 /**

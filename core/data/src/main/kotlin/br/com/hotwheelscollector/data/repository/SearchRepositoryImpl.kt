@@ -144,7 +144,17 @@ public class SearchRepositoryImpl @Inject constructor(
             sql.appendIn("e.status", filters.statuses.map { it.name }, args)
         }
         if (filters.locationIds.isNotEmpty()) {
-            sql.appendIn("e.location_id", filters.locationIds, args)
+            // Filtrar por uma localização inclui tudo o que está dentro dela: "Estante A"
+            // traz as prateleiras, senão o filtro de nível superior voltaria vazio (FR-094).
+            val holes = filters.locationIds.joinToString(", ") { "?" }
+            sql.append(
+                " AND e.location_id IN (" +
+                    "WITH RECURSIVE subtree(id) AS (" +
+                    "SELECT id FROM location WHERE id IN ($holes) " +
+                    "UNION ALL SELECT l.id FROM location l JOIN subtree s ON l.parent_id = s.id" +
+                    ") SELECT id FROM subtree)",
+            )
+            filters.locationIds.forEach { args.add(it) }
         }
         filters.priceMinCents?.let {
             sql.append(" AND a.price_cents >= ?")

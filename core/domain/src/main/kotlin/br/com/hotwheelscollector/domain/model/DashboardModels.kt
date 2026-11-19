@@ -46,12 +46,21 @@ public data class DashboardEntry(
     val date: String,
 )
 
-/** Progresso de uma coleção: quantos itens existem e quantos já estão na estante. */
+/**
+ * Progresso de uma coleção: quantas unidades existem e quantas já estão na estante.
+ *
+ * `owned`/`known` são unidades, não linhas: um item com `expected = 2` pesa dois no
+ * denominador. Item marcado como não colecionável não entra em nenhum dos dois.
+ * `missing` só é preenchido quando a tela pediu o detalhe; o painel usa só os números.
+ */
 public data class CollectionProgress(
     val id: String,
     val name: String,
     val owned: Int,
     val known: Int,
+    val parentId: String? = null,
+    val itemCount: Int = 0,
+    val missing: List<CollectionItemStatus> = emptyList(),
 ) {
     /** Percentual inteiro de 0 a 100; coleção sem itens não conta como completa. */
     val percent: Int
@@ -63,4 +72,8 @@ public data class CollectionProgress(
 
     val isComplete: Boolean
         get() = known > 0 && owned >= known
+
+    /** Coleção sem itens conhecidos não é "0%": não há o que completar. */
+    val hasKnownItems: Boolean
+        get() = known > 0
 }

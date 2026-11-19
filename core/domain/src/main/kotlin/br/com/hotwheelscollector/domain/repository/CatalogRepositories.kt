@@ -64,7 +64,14 @@ public interface CarModelRepository {
 
 public interface SeriesRepository {
     public fun observeByManufacturer(manufacturerId: String): Flow<List<Series>>
+    public suspend fun findById(id: String): Series?
     public suspend fun add(manufacturerId: String, name: String, parentId: String? = null): DomainResult<Series>
+
+    /** Renomeia a série sem tocar nas variantes que a apontam (FR-049). */
+    public suspend fun rename(id: String, name: String): DomainResult<Unit>
+
+    /** Arquiva a série; as variantes continuam existindo, só perdem o agrupamento. */
+    public suspend fun archive(id: String): DomainResult<Unit>
 }
 
 /**
