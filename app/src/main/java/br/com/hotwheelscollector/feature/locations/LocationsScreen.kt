@@ -420,7 +420,9 @@ internal fun DeleteLocationDialog(
                                 row.exemplarCount,
                             ),
                         )
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Empilhados: lado a lado, o rótulo de "Mover" ocupa a largura do
+                        // diálogo e o de "Arquivar" fica fora da tela.
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             FilterChip(
                                 selected = moveChosen,
                                 onClick = { moveChosen = true },

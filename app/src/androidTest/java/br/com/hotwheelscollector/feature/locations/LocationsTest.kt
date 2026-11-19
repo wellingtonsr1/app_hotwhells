@@ -110,7 +110,9 @@ public class LocationsTest {
         }
 
         compose.onAllNodesWithText("Excluir").onFirst().performClick()
-        compose.onNodeWithText("Arquivar os exemplares").assertExists().performClick()
+        // `assertIsDisplayed` e não `assertExists`: com os chips lado a lado o de arquivar
+        // existia na árvore de semântica, mas ficava fora dos limites do diálogo.
+        compose.onNodeWithText("Arquivar os exemplares").assertIsDisplayed().performClick()
         compose.onAllNodesWithText("Excluir").onLast().performClick()
 
         assertEquals(LocationArchivePolicy.ArchiveExemplars, policy)

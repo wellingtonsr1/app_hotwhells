@@ -933,6 +933,7 @@ localização expandindo a subárvore. **Nenhuma alteração de schema.**
 | Árvore e diálogo (T102/T104) | `./gradlew :app:connectedDebugAndroidTest` | `LocationsTest`: 3 testes, 0 falhas (38 no total, emulador `hw_test` API 36) |
 | Texto das mensagens de exclusão | `./gradlew :app:testDebugUnitTest` | `LocationsMessageTextTest`: 4 testes, 0 falhas (32 no módulo) — resolve os plurais do `strings.xml` e confere «1 exemplar movido» / «3 exemplares movidos» |
 | Lint e APK | `./gradlew :app:lintDebug :app:assembleDebug` | `BUILD SUCCESSFUL`, `0 errors, 7 warnings` |
+| Verificação visual no emulador (`hw_test` API 36, dados semeados) | árvore, diálogo, mover e snackbars | Árvore com “1 exemplar”/“3 exemplares” e “(4 na subárvore)”; exclusão de 3 exemplares abriu com as duas opções e o destino "Caixa 12"; snackbar “Localização excluída. 3 exemplares movidos.”; exclusão de 1 exemplar com snackbar “Localização excluída. 1 exemplar arquivado.”; banco conferido (3 `movement` de `shelf3` para `crate`, exemplar arquivado e as duas localizações com `archived_at`) |
 
 Decisões registradas nesta entrega:
 
@@ -956,6 +957,10 @@ Decisões registradas nesta entrega:
 - **Sobras da árvore viram raiz**: pai arquivado ou ciclo gravado por fora não podem fazer
   uma localização que ainda guarda exemplares desaparecer da tela.
 - **Entrada em Ajustes → Localizações**, com o inventário aberto ao tocar na localização.
+- **As opções do diálogo ficam empilhadas**: lado a lado, o rótulo de “Mover os exemplares
+  para outra localização” ocupava a largura do diálogo e empurrava “Arquivar os exemplares”
+  para fora da tela. Só a verificação visual pegou isso — na árvore de semântica o chip
+  existia, então o teste passou a exigir `assertIsDisplayed`.
 
 ---
 ## Phase 12: User Story 10 - Relatórios, importação, exportação e backup (Priority: P4)
