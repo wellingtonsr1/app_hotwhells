@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.hotwheelscollector.domain.model.Condition
 import br.com.hotwheelscollector.domain.model.IsoDate
-import br.com.hotwheelscollector.domain.repository.ExemplarRepository
 import br.com.hotwheelscollector.domain.repository.NewAcquisition
 import br.com.hotwheelscollector.domain.repository.NewExemplar
 import br.com.hotwheelscollector.domain.repository.WishlistEntry
@@ -31,13 +30,13 @@ public data class WishlistUiState(
  *
  * Converter um desejo vinculado a uma variante cria o exemplar e registra a aquisição
  * com o valor encontrado (ou o valor máximo, quando o encontrado não foi informado) e a
- * loja do desejo. Desejo só com texto livre é marcado como adquirido sem exemplar —
- * não há variante para vincular e inventar uma seria pior do que dizer isso à pessoa.
+ * loja do desejo, tudo na mesma transação do vínculo. Desejo só com texto livre é marcado
+ * como adquirido sem exemplar — não há variante para vincular e inventar uma seria pior
+ * do que dizer isso à pessoa.
  */
 @HiltViewModel
 public class WishlistViewModel @Inject constructor(
     private val wishlistRepository: WishlistRepository,
-    private val exemplarRepository: ExemplarRepository,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -70,34 +69,24 @@ public class WishlistViewModel @Inject constructor(
         feedback.value = entry.item.id to null
         viewModelScope.launch {
             val item = entry.item
-            val variantId = item.variantId
-            val message = if (variantId == null) {
-                wishlistRepository.markAcquired(item.id, null).fold(
-                    onSuccess = { ACQUIRED_WITHOUT_EXEMPLAR },
-                    onFailure = { it.message ?: GENERIC_ERROR },
-                )
-            } else {
-                exemplarRepository.add(
-                    NewExemplar(
-                        variantId = variantId,
-                        condition = Condition.SEALED,
-                        notes = item.notes,
-                        acquisition = NewAcquisition(
-                            date = IsoDate.today(clock),
-                            price = item.foundPrice ?: item.maxPrice,
-                            store = item.store,
-                        ),
+            val draft = item.variantId?.let { variantId ->
+                NewExemplar(
+                    variantId = variantId,
+                    condition = Condition.SEALED,
+                    notes = item.notes,
+                    acquisition = NewAcquisition(
+                        date = IsoDate.today(clock),
+                        price = item.foundPrice ?: item.maxPrice,
+                        store = item.store,
                     ),
-                ).fold(
-                    onSuccess = { outcome ->
-                        wishlistRepository.markAcquired(item.id, outcome.exemplar.id).fold(
-                            onSuccess = { ACQUIRED },
-                            onFailure = { it.message ?: GENERIC_ERROR },
-                        )
-                    },
-                    onFailure = { it.message ?: GENERIC_ERROR },
                 )
             }
+            val message = wishlistRepository.convertToAcquisition(item.id, draft).fold(
+                onSuccess = { outcome ->
+                    if (outcome == null) ACQUIRED_WITHOUT_EXEMPLAR else ACQUIRED
+                },
+                onFailure = { it.message ?: GENERIC_ERROR },
+            )
             feedback.value = null to message
         }
     }

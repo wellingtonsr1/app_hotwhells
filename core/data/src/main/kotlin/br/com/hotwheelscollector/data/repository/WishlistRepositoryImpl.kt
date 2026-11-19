@@ -1,6 +1,7 @@
 package br.com.hotwheelscollector.data.repository
 
 import br.com.hotwheelscollector.data.db.AppDatabase
+import br.com.hotwheelscollector.data.db.TransactionRunner
 import br.com.hotwheelscollector.data.db.dao.WishlistRow
 import br.com.hotwheelscollector.data.db.entity.WishlistItemEntity
 import br.com.hotwheelscollector.domain.error.DomainError
@@ -8,6 +9,9 @@ import br.com.hotwheelscollector.domain.error.DomainResult
 import br.com.hotwheelscollector.domain.model.MoneyCents
 import br.com.hotwheelscollector.domain.model.WishlistItem
 import br.com.hotwheelscollector.domain.model.WishlistStatus
+import br.com.hotwheelscollector.domain.repository.AddExemplarOutcome
+import br.com.hotwheelscollector.domain.repository.ExemplarRepository
+import br.com.hotwheelscollector.domain.repository.NewExemplar
 import br.com.hotwheelscollector.domain.repository.WishlistEntry
 import br.com.hotwheelscollector.domain.repository.WishlistRepository
 import java.time.Clock
@@ -27,6 +31,8 @@ import kotlinx.coroutines.flow.map
 @Singleton
 public class WishlistRepositoryImpl @Inject constructor(
     private val database: AppDatabase,
+    private val exemplarRepository: ExemplarRepository,
+    private val transactionRunner: TransactionRunner,
     private val clock: Clock,
 ) : WishlistRepository {
 
@@ -82,13 +88,41 @@ public class WishlistRepositoryImpl @Inject constructor(
     override suspend fun dismiss(id: String): DomainResult<Unit> =
         changeStatus(id) { it.copy(status = WishlistStatus.DISMISSED.name) }
 
-    override suspend fun markAcquired(id: String, exemplarId: String?): DomainResult<Unit> =
-        changeStatus(id) {
-            it.copy(
-                status = WishlistStatus.ACQUIRED.name,
-                convertedExemplarId = exemplarId,
+    /**
+     * A transação externa envolve a interna de `ExemplarRepository.add` (o Room participa
+     * da mesma transação): se gravar o vínculo falhar, exemplar, aquisição, movimentação
+     * e auditoria voltam atrás junto.
+     */
+    override suspend fun convertToAcquisition(
+        id: String,
+        draft: NewExemplar?,
+    ): DomainResult<AddExemplarOutcome?> = try {
+        val outcome = transactionRunner.inTransaction {
+            val current = database.wishlistDao().findById(id)
+                ?: throw DomainError.NotFound
+            if (current.status == WishlistStatus.ACQUIRED.name) {
+                throw DomainError.Validation("Este desejo já foi convertido em aquisição.")
+            }
+
+            val created = draft?.let { exemplarRepository.add(it).getOrThrow() }
+            database.wishlistDao().update(
+                current.copy(
+                    status = WishlistStatus.ACQUIRED.name,
+                    convertedExemplarId = created?.exemplar?.id,
+                    updatedAt = Instant.now(clock).toEpochMilli(),
+                ),
             )
+            created
         }
+        Result.success(outcome)
+    } catch (error: Throwable) {
+        Result.failure(
+            when (error) {
+                is DomainError -> error
+                else -> DomainError.Storage(error.message ?: "Falha ao converter desejo.")
+            },
+        )
+    }
 
     private suspend fun changeStatus(
         id: String,

@@ -65,7 +65,7 @@ sdk.dir=/caminho/para/Android/Sdk
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-Resultado de referência em 2026-11-18: 117 unitários e 32 instrumentados, 0 falhas;
+Resultado de referência em 2026-11-18: 118 unitários e 32 instrumentados, 0 falhas;
 lint com 0 erros e 6 avisos.
 
 ## 4. Decisões já tomadas (não reabrir sem motivo)
@@ -96,9 +96,9 @@ lint com 0 erros e 6 avisos.
 - **T131 parcial**: rótulos estão em `strings.xml`; mensagens de snackbar dos ViewModels
   continuam em Kotlin. O erro de preço da busca e os textos de validação de desejos também
   estão em Kotlin (`SearchViewModel.INVALID_PRICE`, `WishlistFormViewModel`).
-- **Conversão de desejo**: cria o exemplar pelo mesmo caminho do cadastro rápido e depois
-  vincula; não é uma transação única entre exemplar e desejo — se o vínculo falhar, o
-  exemplar permanece e o desejo continua em aberto. A tela informa o erro.
+- **Conversão de desejo é atômica**: `convertToAcquisition` abre uma transação e chama
+  `ExemplarRepository.add` dentro dela; o Room reusa a mesma transação, então exemplar,
+  aquisição, movimentação, auditoria e vínculo do desejo são gravados juntos ou nada é.
 
 ## 5. Próximos passos sugeridos
 

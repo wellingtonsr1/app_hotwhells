@@ -668,7 +668,7 @@ Decisões registradas nesta entrega:
 
 ### Tests for User Story 6
 
-- [X] T073 [P] [US6] Teste de conversão preservando prioridade, valor máximo e data de criação (FR-063) — em `WishlistRepositoryTest`, junto da implementação da conversão; não há `ConvertWishlistUseCase`, a conversão vive no repositório + ViewModel
+- [X] T073 [P] [US6] Teste de conversão transacional preservando prioridade, valor máximo e data de criação (FR-063) — em `WishlistRepositoryTest`, incluindo o caso de falha que desfaz exemplar e vínculo juntos
 - [X] T074 [P] [US6] Teste de que desejo não entra em contagem de possuídos nem no patrimônio (FR-064) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/WishlistRepositoryTest.kt`
 
 ### Implementation for User Story 6
@@ -685,19 +685,20 @@ Decisões registradas nesta entrega:
 
 | Verificação | Comando | Resultado observado |
 | --- | --- | --- |
-| Desejos no banco (T073/T074) | `./gradlew :core:data:testDebugUnitTest --tests "*WishlistRepositoryTest"` | 4 testes, 0 falhas |
+| Desejos no banco (T073/T074) | `./gradlew :core:data:testDebugUnitTest --tests "*WishlistRepositoryTest"` | 5 testes, 0 falhas |
 | Lista e Ajustes (T077/T132/T133) | `./gradlew :app:connectedDebugAndroidTest` | 32 testes, 0 falhas (2m 51s), incluindo `WishlistScreenTest` (3) e `SettingsScreenTest` (1) |
-| Regressão completa | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 117 unitários, 0 falhas; lint 0 erros e 6 avisos |
+| Regressão completa | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 118 unitários, 0 falhas; lint 0 erros e 6 avisos |
 
 Decisões registradas nesta entrega:
 
 - **A tabela já existia**: `wishlist_item`, `WishlistDao` e o modelo de domínio vieram da
   fundação (v1). A US6 não precisou de migração; faltavam o repositório, as telas e a
   conversão.
-- **Conversão**: desejo vinculado a variante cria o exemplar pelo mesmo caminho do
-  cadastro rápido (aquisição com valor encontrado ou máximo e loja do desejo) e liga o
-  `converted_exemplar_id`; desejo só com texto livre vira `ACQUIRED` sem exemplar e a tela
-  diz isso. Prioridade, valores e `created_at` nunca são reescritos na conversão.
+- **Conversão atômica**: `WishlistRepository.convertToAcquisition` abre uma transação
+  (`TransactionRunner`) e chama `ExemplarRepository.add` dentro dela — o Room reusa a
+  mesma transação, então exemplar, aquisição, movimentação, auditoria e vínculo do desejo
+  nascem juntos ou voltam atrás juntos. Desejo só com texto livre vira `ACQUIRED` sem
+  exemplar e a tela diz isso. Prioridade, valores e `created_at` nunca são reescritos.
 - **Edição não reabre**: `update` preserva `status` e vínculo; só `markAcquired` e
   `dismiss` mudam o ciclo de vida.
 - **Título resolvido no SQL**: a consulta junta variante → modelo → fabricante e prefere o

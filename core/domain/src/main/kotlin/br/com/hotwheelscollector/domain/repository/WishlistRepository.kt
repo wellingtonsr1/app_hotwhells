@@ -31,9 +31,15 @@ public interface WishlistRepository {
     public suspend fun dismiss(id: String): DomainResult<Unit>
 
     /**
-     * Conversão em aquisição. O exemplar é criado por quem chama (quando o desejo aponta
-     * para uma variante) e apenas vinculado aqui; prioridade, valores e data de criação
-     * do desejo são preservados.
+     * Conversão em aquisição em **uma transação**: o exemplar (quando [draft] é informado)
+     * e o vínculo com o desejo nascem juntos ou não nascem. Prioridade, valores e data de
+     * criação do desejo são preservados; o evento devolve o exemplar criado, se houver.
+     *
+     * Desejo sem variante é convertido com [draft] nulo: vira `ACQUIRED` sem exemplar, o
+     * que a tela explica, em vez de inventar um vínculo.
      */
-    public suspend fun markAcquired(id: String, exemplarId: String?): DomainResult<Unit>
+    public suspend fun convertToAcquisition(
+        id: String,
+        draft: NewExemplar?,
+    ): DomainResult<AddExemplarOutcome?>
 }

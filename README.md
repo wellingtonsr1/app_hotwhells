@@ -80,7 +80,7 @@ O lint reprova o build com erro (avisos não bloqueiam); o relatório fica em
   offline. Backup e importação continuam na US10.
 - **Fases 7–15** parcialmente entregues: além das fases 1–5, já estão prontas a busca
   (US4), o financeiro (US8), a lista de desejos (US6) e a movimentação de T103 (US9).
-- Verificação de 2026-11-18: **117 testes unitários** e **32 instrumentados**, 0 falhas;
+- Verificação de 2026-11-18: **118 testes unitários** e **32 instrumentados**, 0 falhas;
   lint com 0 erros e 6 avisos pré-existentes. Detalhes em `tasks.md`.
 
 Nenhum dado sai do aparelho: sem conta, sem telemetria, sem permissão ampla de
