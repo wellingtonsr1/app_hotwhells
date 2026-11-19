@@ -12,6 +12,7 @@ import br.com.hotwheelscollector.data.db.dao.CollectionItemDao
 import br.com.hotwheelscollector.data.db.dao.ColorDao
 import br.com.hotwheelscollector.data.db.dao.DashboardDao
 import br.com.hotwheelscollector.data.db.dao.ExemplarDao
+import br.com.hotwheelscollector.data.db.dao.FinanceDao
 import br.com.hotwheelscollector.data.db.dao.HistoryDao
 import br.com.hotwheelscollector.data.db.dao.LocationDao
 import br.com.hotwheelscollector.data.db.dao.ManufacturerDao
@@ -21,6 +22,7 @@ import br.com.hotwheelscollector.data.db.dao.NegotiationEventDao
 import br.com.hotwheelscollector.data.db.dao.PhotoDao
 import br.com.hotwheelscollector.data.db.dao.RealVehicleDao
 import br.com.hotwheelscollector.data.db.dao.RecognitionResultDao
+import br.com.hotwheelscollector.data.db.dao.SearchDao
 import br.com.hotwheelscollector.data.db.dao.SearchIndexDao
 import br.com.hotwheelscollector.data.db.dao.SeriesDao
 import br.com.hotwheelscollector.data.db.dao.ValuationDao
@@ -140,8 +142,14 @@ public abstract class AppDatabase : RoomDatabase() {
 
     public abstract fun searchIndexDao(): SearchIndexDao
 
+    /** Busca do acervo; só leitura (FR-114–FR-122). */
+    public abstract fun searchDao(): SearchDao
+
     /** Só leitura agregada: o painel não grava nada (FR-001–FR-011). */
     public abstract fun dashboardDao(): DashboardDao
+
+    /** Só leitura agregada: o financeiro não grava nada (FR-077–FR-081). */
+    public abstract fun financeDao(): FinanceDao
 
     public companion object {
         public const val DATABASE_NAME: String = "hotwheels.db"
@@ -150,6 +158,8 @@ public abstract class AppDatabase : RoomDatabase() {
         public val CALLBACK: Callback = object : Callback() {
             override fun onOpen(db: SupportSQLiteDatabase) {
                 db.execSQL("PRAGMA foreign_keys = ON")
+                // Índice de busca auto-mantido; idempotente a cada abertura (FR-114–FR-122).
+                SearchIndexSync.install(db)
             }
 
             override fun onCreate(db: SupportSQLiteDatabase) {

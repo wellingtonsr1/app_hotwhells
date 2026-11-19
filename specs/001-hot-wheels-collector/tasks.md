@@ -583,20 +583,53 @@ Decisões registradas nesta entrega:
 
 ### Tests for User Story 4
 
-- [ ] T056 [P] [US4] Teste de FTS com acentos, caixa e ordem parcial (`Nissan Skyline GT-R (R34)` ← `skyline r34`) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/db/SearchIndexTest.kt`
-- [ ] T057 [P] [US4] Teste de filtros combináveis (E entre categorias, múltipla escolha dentro da categoria) e contagem de resultados em `app/src/androidTest/java/br/com/hotwheelscollector/feature/search/SearchFiltersTest.kt`
-- [ ] T058 [P] [US4] Teste de desempenho com 10.000 exemplares (busca < 300 ms, lista < 1 s) em `app/src/androidTest/java/br/com/hotwheelscollector/perf/SearchPerformanceTest.kt`
+- [X] T056 [P] [US4] Teste de FTS com acentos, caixa e ordem parcial (`skyline r34` → uma variante da mesma frase) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/db/SearchIndexTest.kt`
+- [X] T057 [P] [US4] Teste de filtros combináveis (E entre categorias, múltipla escolha dentro da categoria) e contagem de resultados em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/SearchRepositoryTest.kt` e `app/src/androidTest/java/br/com/hotwheelscollector/feature/search/SearchScreenTest.kt`
+- [ ] T058 [P] [US4] Teste de desempenho com 10.000 exemplares (busca < 300 ms, lista < 1 s) em `app/src/androidTest/java/br/com/hotwheelscollector/perf/SearchPerformanceTest.kt` — **pendente**: sem medição, não há resultado a registrar
 
 ### Implementation for User Story 4
 
-- [ ] T059 [US4] Migração v2 criando `search_index` FTS4 (`tokenizer=unicode61 remove_diacritics=1`) e gatilhos de sincronização em `core/data/.../db/migration/Migration_2_Search.kt`
-- [ ] T060 [US4] Implementar `SearchRepository` com as 13 dimensões de filtro e ordenação por nome, ano, data de aquisição e valor (FR-116, FR-118) em `core/data/.../repository/SearchRepositoryImpl.kt`
-- [ ] T061 [US4] Implementar estado de filtros com chips visíveis e ação de limpar (FR-119) em `app/.../feature/search/SearchFilterState.kt`
-- [ ] T062 [US4] Implementar busca global com debounce e contagem de resultados (FR-114, FR-120) em `app/.../feature/search/SearchScreen.kt`
-- [ ] T063 [US4] Implementar visualização em grade e em lista detalhada em `app/.../feature/search/CatalogViews.kt`
-- [ ] T064 [US4] Implementar galeria fotográfica e agrupamentos por coleção, fabricante e série em `app/.../feature/search/GroupedCatalogViews.kt`
+- [X] T059 [US4] Índice FTS4 (`tokenizer=unicode61 remove_diacritics=1`) e gatilhos de sincronização — **sem migração**: a tabela já nasceu no schema v1 e os gatilhos são idempotentes no `onOpen`, com reconstrução quando a contagem diverge, em `core/data/.../db/SearchIndexSync.kt`
+- [X] T060 [US4] Implementar `SearchRepository` com as 13 dimensões de filtro e ordenação por nome, ano, data de aquisição e valor (FR-116, FR-118) em `core/data/.../repository/SearchRepositoryImpl.kt`
+- [X] T061 [US4] Implementar estado de filtros com chips visíveis e ação de limpar (FR-119) em `app/.../feature/search/SearchFilterState.kt`
+- [X] T062 [US4] Implementar busca global com debounce e contagem de resultados (FR-114, FR-120) em `app/.../feature/search/SearchScreen.kt`
+- [X] T063 [US4] Implementar visualização em grade e em lista detalhada em `app/.../feature/search/CatalogViews.kt`
+- [ ] T064 [US4] Implementar agrupamentos por coleção, fabricante e série em `app/.../feature/search/GroupedCatalogViews.kt` — **parcial**: falta a galeria fotográfica, que depende de miniatura no cartão
 
 **Checkpoint**: US4 torna a coleção consultável; sem escrita de dados
+
+**Evidências — Fase 6 / US4 (2026-11-18)** — emulador `hw_test` (API 36, x86_64):
+
+| Verificação | Comando | Resultado observado |
+| --- | --- | --- |
+| Índice FTS e gatilhos (T056) | `./gradlew :core:data:testDebugUnitTest --tests "*SearchIndexTest"` | 5 testes, 0 falhas |
+| Filtros, ordenação e opções (T057) | `./gradlew :core:data:testDebugUnitTest --tests "*SearchRepositoryTest"` | 9 testes, 0 falhas |
+| Tela de busca (T057) | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*SearchScreenTest` | 5 testes, 0 falhas |
+| Regressão completa | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 112 unitários, 0 falhas; lint 0 erros e 6 avisos |
+| Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 27 testes, 0 falhas (2m 51s) |
+
+Decisões registradas nesta entrega:
+
+- **Tela própria em `catalog/search`**, aberta por ícone no cabeçalho do Catálogo e
+  fechada por `popBackStack`: a busca é tarefa, não uma sexta aba; as cinco abas
+  existentes continuam iguais.
+- **Sem migração v2**: `search_index` já existe no schema v1. Os gatilhos são instalados
+  no `onOpen` (idempotente) e o índice é reconstruído quando a contagem diverge de
+  `variant`; assim bancos anteriores a esta entrega também passam a buscar.
+- **Conjunção por espaço, não por `AND`**: `skyline r34` vira `skyline* r34*`. O operador
+  `AND` explícito do FTS4 devolveu zero linhas no SQLite do Android (verificado no teste);
+  a justaposição é a conjunção implícita e funciona também com prefixo.
+- **Status padrão `OWNED`**: a pergunta é «eu tenho esse?»; vendidos e arquivados só
+  aparecem quando o colecionador escolhe o status. Por isso o chip de status só aparece
+  na lista de filtros ativos quando difere do padrão.
+- **Sem filtro de `variantIds` na interface**: a dimensão existe no repositório e é usada
+  para resolver a busca, mas a tela filtra por modelo/série, que é o vocabulário do
+  colecionador.
+- **Busca por texto e filtros são combináveis** (`query` entra como subconsulta no
+  índice); a contagem exibida é `results.size`, sem segunda consulta.
+- **Galeria fotográfica fica pendente** (T064): o cartão atual mostra nome, ano, escala,
+  cor, condição, status, local e valor; a foto exigiria carregar mídia no resultado e
+  ainda não há miniatura no acervo.
 
 ---
 
@@ -680,21 +713,21 @@ Decisões registradas nesta entrega:
 
 ### Tests for User Story 8
 
-- [ ] T089 [P] [US8] Teste de custo (`preço + frete − desconto`), total investido e custo médio com exclusão de itens sem valor (FR-075, FR-081) em `core/domain/src/test/kotlin/br/com/hotwheelscollector/domain/usecase/FinanceTotalsTest.kt`
+- [X] T089 [P] [US8] Teste de custo (`preço + frete − desconto`), total investido e custo médio com exclusão de itens sem valor (FR-075, FR-081) em `core/domain/src/test/kotlin/br/com/hotwheelscollector/domain/model/FinanceModelsTest.kt` (o arquivo planejado era `usecase/FinanceTotalsTest.kt`; a regra ficou no modelo e o teste foi junto).
 - [X] T090 [P] [US8] Teste de "avaliação mais recente = valor atual" e histórico completo preservado (FR-083–FR-084) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/FinancialRepositoryTest.kt`
-- [ ] T091 [P] [US8] Teste Compose do fluxo financeiro com rótulo de estimativa visível em `app/src/androidTest/java/br/com/hotwheelscollector/feature/finance/FinanceScreenTest.kt`
+- [X] T091 [P] [US8] Teste Compose do fluxo financeiro com rótulo de estimativa visível em `app/src/androidTest/java/br/com/hotwheelscollector/feature/finance/FinanceScreenTest.kt`
 
 ### Implementation for User Story 8
 
-- [ ] T092 [US8] Formulário de aquisição (data, preço, frete, desconto, loja, vendedor, forma, moeda) — **parcial**: data, preço, frete, desconto, loja, vendedor e observações já editáveis em `ExemplarDetailScreen`; falta forma de pagamento e moeda.
+- [X] T092 [US8] Formulário de aquisição (data, preço, frete, desconto, loja, vendedor, forma, moeda) — todos os campos editáveis em `ExemplarDetailScreen`. A moeda é BRL fixo: FR-076 define o real como padrão e «outras moedas na interface» está fora de escopo.
 - [X] T093 [US8] Tela de avaliação com valor, data, fonte e histórico de avaliações — entregue dentro de `app/src/main/java/br/com/hotwheelscollector/feature/catalog/ExemplarDetailScreen.kt`.
-- [ ] T094 [US8] Implementar agregações por período, série, fabricante e coleção (FR-078–FR-080) em `core/data/.../repository/FinanceRepositoryImpl.kt`
-- [ ] T095 [US8] Implementar tela de finanças com investido, estimado, diferença e custo médio (FR-077, FR-085) em `app/.../feature/finance/FinanceScreen.kt`
-- [ ] T096 [US8] Implementar rótulo obrigatório "estimativa do colecionador" com fonte e data em toda exibição de valor estimado (FR-086) em `app/.../feature/finance/EstimateLabel.kt`
-- [ ] T097 [US8] Implementar histórico financeiro separando vendas/trocas do investimento (FR-087) em `core/domain/.../usecase/FinancialHistoryUseCase.kt`
-- [ ] T098 [US8] Implementar formatação pt-BR de moeda (centavos) e data centralizada em `core/ui/src/main/kotlin/br/com/hotwheelscollector/ui/format/Formatters.kt`
+- [X] T094 [US8] Implementar agregações por período, série, fabricante e coleção (FR-078–FR-080) em `core/data/.../repository/FinanceRepositoryImpl.kt`
+- [X] T095 [US8] Implementar tela de finanças com investido, estimado, diferença e custo médio (FR-077, FR-085) em `app/.../feature/finance/FinanceScreen.kt`
+- [X] T096 [US8] Implementar rótulo obrigatório "estimativa do colecionador" com fonte e data em toda exibição de valor estimado (FR-086) — aplicado no detalhe do exemplar e na tela de finanças com `valuation_hint` e a data das avaliações; não foi necessário um `EstimateLabel.kt` separado.
+- [ ] T097 [US8] Implementar histórico financeiro separando vendas/trocas do investimento (FR-087) em `core/domain/.../usecase/FinancialHistoryUseCase.kt` — depende das negociações concluídas de US7; o investido já considera só `status = 'OWNED'`.
+- [X] T098 [US8] Implementar formatação pt-BR de moeda (centavos) e data centralizada em `core/ui/src/main/kotlin/br/com/hotwheelscollector/ui/format/Formatters.kt`
 
-### Evidências — aquisição e avaliações (US8 parcial, 2026-11-18)
+### Evidências — aquisição e avaliações (primeira entrega de US8, 2026-11-18)
 
 Entrega: a aquisição do exemplar passou a ser editável (upsert por `exemplar_id`, nunca
 uma segunda compra para a mesma unidade) e as avaliações são registradas com valor, data,
@@ -702,7 +735,7 @@ fonte e observações, com histórico preservado. A avaliação mais recente é 
 
 | Verificação | Comando | Resultado |
 | --- | --- | --- |
-| Unitários | `:core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest` | 90 testes, 0 falhas (3 novos em `FinancialRepositoryTest`) |
+| Unitários | `:core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest` | 90 testes, 0 falhas (3 novos em `FinancialRepositoryTest`) — números daquele commit; o total atual está no bloco do financeiro |
 | Instrumentados | `:app:connectedDebugAndroidTest` (API 36, Pixel 5) | 21 testes, 0 falhas (1 novo `ExemplarDetailScreenTest`) |
 | Lint | `:app:lintDebug` | 0 erros, 7 avisos pré-existentes |
 
@@ -716,9 +749,32 @@ Decisões registradas:
   estimado sempre com o rótulo «estimativa do colecionador» (FR-086).
 - O painel passa a refletir avaliações reais; antes o «Estimado» era sempre zero.
 
-Pendências de US8: T089 (custo médio e exclusões), T091 (teste do fluxo financeiro
-completo), T092 (forma de pagamento e moeda), T094 (agregações por período/série/fabricante),
-T095 (tela de finanças), T096 (rótulo em todas as exibições), T097 e T098.
+Pendências de US8 nesta entrega: T089, T091, T092, T094–T096 e T098; todas fechadas
+na entrega do financeiro abaixo. Continua aberta apenas T097 (vendas/trocas separadas
+do investido), que depende de US7.
+
+### Evidências — financeiro e custo médio (US8, 2026-11-18)
+
+Entrega: tela **Financeiro** na aba própria, com investido, estimado, diferença e custo
+médio; gastos por fabricante, série, coleção e mês, com intervalo livre (`De`/`Até`).
+Forma de aquisição passou a ser editável no detalhe do exemplar. A formatação pt-BR de
+centavos e datas foi centralizada em `core/ui`.
+
+| Verificação | Comando | Resultado |
+| --- | --- | --- |
+| Unitários | `:core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest` | 98 testes, 0 falhas (4 novos em `FinanceModelsTest`, 4 em `FinanceRepositoryTest`) |
+| Instrumentados | `:app:connectedDebugAndroidTest` (API 36, Pixel 5) | 22 testes, 0 falhas (novo `FinanceScreenTest`; `NavigationBarTest` passou a cobrar a tela real) |
+| Lint | `:app:lintDebug` | 0 erros, 7 avisos pré-existentes |
+
+Decisões registradas:
+
+- Somas financeiras usam `Long` cru; a média só divide pelos exemplares com preço
+  informado e a tela diz quantos ficaram fora (FR-081).
+- Aquisição sem preço não entra no investido nem nos agrupamentos, mesmo que tenha frete:
+  custo desconhecido não vira zero nem frete solto (FR-075).
+- Gastos por coleção podem repetir o custo de um exemplar que está em mais de uma coleção;
+  é gasto por coleção, não um segundo total do acervo.
+- Moeda é BRL fixo na interface; outras moedas estão fora de escopo (FR-076).
 
 **Checkpoint**: US8 entrega o módulo de maior valor de longo prazo
 

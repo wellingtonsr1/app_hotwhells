@@ -112,6 +112,7 @@ public fun ExemplarDetailScreen(
             onAcquisitionDateChange = viewModel::onAcquisitionDateChange,
             onAcquisitionStoreChange = viewModel::onAcquisitionStoreChange,
             onAcquisitionSellerChange = viewModel::onAcquisitionSellerChange,
+            onAcquisitionMethodChange = viewModel::onAcquisitionMethodChange,
             onAcquisitionNotesChange = viewModel::onAcquisitionNotesChange,
             onSaveAcquisition = viewModel::onSaveAcquisition,
             onValuationValueChange = viewModel::onValuationValueChange,
@@ -143,6 +144,7 @@ internal fun ExemplarDetailContent(
     onAcquisitionDateChange: (String) -> Unit = {},
     onAcquisitionStoreChange: (String) -> Unit = {},
     onAcquisitionSellerChange: (String) -> Unit = {},
+    onAcquisitionMethodChange: (String) -> Unit = {},
     onAcquisitionNotesChange: (String) -> Unit = {},
     onSaveAcquisition: () -> Unit = {},
     onValuationValueChange: (String) -> Unit = {},
@@ -334,6 +336,13 @@ internal fun ExemplarDetailContent(
                         modifier = Modifier.weight(1f),
                     )
                 }
+                OutlinedTextField(
+                    value = state.acquisitionMethod,
+                    onValueChange = onAcquisitionMethodChange,
+                    label = { Text(stringResource(R.string.acquisition_method)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 OutlinedTextField(
                     value = state.acquisitionNotes,
                     onValueChange = onAcquisitionNotesChange,

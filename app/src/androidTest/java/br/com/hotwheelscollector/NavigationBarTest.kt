@@ -43,9 +43,9 @@ class NavigationBarTest {
         composeRule.onNodeWithText("Desejos").performClick()
         waitForText("O painel já mostra quantos itens", substring = true)
 
-        // 4. Financeiro: aponta para os valores que o painel calcula.
+        // 4. Financeiro: resumo e agrupamentos calculados a partir das aquisições.
         composeRule.onNodeWithText("Financeiro").performClick()
-        waitForText("Investido, estimado e diferença", substring = true)
+        waitForText("Gastos por fabricante")
 
         // 5. Ajustes: assume o que ainda não existe, em vez de fingir uma tela.
         composeRule.onNodeWithText("Ajustes").performClick()

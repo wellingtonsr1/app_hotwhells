@@ -46,6 +46,8 @@ import br.com.hotwheelscollector.feature.catalog.ExemplarListScreen
 import br.com.hotwheelscollector.feature.catalog.IncompleteEntriesScreen
 import br.com.hotwheelscollector.feature.catalog.VariantFormScreen
 import br.com.hotwheelscollector.feature.dashboard.DashboardScreen
+import br.com.hotwheelscollector.feature.finance.FinanceScreen
+import br.com.hotwheelscollector.feature.search.SearchScreen
 
 /**
  * Rotas do aplicativo.
@@ -62,6 +64,9 @@ public sealed class Destination(public val route: String) {
 
     /** Acervo: a lista de miniaturas e o cadastro rápido (US1). */
     public data object Catalog : Destination("catalog")
+
+    /** Busca e filtros do acervo (US4): tela própria, aberta do cabeçalho do catálogo. */
+    public data object Search : Destination("catalog/search")
 
     /** Primeiro passo da miniatura: fabricante, modelo e escala. */
     public data object CreateEntry : Destination("catalog/create")
@@ -182,6 +187,15 @@ public fun AppNavHost(
                     },
                     onCreateEntry = { navController.navigate(Destination.CreateEntry.route) },
                     onOpenIncomplete = { navController.navigate(Destination.Incomplete.route) },
+                    onOpenSearch = { navController.navigate(Destination.Search.route) },
+                )
+            }
+            composable(Destination.Search.route) {
+                SearchScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenExemplar = { exemplarId ->
+                        navController.navigate(Destination.ExemplarDetail.routeFor(exemplarId))
+                    },
                 )
             }
             // Cadastro da miniatura em dois passos: o modelo é resolvido primeiro e a
@@ -250,10 +264,7 @@ public fun AppNavHost(
                 )
             }
             composable(Destination.Finance.route) {
-                PlaceholderScreen(
-                    title = stringResource(R.string.placeholder_finance),
-                    message = stringResource(R.string.placeholder_finance_body),
-                )
+                FinanceScreen()
             }
             composable(Destination.Settings.route) {
                 PlaceholderScreen(

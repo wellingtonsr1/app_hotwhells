@@ -8,10 +8,12 @@ import br.com.hotwheelscollector.data.repository.CarModelRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ColorRepositoryImpl
 import br.com.hotwheelscollector.data.repository.DashboardRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ExemplarRepositoryImpl
+import br.com.hotwheelscollector.data.repository.FinanceRepositoryImpl
 import br.com.hotwheelscollector.data.repository.HistoryRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ManufacturerRepositoryImpl
 import br.com.hotwheelscollector.data.repository.LocationRepositoryImpl
 import br.com.hotwheelscollector.data.repository.PhotoRepositoryImpl
+import br.com.hotwheelscollector.data.repository.SearchRepositoryImpl
 import br.com.hotwheelscollector.data.repository.SeriesRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ValuationRepositoryImpl
 import br.com.hotwheelscollector.data.repository.VariantRepositoryImpl
@@ -22,10 +24,12 @@ import br.com.hotwheelscollector.domain.repository.CarModelRepository
 import br.com.hotwheelscollector.domain.repository.ColorRepository
 import br.com.hotwheelscollector.domain.repository.DashboardRepository
 import br.com.hotwheelscollector.domain.repository.ExemplarRepository
+import br.com.hotwheelscollector.domain.repository.FinanceRepository
 import br.com.hotwheelscollector.domain.repository.HistoryRepository
 import br.com.hotwheelscollector.domain.repository.ManufacturerRepository
 import br.com.hotwheelscollector.domain.repository.LocationRepository
 import br.com.hotwheelscollector.domain.repository.PhotoRepository
+import br.com.hotwheelscollector.domain.repository.SearchRepository
 import br.com.hotwheelscollector.domain.repository.SeriesRepository
 import br.com.hotwheelscollector.domain.repository.ValuationRepository
 import br.com.hotwheelscollector.domain.repository.VariantRepository
@@ -156,4 +160,12 @@ public abstract class RepositoryModule {
     @Binds
     @Singleton
     public abstract fun bindValuationRepository(impl: ValuationRepositoryImpl): ValuationRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindFinanceRepository(impl: FinanceRepositoryImpl): FinanceRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindSearchRepository(impl: SearchRepositoryImpl): SearchRepository
 }

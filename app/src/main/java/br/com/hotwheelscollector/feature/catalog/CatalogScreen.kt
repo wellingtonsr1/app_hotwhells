@@ -10,8 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -44,6 +48,7 @@ public fun CatalogScreen(
     onOpenExemplars: (variantId: String) -> Unit,
     onCreateEntry: () -> Unit,
     onOpenIncomplete: () -> Unit,
+    onOpenSearch: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CatalogViewModel = hiltViewModel(),
 ) {
@@ -54,6 +59,7 @@ public fun CatalogScreen(
         onOpenExemplars = onOpenExemplars,
         onCreateEntry = onCreateEntry,
         onOpenIncomplete = onOpenIncomplete,
+        onOpenSearch = onOpenSearch,
         modifier = modifier,
     )
 }
@@ -64,8 +70,9 @@ internal fun CatalogContent(
     onVariantClick: (String) -> Unit,
     onOpenExemplars: (String) -> Unit,
     onCreateEntry: () -> Unit,
-    onOpenIncomplete: () -> Unit = {},
     modifier: Modifier = Modifier,
+    onOpenIncomplete: () -> Unit = {},
+    onOpenSearch: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -91,16 +98,27 @@ internal fun CatalogContent(
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
                 )
-                if (state.hasIncomplete) {
-                    TextButton(
-                        onClick = onOpenIncomplete,
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (state.hasIncomplete) {
+                        TextButton(
+                            onClick = onOpenIncomplete,
+                            modifier = Modifier.padding(top = 12.dp),
+                        ) {
+                            Text(
+                                text = stringResource(
+                                    R.string.catalog_incomplete_action,
+                                    state.incompleteCount,
+                                ),
+                            )
+                        }
+                    }
+                    IconButton(
+                        onClick = onOpenSearch,
                         modifier = Modifier.padding(top = 12.dp),
                     ) {
-                        Text(
-                            text = stringResource(
-                                R.string.catalog_incomplete_action,
-                                state.incompleteCount,
-                            ),
+                        Icon(
+                            Icons.Filled.Search,
+                            contentDescription = stringResource(R.string.search_open),
                         )
                     }
                 }
@@ -227,6 +245,7 @@ private fun CatalogPreview() {
             onOpenExemplars = {},
             onCreateEntry = {},
             onOpenIncomplete = {},
+            onOpenSearch = {},
         )
     }
 }

@@ -111,8 +111,6 @@
     <!-- Áreas ainda sem tela: a aba existe e diz o que já funciona no lugar. -->
     <string name="placeholder_wishlist">Lista de desejos</string>
     <string name="placeholder_wishlist_body">Esta área ainda não tem tela. O painel já mostra quantos itens estão em aberto na lista de desejos.</string>
-    <string name="placeholder_finance">Financeiro</string>
-    <string name="placeholder_finance_body">Esta área ainda não tem tela. Investido, estimado e diferença já aparecem no painel.</string>
     <string name="placeholder_settings">Ajustes</string>
     <string name="placeholder_settings_body">Esta área ainda não tem tela. Localizações, backup e preferências entram nas próximas etapas.</string>
 
@@ -220,4 +218,69 @@
     <string name="valuation_source">Fonte (ex: colecionador, loja)</string>
     <string name="valuation_notes">Observações da avaliação</string>
     <string name="valuation_add">Registrar avaliação</string>
+
+    <!-- Financeiro (US8, FR-077–FR-087). -->
+    <string name="finance_title">Financeiro</string>
+    <string name="finance_average_cost">Custo médio</string>
+    <string name="finance_average_none">Sem valor</string>
+    <plurals name="finance_average_note">
+        <item quantity="one">%1$d exemplar sem valor informado fica fora do custo médio.</item>
+        <item quantity="other">%1$d exemplares sem valor informado ficam fora do custo médio.</item>
+    </plurals>
+    <string name="finance_spending_manufacturer">Gastos por fabricante</string>
+    <string name="finance_spending_series">Gastos por série</string>
+    <string name="finance_spending_collection">Gastos por coleção</string>
+    <string name="finance_spending_month">Gastos por mês</string>
+    <string name="finance_spending_empty">Nenhuma aquisição com valor.</string>
+    <string name="finance_no_series">Sem série</string>
+    <string name="finance_no_collection">Sem coleção</string>
+    <string name="finance_period_from">De (dd/mm/aaaa)</string>
+    <string name="finance_period_to">Até (dd/mm/aaaa)</string>
+    <string name="finance_period_apply">Aplicar</string>
+    <string name="finance_period_clear">Limpar</string>
+    <string name="acquisition_method">Forma de aquisição</string>
+
+    <!-- Busca e filtros (US4, FR-114–FR-122). -->
+    <string name="search_title">Busca</string>
+    <string name="search_open">Buscar no acervo</string>
+    <string name="search_back">Voltar</string>
+    <string name="search_filter_none">Nenhuma opção cadastrada.</string>
+    <string name="search_hint">Nome, série, coleção ou código</string>
+    <string name="search_filters">Filtros</string>
+    <string name="search_clear_all">Limpar tudo</string>
+    <string name="search_clear_filters">Limpar filtros</string>
+    <string name="search_close">Fechar</string>
+    <string name="search_sort">Ordenar por</string>
+    <string name="search_sort_name">Nome</string>
+    <string name="search_sort_year">Ano</string>
+    <string name="search_sort_acquisition">Aquisição</string>
+    <string name="search_sort_value">Valor</string>
+    <string name="search_view_grid">Grade</string>
+    <string name="search_view_list">Lista</string>
+    <string name="search_view_gallery">Galeria</string>
+    <string name="search_gallery_photo">Foto de %1$s</string>
+    <string name="search_gallery_no_photo">Sem foto</string>
+    <string name="search_view_collection">Coleção</string>
+    <string name="search_view_manufacturer">Fabricante</string>
+    <string name="search_view_series">Série</string>
+    <string name="search_empty">Nenhum exemplar encontrado.</string>
+    <string name="search_empty_hint">Ajuste a busca ou limpe os filtros.</string>
+    <string name="search_filter_model">Modelo</string>
+    <string name="search_filter_series">Série</string>
+    <string name="search_filter_collection">Coleção</string>
+    <string name="search_filter_status">Situação</string>
+    <string name="search_filter_price">Faixa de preço</string>
+    <string name="search_price_min">Mínimo (R$)</string>
+    <string name="search_price_max">Máximo (R$)</string>
+    <string name="search_price_apply">Aplicar faixa</string>
+    <string name="search_status_owned">No acervo</string>
+    <string name="search_status_sold">Vendido</string>
+    <string name="search_status_traded">Trocado</string>
+    <string name="search_status_archived">Arquivado</string>
+    <string name="search_group_header">%1$s · %2$d</string>
+    <string name="search_group_none">Sem %1$s</string>
+    <plurals name="search_result_count">
+        <item quantity="one">%1$d exemplar</item>
+        <item quantity="other">%1$d exemplares</item>
+    </plurals>
 </resources>

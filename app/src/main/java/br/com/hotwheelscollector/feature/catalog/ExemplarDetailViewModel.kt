@@ -65,6 +65,7 @@ public data class ExemplarDetailUiState(
     val acquisitionDate: String = "",
     val acquisitionStore: String = "",
     val acquisitionSeller: String = "",
+    val acquisitionMethod: String = "",
     val acquisitionNotes: String = "",
     val savingAcquisition: Boolean = false,
 
@@ -161,6 +162,9 @@ public class ExemplarDetailViewModel @Inject constructor(
     public fun onAcquisitionSellerChange(value: String) =
         _state.update { it.copy(acquisitionSeller = value) }
 
+    public fun onAcquisitionMethodChange(value: String) =
+        _state.update { it.copy(acquisitionMethod = value) }
+
     public fun onAcquisitionNotesChange(value: String) =
         _state.update { it.copy(acquisitionNotes = value) }
 
@@ -192,6 +196,7 @@ public class ExemplarDetailViewModel @Inject constructor(
             discount = discount.value,
             store = current.acquisitionStore.trim().ifBlank { null },
             seller = current.acquisitionSeller.trim().ifBlank { null },
+            method = current.acquisitionMethod.trim().ifBlank { null },
             notes = current.acquisitionNotes.trim().ifBlank { null },
             createdAt = existing?.createdAt ?: now,
             updatedAt = now,
@@ -417,6 +422,7 @@ public class ExemplarDetailViewModel @Inject constructor(
                 acquisitionDate = acquisition?.date?.formatPtBr() ?: today,
                 acquisitionStore = acquisition?.store.orEmpty(),
                 acquisitionSeller = acquisition?.seller.orEmpty(),
+                acquisitionMethod = acquisition?.method.orEmpty(),
                 acquisitionNotes = acquisition?.notes.orEmpty(),
             )
         }

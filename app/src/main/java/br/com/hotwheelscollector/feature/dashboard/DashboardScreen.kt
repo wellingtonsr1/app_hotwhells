@@ -36,6 +36,7 @@ import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.model.CollectionProgress
 import br.com.hotwheelscollector.domain.model.DashboardEntry
 import br.com.hotwheelscollector.domain.model.DashboardSnapshot
+import br.com.hotwheelscollector.ui.format.formatCentsPtBr
 import kotlin.math.abs
 
 /**
@@ -331,22 +332,11 @@ private fun ProgressBar(fraction: Float) {
     }
 }
 
-/** `R$ 1.234,56`; soma agregada não cabe em `MoneyCents`, então o formato vive aqui. */
+/** `R$ 1.234,56`; a formatação de centavos vem de `core/ui` (T098). */
 @Composable
 private fun moneyText(cents: Long): String {
-    val absolute = stringResource(R.string.dashboard_money, formatCents(abs(cents)))
+    val absolute = stringResource(R.string.dashboard_money, formatCentsPtBr(abs(cents)))
     return if (cents < 0L) "-$absolute" else absolute
-}
-
-private fun formatCents(cents: Long): String {
-    val units = cents / 100L
-    val fraction = (cents % 100L).toString().padStart(2, '0')
-    val grouped = units.toString()
-        .reversed()
-        .chunked(3)
-        .joinToString(".")
-        .reversed()
-    return "$grouped,$fraction"
 }
 
 private const val COLUMNS = 3

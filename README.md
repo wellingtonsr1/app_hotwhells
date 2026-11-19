@@ -63,13 +63,19 @@ O lint reprova o build com erro (avisos não bloqueiam); o relatório fica em
 - **Ciclo de vida do exemplar**: lista por variante, edição de condição/embalagem/
   observações, movimentação com histórico e arquivamento. Exclusão física só sem vínculos,
   com bloqueio explicado e arquivamento como alternativa (FR-028, FR-091).
-- **Aquisição e avaliações (US8 parcial)**: a aquisição é editável no detalhe do exemplar
-  (preço, frete, desconto, data, loja, vendedor) e as avaliações são append-only, com a
-  mais recente como valor atual. O painel já reflete investido e estimado reais.
-- **Fases 6–15** não iniciadas, com exceções pontuais: a movimentação de T103 (US9) e a
-  edição de aquisição/avaliação de US8 já são entregues dentro do detalhe do exemplar.
-- Verificação de 2026-11-18: **90 testes unitários** e **21 instrumentados**, 0 falhas;
-  lint com 0 erros e 7 avisos pré-existentes. Detalhes em `tasks.md`.
+- **Financeiro (US8)**: aquisição editável no detalhe do exemplar (preço, frete, desconto,
+  data, loja, vendedor, forma) e avaliações append-only, com a mais recente como valor
+  atual. A aba Financeiro mostra investido, estimado, diferença, custo médio e gastos por
+  fabricante, série, coleção e mês, com intervalo livre. Falta só separar vendas/trocas
+  (T097), que depende de US7.
+- **Busca e filtros (US4)**: tela própria (`catalog/search`) com busca textual tolerante
+  a acentos e ordem (índice FTS4), 13 dimensões de filtro combináveis, chips de filtros
+  ativos, contagem de resultados e visualizações em grade, lista e agrupadas por coleção,
+  fabricante ou série. A galeria fotográfica no resultado ainda falta.
+- **Fases 7–15** não iniciadas, com exceções pontuais: a movimentação de T103 (US9) e o
+  financeiro de US8 já estão entregues.
+- Verificação de 2026-11-18: **112 testes unitários** e **27 instrumentados**, 0 falhas;
+  lint com 0 erros e 6 avisos pré-existentes. Detalhes em `tasks.md`.
 
 Nenhum dado sai do aparelho: sem conta, sem telemetria, sem permissão ampla de
 armazenamento (importação e backup usam Storage Access Framework).

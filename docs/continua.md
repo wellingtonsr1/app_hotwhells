@@ -11,10 +11,14 @@ nos blocos «Evidências» de cada fase. Este documento é operacional.
   (painel).
 - Ciclo de vida do exemplar: lista por variante, edição, movimentação com histórico,
   arquivamento e exclusão bloqueada por dependentes (FR-028, FR-091).
-- Aquisição editável e avaliações append-only no detalhe do exemplar (US8 parcial): o
-  painel já reflete investido e estimado reais.
-- Nada além disso: busca/filtros, coleções, desejos, agregações financeiras, relatórios/
-  backup e reconhecimento ainda não têm tela.
+- Financeiro (US8): aquisição editável e avaliações append-only no detalhe do exemplar;
+  aba própria com investido, estimado, diferença, custo médio e gastos por fabricante,
+  série, coleção e mês, filtráveis por intervalo.
+- Busca e filtros (US4): tela `catalog/search` com FTS4 tolerante a acentos, 13 filtros
+  combináveis, chips ativos, contagem e grade/lista/agrupamentos. A galeria fotográfica no
+  resultado ainda falta (T064 parcial).
+- Nada além disso: coleções, desejos, vendas/trocas separadas do investido (T097),
+  relatórios/backup e reconhecimento ainda não têm tela.
 
 ## 2. Pré-requisitos
 
@@ -56,8 +60,8 @@ sdk.dir=/caminho/para/Android/Sdk
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-Resultado de referência em 2026-11-18: 90 unitários e 21 instrumentados, 0 falhas;
-lint com 0 erros e 7 avisos.
+Resultado de referência em 2026-11-18: 112 unitários e 27 instrumentados, 0 falhas;
+lint com 0 erros e 6 avisos.
 
 ## 4. Decisões já tomadas (não reabrir sem motivo)
 
@@ -73,16 +77,27 @@ lint com 0 erros e 7 avisos.
   `created_at` originais são preservados.
 - **Avaliação é append-only**: cada valor/dia é uma linha; valor atual = avaliação mais
   recente (FR-083–FR-084).
+- **Financeiro é derivado**: investido, estimado, média e agrupamentos saem de consulta;
+  nada é armazenado. Aquisição sem preço não entra no investido (custo desconhecido não
+  vira zero) e a média divide só pelos exemplares com valor, informando os excluídos.
+- **Moeda é BRL fixo**: FR-076 define o real como padrão e outras moedas na interface
+  estão fora de escopo. Formatação de centavos/datas fica em `core/ui` (T098).
 - **T048** lista modelo sem variante e variante sem cor/ano; complementar a variante exige
   tela de edição que ainda não existe.
+- **Busca (US4)**: a tela é própria (`catalog/search`), não uma sexta aba. O índice FTS4
+  já existia no schema v1; os gatilhos vivem no `onOpen` (idempotentes) com reconstrução
+  quando a contagem diverge — não há migração v2. `skyline r34` vira `skyline* r34*`:
+  o `AND` explícito do FTS4 voltou vazio no SQLite do Android. Status padrão é `OWNED`.
 - **T131 parcial**: rótulos estão em `strings.xml`; mensagens de snackbar dos ViewModels e
-  o texto do `PlaceholderScreen` continuam em Kotlin.
+  o texto do `PlaceholderScreen` continuam em Kotlin. O erro de preço da busca também
+  está em Kotlin (`SearchViewModel.INVALID_PRICE`).
 
 ## 5. Próximos passos sugeridos
 
-1. **Restante de US8**: forma de pagamento/moeda na aquisição, agregações por período/
-   série/fabricante, custo médio e tela de finanças (T092, T094–T098).
-2. **US4**: busca FTS4 (a tabela já existe), filtros combináveis e visualizações.
+1. **T064 (US4)**: galeria fotográfica no resultado da busca e teste de desempenho
+   (T058, 10.000 exemplares) — únicas pendências da fase.
+2. **US5/6**: séries, coleções, progresso, desejos e vendas/trocas; T097 separa
+   vendas/trocas concluídas do investido junto com US7.
 3. **Backup/exportação mínima (US10)**: a coleção vive num único SQLite no aparelho.
 4. **Variante**: exclusão/arquivamento com o mesmo padrão do exemplar e união/separação
    (T143–T145).
