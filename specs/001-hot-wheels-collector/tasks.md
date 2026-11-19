@@ -890,17 +890,17 @@ Decisões registradas:
 
 ### Tests for User Story 9
 
-- [ ] T099 [P] [US9] Teste de hierarquia (ciclo impedido) e movimentação atômica (localização + histórico juntos) em `core/domain/src/test/kotlin/br/com/hotwheelscollector/domain/usecase/LocationTreeTest.kt`
-- [ ] T100 [P] [US9] Teste de exclusão bloqueada quando há exemplares na localização (FR-093) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/LocationRepositoryTest.kt`
+- [X] T099 [P] [US9] Teste de hierarquia (ciclo impedido) e movimentação atômica (localização + histórico juntos) em `core/domain/src/test/kotlin/br/com/hotwheelscollector/domain/usecase/LocationTreeTest.kt` — **verde**, 4 testes; a transação é coberta por `LocationRepositoryTest` (7 testes)
+- [X] T100 [P] [US9] Teste de exclusão bloqueada quando há exemplares na localização (FR-093) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/LocationRepositoryTest.kt` — **verde**, 7 testes no arquivo
 
 ### Implementation for User Story 9
 
 - [X] T101 [US9] **Obsoleta (2026-11-19).** `LocationEntity` (com `type`), `MovementEntity` e os DAOs `LocationDao`/`MovementDao` já estão no schema v1 (`InventoryDao.kt`, `SearchDao.kt`); não há migração v6 nem `LocationEntities.kt`
-- [ ] T102 [US9] Implementar árvore de localização com criação de níveis e nomes personalizados em `app/.../feature/locations/LocationTreeScreen.kt`
+- [X] T102 [US9] Implementar árvore de localização com criação de níveis e nomes personalizados em `app/.../feature/locations/LocationsScreen.kt` — (`LocationTreeScreen.kt` não foi necessário)
 - [X] T103 [US9] Implementar atribuição e movimentação com histórico em transação única (FR-090–FR-091) — **entregue dentro de `app/src/main/java/br/com/hotwheelscollector/feature/catalog/ExemplarDetailScreen.kt`**, não em `MoveExemplarSheet.kt`: localização, movimentação com observação e histórico saem do mesmo `SupportRepositories`, em `transactionRunner.inTransaction`
-- [ ] T104 [US9] Implementar diálogo de exclusão com decisão explícita (mover ou arquivar), sem cascata em `app/.../feature/locations/DeleteLocationDialog.kt`
-- [ ] T105 [US9] Implementar consulta e filtro por localização em qualquer nível da hierarquia (FR-094) em `app/.../feature/locations/LocationContentsScreen.kt`
-- [ ] T106 [US9] Implementar inventário por localização (FR-095) em `app/.../feature/locations/LocationInventoryScreen.kt`
+- [X] T104 [US9] Implementar diálogo de exclusão com decisão explícita (mover ou arquivar), sem cascata — `DeleteLocationDialog` dentro de `LocationsScreen.kt`, com a transação em `LocationRepositoryImpl.archive(id, policy)`
+- [X] T105 [US9] Implementar consulta e filtro por localização em qualquer nível da hierarquia (FR-094) — inventário com CTE recursiva (`LocationDao.observeContents`) e filtro da busca expandindo a subárvore (`SearchRepositoryImpl`), coberto em `SearchRepositoryTest`
+- [X] T106 [US9] Implementar inventário por localização (FR-095) em `app/.../feature/locations/LocationContentsScreen.kt` — cada item abre o detalhe do exemplar
 
 **Checkpoint**: US9 resolve "não sei onde guardei"
 
@@ -914,9 +914,47 @@ A fase está **meio entregue**, e não do jeito que o plano previa:
 - `LocationRepository` já existe em `SupportRepositories.kt`, incluindo a lista usada pelo
   cadastro de exemplar (`AddExemplarScreen`).
 
-**O que falta de fato:** T099, T100, T102 e T104–T106. Sem a árvore de locais (T102), o
-usuário só escolhe entre as localizações que já existirem — não há como criar
+**O que faltava de fato:** T099, T100, T102 e T104–T106. Sem a árvore de locais (T102), o
+usuário só escolhia entre as localizações que já existissem — não havia como criar
 «Estante A > Prateleira 3» pela interface, que é justamente o Independent Test da fase.
+**Fechado em 2026-11-19**, ver evidências abaixo.
+
+### Evidências — Fase 11 / US9 (2026-11-19)
+
+Entrega: árvore de localizações com criação de níveis, renomeação e exclusão com decisão
+explícita; inventário por localização incluindo sublocalizações; filtro de busca por
+localização expandindo a subárvore. **Nenhuma alteração de schema.**
+
+| Verificação | Comando | Resultado |
+| --- | --- | --- |
+| Árvore e hierarquia (T099) | `./gradlew :core:domain:test` | `LocationTreeTest`: 4 testes, 0 falhas (43 no módulo) |
+| Exclusão, movimentação e inventário (T100) | `./gradlew :core:data:testDebugUnitTest` | `LocationRepositoryTest`: 9 testes, 0 falhas (78 no módulo) |
+| Filtro por localização inclui sublocalização | `./gradlew :core:data:testDebugUnitTest` | `SearchRepositoryTest`: 11 testes, 0 falhas |
+| Árvore e diálogo (T102/T104) | `./gradlew :app:connectedDebugAndroidTest` | `LocationsTest`: 3 testes, 0 falhas (38 no total, emulador `hw_test` API 36) |
+| Lint e APK | `./gradlew :app:lintDebug :app:assembleDebug` | `BUILD SUCCESSFUL`, `0 errors, 7 warnings` |
+
+Decisões registradas nesta entrega:
+
+- **CTE recursiva** no SQLite para inventário e para o filtro de busca: "Estante A" traz as
+  prateleiras sem uma consulta por nível e sem depender de hierarquia fixa.
+- **Exclusão é arquivamento com política**: `LocationArchivePolicy.None` só é aceito com a
+  localização vazia; `MoveTo` move cada exemplar e grava `movement` + auditoria na mesma
+  transação; `ArchiveExemplars` marca `status = ARCHIVED` e registra a saída.
+- **A contagem da mensagem vem do repositório**, que devolve quantos exemplares tratou.
+  A tela não informa mais o número: o que ela exibe é o acervo da subárvore, e o repositório
+  trata os possuídos daquela localização. Exemplar vendido ou arquivado não entra na conta
+  nem é movimentado (`LocationRepositoryTest` cobre arquivado e vendido).
+- **Só `OWNED` conta como acervo**, igual a todo o resto do app (dashboard, finanças, busca,
+  contagens e inventário). Pelo mesmo motivo, o diálogo de exclusão fala dos possuídos
+  *daquela* localização, não da subárvore: com sublocalização ativa a exclusão nem passa.
+  `LocationsViewModel` tem um teste em que a árvore anuncia 99 e o repositório devolve 5 — a
+  mensagem segue o 5.
+- **Destino não pode ser descendente** da localização excluída: mover para dentro dela
+  deixaria exemplares embaixo de uma raiz arquivada.
+- **Sublocalização ativa bloqueia** a exclusão (`Blocked`) — reorganizar antes, sem cascata.
+- **Sobras da árvore viram raiz**: pai arquivado ou ciclo gravado por fora não podem fazer
+  uma localização que ainda guarda exemplares desaparecer da tela.
+- **Entrada em Ajustes → Localizações**, com o inventário aberto ao tocar na localização.
 
 ---
 ## Phase 12: User Story 10 - Relatórios, importação, exportação e backup (Priority: P4)

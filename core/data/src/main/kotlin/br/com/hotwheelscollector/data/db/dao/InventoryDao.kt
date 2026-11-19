@@ -30,9 +30,6 @@ public interface LocationDao {
     @Query("SELECT * FROM location WHERE id = :id")
     public suspend fun findById(id: String): LocationEntity?
 
-    @Query("SELECT COUNT(*) FROM exemplar WHERE location_id = :locationId")
-    public suspend fun countExemplars(locationId: String): Int
-
     /** Contagem por localização em uma consulta; a árvore monta a soma em memória. */
     @Query(
         """
@@ -44,9 +41,13 @@ public interface LocationDao {
     )
     public fun observeOwnedCounts(): Flow<List<LocationCountRow>>
 
-    /** Todos os exemplares da localização, de qualquer status: a FK não distingue. */
-    @Query("SELECT id FROM exemplar WHERE location_id = :locationId")
-    public suspend fun findExemplarIdsAt(locationId: String): List<String>
+    /**
+     * Exemplares **possuídos** da localização: a conta que a exclusão trata.
+     * Vendido e arquivado são histórico, não acervo — não entram na contagem nem são
+     * movimentados por uma exclusão de localização (FR-044).
+     */
+    @Query("SELECT id FROM exemplar WHERE location_id = :locationId AND status = 'OWNED'")
+    public suspend fun findOwnedExemplarIdsAt(locationId: String): List<String>
 
     /**
      * Inventário da localização incluindo as sublocalizações (FR-094–FR-095).

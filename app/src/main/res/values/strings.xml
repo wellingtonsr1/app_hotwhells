@@ -376,4 +376,67 @@
     <string name="series_save">Salvar série</string>
     <string name="series_archive">Arquivar série?</string>
     <string name="series_archive_message">As variantes continuam existindo; elas só perdem o agrupamento por série.</string>
+
+    <!-- Localizações físicas e inventário (US9, FR-088–FR-095). -->
+    <string name="locations_title">Localizações</string>
+    <string name="locations_open">Localizações</string>
+    <string name="locations_open_subtitle">Onde cada exemplar está guardado</string>
+    <string name="locations_back">Voltar</string>
+    <string name="locations_add">+ Local</string>
+    <string name="locations_add_child">Sublocal</string>
+    <string name="locations_rename">Renomear</string>
+    <string name="locations_delete">Excluir</string>
+    <string name="locations_loading">Carregando localizações…</string>
+    <string name="locations_empty_title">Nenhuma localização ainda</string>
+    <string name="locations_empty_hint">Crie ambientes, estantes e caixas para saber onde cada miniatura está.</string>
+    <plurals name="locations_exemplar_count">
+        <item quantity="one">%1$d exemplar</item>
+        <item quantity="other">%1$d exemplares</item>
+    </plurals>
+    <string name="locations_subtree_count">(%1$d na subárvore)</string>
+    <string name="locations_add_title">Nova localização</string>
+    <string name="locations_add_child_title">Nova sublocalização</string>
+    <string name="locations_rename_title">Renomear localização</string>
+    <string name="locations_name">Nome</string>
+    <string name="locations_type">Tipo</string>
+    <string name="locations_parent">Dentro de</string>
+    <string name="locations_no_parent">Sem localização superior</string>
+    <string name="locations_save">Salvar</string>
+    <string name="locations_delete_title">Excluir localização?</string>
+    <plurals name="locations_delete_with_exemplars">
+        <item quantity="one">Esta localização guarda %1$d exemplar. Escolha o que fazer com o exemplar — nada é apagado sem decisão.</item>
+        <item quantity="other">Esta localização guarda %1$d exemplares. Escolha o que fazer com as unidades — nada é apagado sem decisão.</item>
+    </plurals>
+    <string name="locations_delete_empty">Esta localização está vazia e sai da árvore. Nada mais é afetado.</string>
+    <plurals name="locations_delete_blocked">
+        <item quantity="one">Ela tem %1$d sublocalização ativa. Organize ou exclua a sublocalização antes.</item>
+        <item quantity="other">Ela tem %1$d sublocalizações ativas. Organize ou exclua as sublocalizações antes.</item>
+    </plurals>
+
+    <string name="locations_archived_empty">Localização excluída.</string>
+    <plurals name="locations_archived_moved">
+        <item quantity="one">Localização excluída. %1$d exemplar movido.</item>
+        <item quantity="other">Localização excluída. %1$d exemplares movidos.</item>
+    </plurals>
+    <plurals name="locations_archived_archived">
+        <item quantity="one">Localização excluída. %1$d exemplar arquivado.</item>
+        <item quantity="other">Localização excluída. %1$d exemplares arquivados.</item>
+    </plurals>
+    <string name="locations_delete_move">Mover os exemplares para outra localização</string>
+    <string name="locations_delete_archive">Arquivar os exemplares</string>
+    <string name="locations_delete_confirm">Excluir</string>
+    <string name="locations_move_target">Destino</string>
+    <string name="inventory_title">Inventário</string>
+    <string name="inventory_loading">Carregando inventário…</string>
+    <string name="inventory_empty">Nenhum exemplar nesta localização.</string>
+    <string name="inventory_includes_children">Inclui as sublocalizações</string>
+    <string name="location_type_environment">Ambiente</string>
+    <string name="location_type_cabinet">Armário</string>
+    <string name="location_type_rack">Estante</string>
+    <string name="location_type_shelf">Prateleira</string>
+    <string name="location_type_crate">Caixa</string>
+    <string name="location_type_drawer">Gaveta</string>
+    <string name="location_type_display">Vitrine</string>
+    <string name="location_type_compartment">Compartimento</string>
+    <string name="location_type_custom">Personalizado</string>
 </resources>

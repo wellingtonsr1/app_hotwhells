@@ -278,7 +278,12 @@ private class FakeLocationRepository : LocationRepository {
 
     override fun observeActive(): Flow<List<Location>> = flowOf(locations)
 
+    override fun observeTree(): Flow<List<br.com.hotwheelscollector.domain.model.LocationNode>> =
+        flowOf(emptyList())
+
     override suspend fun children(parentId: String): List<Location> = emptyList()
+
+    override suspend fun findById(id: String): Location? = locations.firstOrNull { it.id == id }
 
     override suspend fun add(
         type: br.com.hotwheelscollector.domain.model.LocationType,
@@ -289,7 +294,14 @@ private class FakeLocationRepository : LocationRepository {
     override suspend fun rename(id: String, name: String): DomainResult<Unit> =
         Result.success(Unit)
 
-    override suspend fun archive(id: String): DomainResult<Unit> = Result.success(Unit)
+    override suspend fun archive(
+        id: String,
+        policy: br.com.hotwheelscollector.domain.model.LocationArchivePolicy,
+    ): DomainResult<Int> = Result.success(0)
 
     override suspend fun movements(exemplarId: String): Flow<List<Movement>> = flowOf(emptyList())
+
+    override fun observeContents(
+        locationId: String,
+    ): Flow<List<br.com.hotwheelscollector.domain.model.InventoryItem>> = flowOf(emptyList())
 }

@@ -54,10 +54,12 @@ public object LocationTree {
             .map { render(it) }
             .toMutableList()
 
-        // Sobras (ciclo ou pai arquivado no meio da cadeia) entram como raiz.
-        locations.filter { it.id !in rendered }
-            .sortedBy { it.name.lowercase() }
-            .forEach { roots += render(it) }
+        // Sobras (ciclo ou pai arquivado no meio da cadeia) entram como raiz. O filtro é
+        // relido a cada iteração: renderizar uma sobra pode renderizar as outras junto.
+        locations.sortedBy { it.name.lowercase() }
+            .forEach { location ->
+                if (location.id !in rendered) roots += render(location)
+            }
 
         return roots
     }

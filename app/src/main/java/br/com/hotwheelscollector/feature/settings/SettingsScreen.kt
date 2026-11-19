@@ -26,6 +26,7 @@ public fun SettingsScreen(
     onAbout: () -> Unit,
     onPrivacy: () -> Unit,
     modifier: Modifier = Modifier,
+    onLocations: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -36,6 +37,11 @@ public fun SettingsScreen(
         Text(
             text = stringResource(R.string.settings_title),
             style = MaterialTheme.typography.headlineSmall,
+        )
+        SettingsRow(
+            title = stringResource(R.string.locations_open),
+            subtitle = stringResource(R.string.locations_open_subtitle),
+            onClick = onLocations,
         )
         SettingsRow(
             title = stringResource(R.string.settings_about),

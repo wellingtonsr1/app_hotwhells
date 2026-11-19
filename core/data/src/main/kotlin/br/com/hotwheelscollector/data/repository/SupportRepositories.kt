@@ -229,7 +229,7 @@ public class LocationRepositoryImpl @Inject constructor(
                 )
             }
 
-            val exemplarIds = database.locationDao().findExemplarIdsAt(id)
+            val exemplarIds = database.locationDao().findOwnedExemplarIdsAt(id)
             val now = Instant.now(clock)
             val millis = now.toEpochMilli()
 
@@ -249,6 +249,18 @@ public class LocationRepositoryImpl @Inject constructor(
                         ?: throw DomainError.NotFound
                     if (target.archivedAt != null) {
                         throw DomainError.Validation("A localização de destino está arquivada.")
+                    }
+                    // Mover para dentro da própria localização deixaria os exemplares
+                    // embaixo de uma raiz arquivada: o destino não pode ser descendente.
+                    var ancestor: String? = target.parentId
+                    var guard = 0
+                    while (ancestor != null && ++guard <= MAX_DEPTH) {
+                        if (ancestor == id) {
+                            throw DomainError.Validation(
+                                "Escolha um destino fora desta localização e das sublocalizações dela.",
+                            )
+                        }
+                        ancestor = database.locationDao().findById(ancestor)?.parentId
                     }
                     exemplarIds.forEach { exemplarId ->
                         database.exemplarDao().setLocation(exemplarId, target.id, millis)
@@ -326,6 +338,10 @@ public class LocationRepositoryImpl @Inject constructor(
     override fun observeContents(locationId: String): Flow<List<InventoryItem>> =
         database.locationDao().observeContents(locationId)
             .map { rows -> rows.map { it.toDomain() } }
+
+    private companion object {
+        const val MAX_DEPTH = 100
+    }
 }
 
 /** Trilha de auditoria: leitura somente. */

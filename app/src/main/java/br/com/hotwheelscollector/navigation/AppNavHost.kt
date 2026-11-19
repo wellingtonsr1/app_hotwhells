@@ -38,6 +38,8 @@ import br.com.hotwheelscollector.feature.catalog.IncompleteEntriesScreen
 import br.com.hotwheelscollector.feature.catalog.VariantFormScreen
 import br.com.hotwheelscollector.feature.dashboard.DashboardScreen
 import br.com.hotwheelscollector.feature.finance.FinanceScreen
+import br.com.hotwheelscollector.feature.locations.LocationContentsScreen
+import br.com.hotwheelscollector.feature.locations.LocationsScreen
 import br.com.hotwheelscollector.feature.organization.CollectionDetailScreen
 import br.com.hotwheelscollector.feature.organization.CollectionFormScreen
 import br.com.hotwheelscollector.feature.organization.CollectionsScreen
@@ -134,6 +136,14 @@ public sealed class Destination(public val route: String) {
 
     public data object Finance : Destination("finance")
 
+    /** Árvore de localizações físicas (US9). */
+    public data object Locations : Destination("locations")
+
+    /** Inventário da localização e das sublocalizações (FR-094–FR-095). */
+    public data object LocationContents : Destination("locations/{${RouteArgs.LOCATION_ID}}") {
+        public fun routeFor(locationId: String): String = "locations/$locationId"
+    }
+
     /** Ajustes: hub das opções do app (T132, T133). */
     public data object Settings : Destination("settings")
     public data object SettingsAbout : Destination("settings/about")
@@ -148,6 +158,7 @@ public object RouteArgs {
     public const val PHOTO_ID: String = "photoId"
     public const val WISHLIST_ITEM_ID: String = "itemId"
     public const val COLLECTION_ID: String = "collectionId"
+    public const val LOCATION_ID: String = "locationId"
 }
 
 /** Aba da barra inferior: rota, rótulo e ícone. Só rotas de primeiro nível entram aqui. */
@@ -356,10 +367,32 @@ public fun AppNavHost(
             composable(Destination.Finance.route) {
                 FinanceScreen()
             }
+            composable(Destination.Locations.route) {
+                LocationsScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenContents = { locationId ->
+                        navController.navigate(Destination.LocationContents.routeFor(locationId))
+                    },
+                )
+            }
+            composable(
+                route = Destination.LocationContents.route,
+                arguments = listOf(
+                    navArgument(RouteArgs.LOCATION_ID) { type = NavType.StringType },
+                ),
+            ) {
+                LocationContentsScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenExemplar = { exemplarId ->
+                        navController.navigate(Destination.ExemplarDetail.routeFor(exemplarId))
+                    },
+                )
+            }
             composable(Destination.Settings.route) {
                 SettingsScreen(
                     onAbout = { navController.navigate(Destination.SettingsAbout.route) },
                     onPrivacy = { navController.navigate(Destination.SettingsPrivacy.route) },
+                    onLocations = { navController.navigate(Destination.Locations.route) },
                 )
             }
             composable(Destination.SettingsAbout.route) {

@@ -227,6 +227,23 @@ public class SearchRepositoryTest {
     }
 
     @Test
+    public fun `filtro por localizacao inclui o que esta nas sublocalizacoes`(): Unit = runBlocking {
+        seed()
+        // e1 está em l1; move para uma prateleira dentro de l1.
+        database.locationDao().insert(
+            LocationEntity("l3", "Prateleira", "Prateleira 3", "l1", null, 0, 0),
+        )
+        database.exemplarDao().setLocation("e1", "l3", 0)
+
+        val byRack = repository.observeResults(
+            SearchFilters(locationIds = setOf("l1")),
+        ).first()
+
+        assertThat(byRack.map { it.exemplarId }).containsExactly("e1")
+        assertThat(byRack.single().locationName).isEqualTo("Prateleira 3")
+    }
+
+    @Test
     public fun `variantIds alimenta o filtro por variante da busca`(): Unit = runBlocking {
         seed()
 
