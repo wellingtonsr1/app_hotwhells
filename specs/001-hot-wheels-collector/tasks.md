@@ -931,6 +931,7 @@ localização expandindo a subárvore. **Nenhuma alteração de schema.**
 | Exclusão, movimentação e inventário (T100) | `./gradlew :core:data:testDebugUnitTest` | `LocationRepositoryTest`: 9 testes, 0 falhas (78 no módulo) |
 | Filtro por localização inclui sublocalização | `./gradlew :core:data:testDebugUnitTest` | `SearchRepositoryTest`: 11 testes, 0 falhas |
 | Árvore e diálogo (T102/T104) | `./gradlew :app:connectedDebugAndroidTest` | `LocationsTest`: 3 testes, 0 falhas (38 no total, emulador `hw_test` API 36) |
+| Texto das mensagens de exclusão | `./gradlew :app:testDebugUnitTest` | `LocationsMessageTextTest`: 4 testes, 0 falhas (32 no módulo) — resolve os plurais do `strings.xml` e confere «1 exemplar movido» / «3 exemplares movidos» |
 | Lint e APK | `./gradlew :app:lintDebug :app:assembleDebug` | `BUILD SUCCESSFUL`, `0 errors, 7 warnings` |
 
 Decisões registradas nesta entrega:
