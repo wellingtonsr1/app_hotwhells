@@ -27,8 +27,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -160,13 +162,16 @@ private fun IndicatorGrid(snapshot: DashboardSnapshot) {
         stringResource(R.string.dashboard_metric_difference) to moneyDifference,
     )
 
+    val fontScale = LocalConfiguration.current.fontScale
+    val columns = if (fontScale >= 1.3f) 2 else COLUMNS
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        indicators.chunked(COLUMNS).forEach { row ->
+        indicators.chunked(columns).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 row.forEach { (label, value) ->
                     MetricCard(label = label, value = value, modifier = Modifier.weight(1f))
                 }
-                repeat(COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
+                repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }
@@ -175,8 +180,17 @@ private fun IndicatorGrid(snapshot: DashboardSnapshot) {
 @Composable
 private fun MetricCard(label: String, value: String, modifier: Modifier = Modifier) {
     Card(modifier = modifier) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(text = value, style = MaterialTheme.typography.titleMedium)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = label,

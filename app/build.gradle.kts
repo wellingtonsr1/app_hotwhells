@@ -86,6 +86,12 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.systemProperty(
+                "user.home",
+                rootProject.layout.projectDirectory.dir(".tools/user-home").asFile.absolutePath,
+            )
+        }
     }
 
     lint {

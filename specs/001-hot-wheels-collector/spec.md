@@ -4,7 +4,9 @@
 
 **Created**: 2026-11-16
 
-**Status**: Draft
+**Status**: Ratified (v1)
+
+**Last Updated**: 2026-11-20 (Refinamento do escopo de entrega v1)
 
 **Input**: Aplicativo Android offline-first para catalogação, organização e gestão profissional de coleções de miniaturas em escala 1:64 (Hot Wheels e outros fabricantes), cobrindo os 12 módulos: dashboard, cadastro de miniaturas, modelo/variante/exemplar, séries e coleções, lista de desejos, duplicados e trocas, controle financeiro, localização física, fotografias com reconhecimento assistido, leitura de código de barras, pesquisa e filtros, e relatórios — sem servidor, com importação/exportação por arquivo e PDF gerado no aparelho.
 
@@ -18,6 +20,10 @@
 
 - Q: Com qual stack o aplicativo Android será construído? → A: Nativo Kotlin + Jetpack Compose, com Room para persistência local e ML Kit on-device para OCR e leitura de código de barras.
 - Q: Como o aplicativo será distribuído na versão 1? → A: Sideload de arquivo assinado na v1, mantendo o pacote de publicação (AAB) e os requisitos de loja prontos para publicação futura, sem publicar automaticamente.
+
+### Session 2026-11-20
+
+- Q: Qual é o recorte de fechamento para a versão 1 de uso pessoal? → A: O foco da v1 é a preservação da integridade da coleção, cadastro manual robusto, fotos, finanças, desejos, duplicados e backup/restauração local com exportação aberta. Importação de planilhas de terceiros, relatórios formatados em PDF/XLSX e OCR/código de barras por ML Kit ficam diferidos para a v2, sem comprometer a regra de ouro de não perder dados.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -482,8 +488,8 @@ Legenda: **MUST** = obrigatório e verificável; **MUST NOT** = proibido. Cada r
 - **SC-003**: 100% das funções essenciais (cadastro, edição, consulta, filtros, fotos, financeiro, relatórios, backup) funcionam com o aparelho em modo avião.
 - **SC-004**: Exportar e reimportar a coleção em outro aparelho restaura 100% dos exemplares, variantes, modelos, fotos vinculadas, aquisições, avaliações e localizações, com contagens idênticas.
 - **SC-005**: Duas variantes diferentes do mesmo modelo nunca são contadas como duplicata, e dois exemplares da mesma variante sempre são, em 100% dos casos testados.
-- **SC-006**: Importação de arquivo com 1.000 linhas apresenta pré-visualização completa e relatório de erros por linha antes de gravar qualquer dado.
-- **SC-007**: Relatório em PDF é gerado no aparelho, sem conexão, em menos de 10 segundos para 1.000 exemplares, com totais iguais aos do painel.
+- **SC-006**: Importação de arquivo com 1.000 linhas apresenta pré-visualização completa e relatório de erros por linha antes de gravar qualquer dado *(diferido para v2 com a importação de planilhas de terceiros)*.
+- **SC-007**: Relatório em PDF é gerado no aparelho, sem conexão, em menos de 10 segundos para 1.000 exemplares, com totais iguais aos do painel *(diferido para v2 com os relatórios formatados em PDF)*.
 - **SC-008**: O aplicativo nunca perde dados de formulário em 20 interrupções simuladas (rotação, segundo plano, encerramento pelo sistema).
 - **SC-009**: Nenhum dado sai do aparelho sem ação explícita do usuário, verificado em 100% dos fluxos que envolvem rede.
 - **SC-010**: Sugestões automáticas nunca gravam registros sem confirmação: 0 gravações automáticas em testes com reconhecimento inconclusivo.
@@ -510,6 +516,9 @@ Legenda: **MUST** = obrigatório e verificável; **MUST NOT** = proibido. Cada r
 
 ## Out of Scope *(v1)*
 
+- Importação direta de planilhas CSV/XLSX de terceiros (o backup/restauração e exportação aberta JSON/CSV atendem à preservação de dados da v1; importação arbitrária de planilhas de terceiros com conciliação fica para a v2).
+- Geração de relatórios tabulares formatados em PDF e planilhas XLSX com cabeçalhos dedicados (diferidos para a v2; a exportação aberta cobre a extração de dados).
+- Reconhecimento assistido por ML Kit (código de barras e OCR de embalagem) (diferido para a v2; o cadastro manual e fotos cobrem integralmente o acervo).
 - Sincronização entre aparelhos, conta em nuvem e compartilhamento público da coleção.
 - Catálogo de referência mundial compartilhado com curadoria.
 - Aplicativo para iOS, web ou desktop.

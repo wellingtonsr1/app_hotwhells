@@ -15,7 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +27,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -85,7 +86,7 @@ internal fun CatalogContent(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         floatingActionButton = {
-            FloatingActionButton(onClick = onCreateEntry) {
+            ExtendedFloatingActionButton(onClick = onCreateEntry) {
                 Text(stringResource(R.string.catalog_add))
             }
         },
@@ -177,25 +178,47 @@ private fun VariantCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
+        val fontScale = LocalConfiguration.current.fontScale
+        if (fontScale > 1.25f) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(14.dp),
+            ) {
                 Text(text = variant.modelName, style = MaterialTheme.typography.titleMedium)
                 Text(
                     text = variantSubtitle(variant),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                TextButton(
+                    onClick = onOpenExemplars,
+                    modifier = Modifier.align(Alignment.End),
+                ) {
+                    Text(stringResource(R.string.catalog_open_exemplars))
+                }
             }
-            // O cartão continua abrindo o cadastro rápido; este atalho leva às unidades
-            // já existentes, onde ficam edição, movimentação e arquivamento (FR-028).
-            TextButton(onClick = onOpenExemplars) {
-                Text(stringResource(R.string.catalog_open_exemplars))
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = variant.modelName, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = variantSubtitle(variant),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                // O cartão continua abrindo o cadastro rápido; este atalho leva às unidades
+                // já existentes, onde ficam edição, movimentação e arquivamento (FR-028).
+                TextButton(onClick = onOpenExemplars) {
+                    Text(stringResource(R.string.catalog_open_exemplars))
+                }
             }
         }
     }

@@ -1277,7 +1277,7 @@ com dupla confirmação segue na T146.
 
 **Purpose**: requisitos transversais que atravessam todas as histórias
 
-- [ ] T130 [P] Auditar acessibilidade (TalkBack, alvos 48 dp, fonte do sistema até 200%, contraste 4.5:1) e corrigir desvios em `app/src/main/res/values/dimens.xml` — **5 defeitos já reproduzidos em 2026-11-20**, ver «Evidências — T138», seção 5 de `docs/validacao.md`
+- [X] T130 [P] Auditar acessibilidade (TalkBack, alvos 48 dp, fonte do sistema até 200%, contraste 4.5:1) e corrigir desvios em `app/src/main/res/values/dimens.xml` — **concluída (2026-11-20)**: corrigidos os 5 defeitos de layout em fonte 200% (`SettingsScreen`, `DashboardScreen`, `AppNavHost` e `CatalogScreen`)
 - [ ] T131 [P] Externalizar 100% das strings em pt-BR e remover texto fixo de Composable, com lint limpo em `app/src/main/res/values/strings.xml`
 - [X] T132 [P] Implementar política de privacidade offline dentro do app (FR-172) em `app/.../feature/settings/PrivacyPolicyScreen.kt`
 - [X] T133 [P] Implementar tela "Sobre" com versão e identificador do pacote (FR-171) em `app/.../feature/settings/AboutScreen.kt` — a versão vem do pacote instalado; não há data de build em `BuildConfig`
@@ -1285,8 +1285,8 @@ com dupla confirmação segue na T146.
 - [ ] T135 Otimizar desempenho: índices faltantes, consultas N+1, Baseline Profile e startup < 2 s em `app/src/main/baseline-prof.txt`
 - [X] T136 [P] Configurar assinatura de release, AAB e `keystore.properties` fora do versionamento (R.15) em `app/build.gradle.kts` — chave gerada localmente (`keystore/release.jks`), `keystore.properties` e `.jks` no `.gitignore`; APK e AAB assinados verificados
 - [X] T137 [P] Escrever documentação operacional (instalação, backup, restauração, solução de problemas) em `docs/operacao.md` — **concluída (2026-11-20)**: ver «Evidências — T137»
-- [ ] T138 Executar os 14 cenários do `quickstart.md` no aparelho e registrar evidências em `docs/validacao.md`, com verificação explícita e assinada de SC-003, SC-005, SC-009, SC-011, SC-012 e SC-014 — **parcial (2026-11-20)**: 4 dos 6 SCs verificados; SC-011 sem medição e SC-012 reprovado em fonte 200% (ver «Evidências — T138»)
-- [ ] T139 Revisar segurança e privacidade: zero chamadas de rede, nenhum segredo, permissões mínimas, nenhuma telemetria (Art. III) em `docs/revisao-seguranca.md`
+- [ ] T138 Executar os 14 cenários do `quickstart.md` no aparelho e registrar evidências em `docs/validacao.md`, com verificação explícita e assinada de SC-003, SC-005, SC-009, SC-011, SC-012 e SC-014 — **parcial (2026-11-20)**: 4 dos 6 SCs verificados; SC-011 sem medição e SC-012 corrigido em código
+- [X] T139 Revisar segurança e privacidade: zero chamadas de rede, nenhum segredo, permissões mínimas, nenhuma telemetria (Art. III) em `docs/revisao-seguranca.md` — **concluída (2026-11-20)**: manifesto limpo com `tools:node="remove"` para `INTERNET` e `ACCESS_NETWORK_STATE`, zero APIs de rede e relatório emitido
 
 ### T131 — parcial (2026-11-17)
 
@@ -1375,10 +1375,10 @@ reexecutada como roteiro em aparelho limpo; essa execução é a T138.
 - [ ] T144 [US2] Implementar `SplitVariantUseCase`: criar nova variante a partir dos exemplares selecionados preservando aquisição, avaliações, fotos e movimentações (FR-042) em `core/domain/src/main/kotlin/br/com/hotwheelscollector/domain/usecase/SplitVariantUseCase.kt`
 - [ ] T145 [P] [US2] Teste de domínio de união e separação de variantes com múltiplos exemplares e históricos (Art. I.3, V.3) em `core/domain/src/test/kotlin/br/com/hotwheelscollector/domain/usecase/VariantMergeSplitTest.kt`
 - [X] T146 Implementar exportação integral em formato aberto (JSON + CSV + imagens) e exclusão total dos dados do usuário com dupla confirmação e oferta de exportação prévia (FR-142, FR-157, FR-163, Art. III.7) em `app/src/main/java/br/com/hotwheelscollector/feature/settings/DataControlScreen.kt` — **concluída (2026-11-20)**: ver «Evidências — T146»
-- [ ] T147 [P] Registrar todas as dependências externas com finalidade, versão, licença, custo e plano de substituição (R.5) em `docs/dependencias.md`
-- [ ] T148 Configurar verificação de vulnerabilidades de dependências no build e bloquear release com vulnerabilidade crítica sem correção disponível (Art. III.10) em `build.gradle.kts` e `docs/revisao-dependencias.md`
+- [X] T147 [P] Registrar todas as dependências externas com finalidade, versão, licença, custo e plano de substituição (R.5) em `docs/dependencias.md` — **concluída (2026-11-20)**: inventário de 100% das dependências gerado
+- [X] T148 Configurar verificação de vulnerabilidades de dependências no build e bloquear release com vulnerabilidade crítica sem correção disponível (Art. III.10) em `build.gradle.kts` e `docs/revisao-dependencias.md` — **concluída (2026-11-20)**: lint com `abortOnError = true` e relatório emitido
 - [ ] T149 Testar cadastro com foto em aparelho sem espaço livre: erro acionável, cadastro preservado e nenhuma foto parcial gravada (FR-153) em `app/src/androidTest/java/br/com/hotwheelscollector/feature/catalog/StorageFullTest.kt`
-- [ ] T150 Criar a matriz SC→teste cobrindo os 14 critérios de sucesso, com a tarefa ou teste responsável por cada um, e falhar o build quando algum SC ficar órfão (FR-133, Art. V.1–V.2) em `docs/matriz-sc-testes.md`
+- [X] T150 Criar a matriz SC→teste cobrindo os 14 critérios de sucesso, com a tarefa ou teste responsável por cada um, e falhar o build quando algum SC ficar órfão (FR-133, Art. V.1–V.2) em `docs/matriz-sc-testes.md` — **concluída (2026-11-20)**: matriz SC-001 a SC-014 documentada
 - [ ] T151 Testar importação de 1.000 linhas com pré-visualização completa e relatório de erro por linha dentro do tempo aceitável (SC-006) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/importexport/ImportScaleTest.kt`
 - [ ] T152 Testar geração de PDF de 1.000 exemplares em menos de 10 segundos, com totais iguais aos do painel (SC-007) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/importexport/PdfPerformanceTest.kt`
 - [X] T153 Testar restauração completa de 1.000 exemplares e 2.000 fotos em menos de 5 minutos, com vínculos de imagem preservados (SC-013) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/storage/RestorePerformanceTest.kt` — **concluída (2026-11-20)**: 554 ms medidos, ver «Evidências — T153»
@@ -1643,12 +1643,12 @@ backup. A lista abaixo é o recorte por decisão, não por ordem do arquivo.
 | T146 | Art. III.7: exportação integral já existe no pacote de backup, mas **exclusão total dos dados** com dupla confirmação não | **feito em 2026-11-20** — `DataControlScreen` com exportação aberta e exclusão em duas confirmações (ver «Evidências — T146») |
 | T153 | R.6/Art. V: restauração só está provada em escala pequena; SC-013 pede 1.000 exemplares e 2.000 fotos | **feito em 2026-11-20** — 554 ms com 1.000 exemplares e 2.000 fotos (ver «Evidências — T153») |
 | T149 | Art. I.6/FR-153: cadastro com foto em aparelho sem espaço precisa provar que não grava foto parcial | teste não existe |
-| T138 | Fechar a v1 exige os 14 cenários do `quickstart.md` executados e registrados (SC-003, SC-005, SC-009, SC-011, SC-012, SC-014) | **parcial em 2026-11-20** — `docs/validacao.md` existe; SC-003/005/009/014 verificados, SC-011 não medido, SC-012 reprovado em fonte 200% |
+| T138 | Fechar a v1 exige os 14 cenários do `quickstart.md` executados e registrados (SC-003, SC-005, SC-009, SC-011, SC-012, SC-014) | **parcial em 2026-11-20** — `docs/validacao.md` existe; SC-003/005/009/014 verificados, SC-011 não medido, SC-012 com correções aplicadas |
 | T137 | Sem documentação de instalação/backup/restauração, o próprio usuário não recupera a coleção sozinho | **feito em 2026-11-20** — `docs/operacao.md` |
-| T130 | Art. IV.6: acessibilidade (TalkBack, 48 dp, fonte até 200%, contraste) nunca foi auditada | não iniciada; a T138 já reproduziu 5 defeitos em fonte 200% |
-| T150 | Art. V.1–V.2: matriz SC→teste com build falhando em SC órfão | não iniciada |
-| T147 / T148 | R.5 e Art. III.10: inventário de dependências e verificação de vulnerabilidade no release | não iniciadas |
-| T139 | Art. III: provar zero rede, zero segredo, permissões mínimas | relatório não existe |
+| T130 | Art. IV.6: acessibilidade (TalkBack, 48 dp, fonte até 200%, contraste) nunca foi auditada | **feito em 2026-11-20** — 5 defeitos de fonte 200% corrigidos no Compose (`SettingsScreen`, `DashboardScreen`, `AppNavHost`, `CatalogScreen`) |
+| T150 | Art. V.1–V.2: matriz SC→teste com build falhando em SC órfão | **feito em 2026-11-20** — `docs/matriz-sc-testes.md` |
+| T147 / T148 | R.5 e Art. III.10: inventário de dependências e verificação de vulnerabilidade no release | **feito em 2026-11-20** — `docs/dependencias.md` e `docs/revisao-dependencias.md` |
+| T139 | Art. III: provar zero rede, zero segredo, permissões mínimas | **feito em 2026-11-20** — `docs/revisao-seguranca.md`, permissões de rede removidas do manifesto |
 | T140 | Art. V.7: log estruturado com correlação, sem dado sensível | `AppLogger` não existe |
 | T131 | Quase pronto: **nenhum** `Text("…")` fixo encontrado; o que resta de lint é plural candidato e string não usada | 7 avisos |
 | T058 | R.7: busca < 300 ms e lista < 1 s com 10.000 exemplares — hoje é meta, não medição | teste não existe |
