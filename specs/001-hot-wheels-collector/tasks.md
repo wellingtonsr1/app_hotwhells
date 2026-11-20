@@ -1086,9 +1086,9 @@ Decisões registradas nesta entrega:
 ### Tests for User Story 10
 
 - [ ] T107 [P] [US10] Teste de contrato do CSV de importação (colunas, enums, datas, `E001`–`E008`) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/importexport/CsvImportContractTest.kt`
-- [ ] T108 [P] [US10] Teste de contrato do pacote de backup (layout, `manifest.json`, SHA-256 por arquivo) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/storage/BackupPackageContractTest.kt`
+- [X] T108 [P] [US10] Teste de contrato do pacote de backup (layout, `manifest.json`, SHA-256 por arquivo) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/storage/BackupServiceTest.kt`
 - [ ] T109 [P] [US10] Teste de formato dos relatórios: PDF (páginas, cabeçalho, totais) e XLSX aberto por leitor independente em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/importexport/ReportFormatTest.kt`
-- [ ] T110 [P] [US10] Teste de ida e volta backup→restauração em banco novo com fotos e relacionamentos (SC-004) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/storage/RestoreRoundTripTest.kt`
+- [X] T110 [P] [US10] Teste de ida e volta backup→restauração em banco novo com fotos e relacionamentos (SC-004) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/storage/BackupServiceTest.kt`
 
 ### Implementation for User Story 10
 
@@ -1100,12 +1100,57 @@ Decisões registradas nesta entrega:
 - [ ] T116 [US10] Implementar escritores CSV e XLSX (OOXML por `ZipOutputStream`) com nome de arquivo datado em `core/data/.../importexport/ReportWriters.kt`
 - [ ] T117 [US10] Implementar gerador de PDF com `PdfDocument`, cabeçalho, filtros, totais e paginação (FR-126–FR-128) em `core/data/.../importexport/PdfReportWriter.kt`
 - [ ] T118 [US10] Implementar tela de relatórios com os 11 tipos, progresso e cancelamento seguro (FR-123–FR-132) em `app/.../feature/reports/ReportsScreen.kt`
-- [ ] T119 [US10] Implementar `BackupService` (manifesto, hashes, streaming) e restauração com validação prévia e modos substituir/mesclar em `core/data/.../storage/BackupService.kt`
-- [ ] T120 [US10] Implementar tela de backup/restauração com lembrete por intervalo e aviso de cota do Auto Backup em `app/.../feature/transfer/BackupScreen.kt`
+- [ ] T119 [US10] Implementar `BackupService` (manifesto, hashes, streaming) e restauração com validação prévia e modos substituir/mesclar em `core/data/.../storage/BackupService.kt` — **parcial (2026-11-19)**: pacote, validação, modo substituir e exportação aberta (JSON/CSV) prontos; modo mesclar pendente
+- [ ] T120 [US10] Implementar tela de backup/restauração com lembrete por intervalo e aviso de cota do Auto Backup em `app/.../feature/transfer/BackupScreen.kt` — **parcial (2026-11-19)**: criar/restaurar com resumo e confirmação; lembrete por intervalo pendente
 
 **Checkpoint**: US10 garante que a coleção não fica presa ao app
 
 ---
+
+
+### Evidências — backup manual (T108, T110, T119/T120 parciais, 2026-11-19)
+
+O que o usuário pediu: um pacote com **banco + fotos + manifesto** e restauração com
+validação, para uso pessoal — é a rede de segurança contra trocar de celular ou limpar os
+dados do app.
+
+**Formato (decisão registrada):** o ZIP leva `data/hotwheels.db` (snapshot SQLite após
+`wal_checkpoint(TRUNCATE)`), `images/...` com as fotos referenciadas por `photo.path`,
+`data/<tabela>.json` e `CSV/<tabela>.csv` (exportação aberta, gerada por streaming a partir
+do snapshot), `README.txt` e `manifest.json` (`format_version`, `schema_version`, `app_version`,
+`created_at`, `created_on_device`, `counts` por tabela + fotos, `total_bytes`,
+`missing_images` e `files[{path,bytes,sha256}]`). O banco vai como arquivo, não como um
+JSON por tabela: preserva inclusive tabelas de versões futuras e torna a restauração uma
+cópia validada. A exportação aberta (FR-142) vai no **mesmo** pacote, uma linha por
+registro, com `search_index` de fora por ser derivado e reconstruído na abertura.
+
+**Validação antes de gravar (FR-143):** ZIP legível, manifesto presente, `format_version`
+conhecida, `schema_version` não superior à do app, todo arquivo listado presente com o
+tamanho e o SHA-256 do manifesto, `PRAGMA integrity_check` = `ok`, `PRAGMA
+foreign_key_check` vazio e contagens por tabela iguais às declaradas. Qualquer falha
+aborta **antes** de tocar nos dados atuais.
+
+**Restauração (modo substituir):** valida de novo, fecha o banco, guarda
+`hotwheels.db.pre-restore-<data>` e `images.pre-restore-<data>`, instala banco e fotos e
+remove `-wal`/`-shm` antigos; em erro, faz rollback e mantém o estado anterior. Como o
+banco injetado é fechado, a tela pede para reabrir o app e reinicia o processo.
+
+| Verificação | Comando | Resultado |
+| --- | --- | --- |
+| Contrato do pacote (T108) | `./gradlew :core:data:testDebugUnitTest --tests '*BackupServiceTest'` | `BackupServiceTest`: 4 testes, 0 falhas |
+| Ida e volta com banco e foto (T110/SC-004) | idem | `restauracaoDevolveBancoEFotos`: banco reaberto com 1 exemplar e foto restaurada byte a byte |
+| Pacote corrompido | idem | `fotoAlteradaRecusaRestauracaoSemTocarNosDados`: recusa por tamanho/hash e o banco fica intacto |
+| Versão de schema mais nova | idem | `manifestoDeVersaoMaisNovaERecusado`: falha `NEWER_SCHEMA` |
+| Exportação aberta (FR-142) | idem | `data/exemplar.json` e `CSV/exemplar.csv` com o registro semeado, listados e com hash no manifesto |
+| Tela (T120 parcial) | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*BackupScreenTest` | `BackupScreenTest`: 2 testes, 0 falhas (emulador `hw_test`, API 36) |
+| Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 41 testes, 0 falhas (3m 32s) |
+| Regressão unitária e lint | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 174 testes, 0 falhas; `0 errors, 7 warnings` |
+
+**Limites conhecidos:** não há modo mesclar, lembrete periódico, cancelamento no meio da
+gravação nem exportação XLSX separada (T116). O pacote não é comprimido além do próprio
+ZIP, e o backup inclui apenas as fotos existentes (as ausentes são contadas e avisadas).
+A exclusão total dos dados com dupla confirmação segue na T146.
+
 
 ## Phase 13: User Story 11 - Reconhecimento assistido por foto e código de barras (Priority: P4)
 

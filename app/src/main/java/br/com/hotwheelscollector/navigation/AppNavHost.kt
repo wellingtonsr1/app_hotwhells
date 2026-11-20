@@ -50,6 +50,7 @@ import br.com.hotwheelscollector.feature.search.SearchScreen
 import br.com.hotwheelscollector.feature.settings.AboutScreen
 import br.com.hotwheelscollector.feature.settings.PrivacyPolicyScreen
 import br.com.hotwheelscollector.feature.settings.SettingsScreen
+import br.com.hotwheelscollector.feature.transfer.BackupScreen
 import br.com.hotwheelscollector.feature.wishlist.WishlistFormScreen
 import br.com.hotwheelscollector.feature.wishlist.WishlistScreen
 
@@ -158,6 +159,9 @@ public sealed class Destination(public val route: String) {
 
     /** Ajustes: hub das opções do app (T132, T133). */
     public data object Settings : Destination("settings")
+
+    /** Backup manual: pacote com banco, fotos e manifesto (T119/T120). */
+    public data object Backup : Destination("settings/backup")
     public data object SettingsAbout : Destination("settings/about")
     public data object SettingsPrivacy : Destination("settings/privacy")
 }
@@ -422,7 +426,11 @@ public fun AppNavHost(
                     onAbout = { navController.navigate(Destination.SettingsAbout.route) },
                     onPrivacy = { navController.navigate(Destination.SettingsPrivacy.route) },
                     onLocations = { navController.navigate(Destination.Locations.route) },
+                    onBackup = { navController.navigate(Destination.Backup.route) },
                 )
+            }
+            composable(Destination.Backup.route) {
+                BackupScreen(onBack = { navController.popBackStack() })
             }
             composable(Destination.SettingsAbout.route) {
                 AboutScreen()

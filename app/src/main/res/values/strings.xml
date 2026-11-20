@@ -517,4 +517,55 @@
     <string name="finance_history_trade">Troca</string>
     <string name="finance_history_counterparty">Contraparte: %1$s</string>
     <string name="finance_history_received">Recebido: %1$s</string>
+
+    <!-- Backup manual (T119/T120, FR-140–FR-145). -->
+    <string name="backup_title">Backup e restauração</string>
+    <string name="backup_back">Voltar</string>
+    <string name="backup_intro">O pacote guarda o banco, as fotos, um manifesto com o hash de cada arquivo e uma cópia em CSV/JSON legível sem o app. Guarde-o fora do aparelho: é o que permite reconstruir a coleção em outro celular.</string>
+    <string name="backup_auto_note">O backup automático do Android copia o banco, mas não as fotos. Só este pacote leva tudo.</string>
+    <string name="backup_create">Criar backup</string>
+    <string name="backup_restore">Restaurar backup</string>
+    <string name="backup_busy">Trabalhando…</string>
+    <string name="backup_created_title">Backup criado</string>
+    <string name="backup_created_hint">O arquivo foi gravado no local escolhido. Copie-o para fora do aparelho.</string>
+    <plurals name="backup_counts_exemplars">
+        <item quantity="one">%1$d exemplar</item>
+        <item quantity="other">%1$d exemplares</item>
+    </plurals>
+    <plurals name="backup_counts_photos">
+        <item quantity="one">%1$d foto</item>
+        <item quantity="other">%1$d fotos</item>
+    </plurals>
+    <plurals name="backup_missing_images">
+        <item quantity="one">%1$d foto referenciada não estava no armazenamento e ficou de fora.</item>
+        <item quantity="other">%1$d fotos referenciadas não estavam no armazenamento e ficaram de fora.</item>
+    </plurals>
+    <plurals name="backup_confirm_missing_images">
+        <item quantity="one">Atenção: %1$d foto do pacote estava ausente.</item>
+        <item quantity="other">Atenção: %1$d fotos do pacote estavam ausentes.</item>
+    </plurals>
+    <string name="backup_confirm_title">Substituir os dados atuais?</string>
+    <string name="backup_confirm_created_at">Criado em %1$s</string>
+    <string name="backup_confirm_device">Aparelho de origem: %1$s</string>
+    <string name="backup_confirm_size">Tamanho: %1$s</string>
+    <string name="backup_confirm_warning">Todos os dados atuais serão substituídos pelos do pacote. Uma cópia do estado anterior fica guardada no aparelho.</string>
+    <string name="backup_confirm_action">Restaurar</string>
+    <string name="backup_cancel">Cancelar</string>
+    <string name="backup_restored_title">Restauração concluída</string>
+    <string name="backup_restored_body">Para continuar, o app precisa ser reaberto.</string>
+    <string name="backup_restart">Reabrir o app</string>
+    <string name="backup_error_title">Não foi possível concluir</string>
+    <string name="backup_dismiss">Fechar</string>
+    <string name="backup_error_not_a_package">O arquivo escolhido não é um pacote de backup.</string>
+    <string name="backup_error_unsupported_format">Este pacote foi criado em um formato que este app não lê.</string>
+    <string name="backup_error_missing_file">O pacote está incompleto: falta um arquivo listado no manifesto.</string>
+    <string name="backup_error_size">Um arquivo do pacote tem tamanho diferente do registrado no manifesto.</string>
+    <string name="backup_error_checksum">Um arquivo do pacote está corrompido (hash diferente do manifesto).</string>
+    <string name="backup_error_count">As contagens do pacote não conferem com o banco.</string>
+    <string name="backup_error_database">O banco dentro do pacote está inválido.</string>
+    <string name="backup_error_newer_schema">O pacote é de uma versão mais nova do app. Atualize o app antes de restaurar.</string>
+    <string name="backup_error_foreign_key">O banco do pacote tem vínculos quebrados.</string>
+    <string name="backup_error_write">Não foi possível gravar a restauração. Os dados atuais foram mantidos.</string>
+    <string name="settings_backup">Backup e restauração</string>
+    <string name="settings_backup_subtitle">Pacote com banco, fotos e manifesto</string>
 </resources>

@@ -21,8 +21,10 @@ import br.com.hotwheelscollector.data.repository.SeriesRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ValuationRepositoryImpl
 import br.com.hotwheelscollector.data.repository.VariantRepositoryImpl
 import br.com.hotwheelscollector.data.repository.WishlistRepositoryImpl
+import br.com.hotwheelscollector.data.storage.FileBackupService
 import br.com.hotwheelscollector.data.storage.FileImageStore
 import br.com.hotwheelscollector.data.storage.ImageStore
+import br.com.hotwheelscollector.domain.backup.BackupService
 import br.com.hotwheelscollector.domain.repository.AcquisitionRepository
 import br.com.hotwheelscollector.domain.repository.CarModelRepository
 import br.com.hotwheelscollector.domain.repository.CollectionRepository
@@ -115,6 +117,10 @@ public abstract class RepositoryModule {
     @Binds
     @Singleton
     public abstract fun bindImageStore(impl: FileImageStore): ImageStore
+
+    @Binds
+    @Singleton
+    public abstract fun bindBackupService(impl: FileBackupService): BackupService
 
     @Binds
     @Singleton

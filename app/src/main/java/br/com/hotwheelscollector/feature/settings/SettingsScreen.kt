@@ -16,10 +16,10 @@ import androidx.compose.ui.unit.dp
 import br.com.hotwheelscollector.R
 
 /**
- * Ajustes (T132, T133).
+ * Ajustes (T132, T133, T120).
  *
- * Só entram aqui opções que já existem de verdade. Backup, importação e preferências de
- * transferência dependem da US10 e não aparecem como item desabilitado sem explicação.
+ * Só entram aqui opções que já existem de verdade. Importação e relatórios dependem do
+ * restante da US10 e não aparecem como item desabilitado sem explicação.
  */
 @Composable
 public fun SettingsScreen(
@@ -27,6 +27,7 @@ public fun SettingsScreen(
     onPrivacy: () -> Unit,
     modifier: Modifier = Modifier,
     onLocations: () -> Unit = {},
+    onBackup: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -42,6 +43,11 @@ public fun SettingsScreen(
             title = stringResource(R.string.locations_open),
             subtitle = stringResource(R.string.locations_open_subtitle),
             onClick = onLocations,
+        )
+        SettingsRow(
+            title = stringResource(R.string.settings_backup),
+            subtitle = stringResource(R.string.settings_backup_subtitle),
+            onClick = onBackup,
         )
         SettingsRow(
             title = stringResource(R.string.settings_about),
