@@ -90,6 +90,7 @@ internal fun NegotiationEntity.toDomain(): Negotiation = Negotiation(
     amount = amountCents?.let(::MoneyCents),
     currency = currency,
     notes = notes,
+    receivedExemplarId = receivedExemplarId,
 )
 
 internal fun NegotiationEventEntity.toDomain(): NegotiationEvent = NegotiationEvent(

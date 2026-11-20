@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.hotwheelscollector.domain.model.FinancePeriod
 import br.com.hotwheelscollector.domain.model.FinanceSummary
+import br.com.hotwheelscollector.domain.model.FinancialHistory
 import br.com.hotwheelscollector.domain.model.IsoDate
 import br.com.hotwheelscollector.domain.model.PeriodSpending
 import br.com.hotwheelscollector.domain.model.SpendingSlice
 import br.com.hotwheelscollector.domain.repository.FinanceRepository
+import br.com.hotwheelscollector.domain.usecase.FinancialHistoryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,6 +27,7 @@ public data class FinanceUiState(
     val bySeries: List<SpendingSlice> = emptyList(),
     val byCollection: List<SpendingSlice> = emptyList(),
     val byMonth: List<PeriodSpending> = emptyList(),
+    val history: FinancialHistory = FinancialHistory(),
     val fromText: String = "",
     val toText: String = "",
     val periodMessage: String? = null,
@@ -34,6 +37,7 @@ public data class FinanceUiState(
 @HiltViewModel
 public class FinanceViewModel @Inject constructor(
     financeRepository: FinanceRepository,
+    financialHistory: FinancialHistoryUseCase,
 ) : ViewModel() {
 
     private data class FormState(
@@ -70,13 +74,18 @@ public class FinanceViewModel @Inject constructor(
         )
     }
 
-    public val state: StateFlow<FinanceUiState> = combine(data, form) { values, formState ->
+    public val state: StateFlow<FinanceUiState> = combine(
+        data,
+        financialHistory.observe(),
+        form,
+    ) { values, history, formState ->
         FinanceUiState(
             summary = values.summary,
             byManufacturer = values.byManufacturer,
             bySeries = values.bySeries,
             byCollection = values.byCollection,
             byMonth = values.byMonth,
+            history = history,
             fromText = formState.fromText,
             toText = formState.toText,
             periodMessage = formState.periodMessage,

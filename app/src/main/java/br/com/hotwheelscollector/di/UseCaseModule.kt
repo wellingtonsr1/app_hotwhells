@@ -2,14 +2,21 @@ package br.com.hotwheelscollector.di
 
 import br.com.hotwheelscollector.domain.repository.CarModelRepository
 import br.com.hotwheelscollector.domain.repository.CollectionRepository
+import br.com.hotwheelscollector.domain.repository.DuplicateRepository
 import br.com.hotwheelscollector.domain.repository.ExemplarRepository
+import br.com.hotwheelscollector.domain.repository.FinanceRepository
 import br.com.hotwheelscollector.domain.repository.ManufacturerRepository
+import br.com.hotwheelscollector.domain.repository.NegotiationRepository
 import br.com.hotwheelscollector.domain.repository.VariantRepository
 import br.com.hotwheelscollector.domain.usecase.AddExemplarUseCase
+import br.com.hotwheelscollector.domain.usecase.CloseSaleUseCase
+import br.com.hotwheelscollector.domain.usecase.CloseTradeUseCase
 import br.com.hotwheelscollector.domain.usecase.CollectionProgressUseCase
 import br.com.hotwheelscollector.domain.usecase.CreateCatalogEntryUseCase
 import br.com.hotwheelscollector.domain.usecase.CreateModelUseCase
 import br.com.hotwheelscollector.domain.usecase.CreateVariantUseCase
+import br.com.hotwheelscollector.domain.usecase.FinancialHistoryUseCase
+import br.com.hotwheelscollector.domain.usecase.GetDuplicatesUseCase
 import br.com.hotwheelscollector.domain.usecase.MissingItemsUseCase
 import dagger.Module
 import dagger.Provides
@@ -66,4 +73,28 @@ public object UseCaseModule {
     public fun provideMissingItemsUseCase(
         collections: CollectionRepository,
     ): MissingItemsUseCase = MissingItemsUseCase(collections)
+
+    @Provides
+    @Singleton
+    public fun provideGetDuplicatesUseCase(
+        duplicates: DuplicateRepository,
+    ): GetDuplicatesUseCase = GetDuplicatesUseCase(duplicates)
+
+    @Provides
+    @Singleton
+    public fun provideCloseSaleUseCase(
+        negotiations: NegotiationRepository,
+    ): CloseSaleUseCase = CloseSaleUseCase(negotiations)
+
+    @Provides
+    @Singleton
+    public fun provideCloseTradeUseCase(
+        negotiations: NegotiationRepository,
+    ): CloseTradeUseCase = CloseTradeUseCase(negotiations)
+
+    @Provides
+    @Singleton
+    public fun provideFinancialHistoryUseCase(
+        financeRepository: FinanceRepository,
+    ): FinancialHistoryUseCase = FinancialHistoryUseCase(financeRepository)
 }

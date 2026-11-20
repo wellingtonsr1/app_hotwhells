@@ -16,7 +16,10 @@ import br.com.hotwheelscollector.domain.model.Condition
 import br.com.hotwheelscollector.domain.model.FinancePeriod
 import br.com.hotwheelscollector.domain.model.IsoDate
 import br.com.hotwheelscollector.domain.model.MoneyCents
+import br.com.hotwheelscollector.domain.model.NegotiationStatus
+import br.com.hotwheelscollector.domain.model.NegotiationType
 import br.com.hotwheelscollector.domain.repository.NewExemplar
+import br.com.hotwheelscollector.domain.repository.NewNegotiation
 import com.google.common.truth.Truth.assertThat
 import java.time.Clock
 import java.time.Instant
@@ -46,6 +49,7 @@ public class FinanceRepositoryTest {
     private lateinit var financeRepository: FinanceRepositoryImpl
     private lateinit var acquisitionRepository: AcquisitionRepositoryImpl
     private lateinit var exemplarRepository: ExemplarRepositoryImpl
+    private lateinit var negotiationRepository: NegotiationRepositoryImpl
 
     private val fixedClock: Clock = Clock.fixed(Instant.parse("2026-11-18T12:00:00Z"), ZoneOffset.UTC)
 
@@ -60,6 +64,7 @@ public class FinanceRepositoryTest {
         val transactions = TransactionRunner(database)
         exemplarRepository = ExemplarRepositoryImpl(database, transactions, audit, fixedClock)
         acquisitionRepository = AcquisitionRepositoryImpl(database, transactions, audit, fixedClock)
+        negotiationRepository = NegotiationRepositoryImpl(database, transactions, audit, fixedClock)
         financeRepository = FinanceRepositoryImpl(database)
     }
 
@@ -141,8 +146,57 @@ public class FinanceRepositoryTest {
         assertThat(byManufacturer.map { it.cents }).containsExactly(10_000L)
     }
 
+    @Test
+    public fun `vendas e trocas concluidas ficam fora do investimento e no historico`(): Unit =
+        runBlocking {
+            val ids = seedScenario()
+            assertThat(financeRepository.observeSummary().first().investedCents).isEqualTo(40_000L)
+
+            val sale = negotiationRepository.open(
+                NewNegotiation(
+                    exemplarId = ids.first,
+                    type = NegotiationType.SALE,
+                    counterparty = "Ana",
+                ),
+            ).getOrThrow()
+            negotiationRepository.closeSale(
+                negotiationId = sale.id,
+                amount = MoneyCents(15_000),
+                date = IsoDate(LocalDate.of(2026, 11, 20)),
+            ).getOrThrow()
+
+            val trade = negotiationRepository.open(
+                NewNegotiation(exemplarId = ids.second, type = NegotiationType.TRADE),
+            ).getOrThrow()
+            negotiationRepository.closeTrade(trade.id, receivedExemplarId = null).getOrThrow()
+
+            // Cancelada não é saída: o exemplar sem preço continua no acervo e no resumo.
+            val cancelled = negotiationRepository.open(
+                NewNegotiation(exemplarId = ids.third, type = NegotiationType.SALE),
+            ).getOrThrow()
+            negotiationRepository.cancel(cancelled.id).getOrThrow()
+
+            val summary = financeRepository.observeSummary().first()
+            assertThat(summary.ownedExemplars).isEqualTo(1)
+            assertThat(summary.investedCents).isEqualTo(0L)
+
+            val disposals = financeRepository.observeDisposals().first()
+            assertThat(disposals).hasSize(2)
+            val saleEntry = disposals.single { it.type == NegotiationType.SALE }
+            assertThat(saleEntry.negotiationId).isEqualTo(sale.id)
+            assertThat(saleEntry.amount).isEqualTo(MoneyCents(15_000))
+            assertThat(saleEntry.counterparty).isEqualTo("Ana")
+            assertThat(saleEntry.manufacturerName).isEqualTo("Mattel")
+            assertThat(saleEntry.modelName).isEqualTo("Twin Mill")
+            assertThat(saleEntry.closedAt.toEpochMilli()).isGreaterThan(0L)
+            assertThat(disposals.single { it.type == NegotiationType.TRADE }.amount).isNull()
+            assertThat(
+                database.negotiationDao().findById(cancelled.id)?.status,
+            ).isEqualTo(NegotiationStatus.CANCELLED.name)
+        }
+
     /** Devolve os ids dos exemplares com preço, na ordem em que foram criados. */
-    private suspend fun seedScenario(): Pair<String, String> {
+    private suspend fun seedScenario(): Triple<String, String, String> {
         seedCatalog()
         val first = addExemplar()
         val second = addExemplar()
@@ -201,7 +255,7 @@ public class FinanceRepositoryTest {
             ),
         )
 
-        return first to second
+        return Triple(first, second, withoutPrice)
     }
 
     private suspend fun addExemplar(): String =

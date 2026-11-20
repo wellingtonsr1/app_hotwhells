@@ -2,6 +2,7 @@ package br.com.hotwheelscollector.domain.repository
 
 import br.com.hotwheelscollector.domain.model.FinancePeriod
 import br.com.hotwheelscollector.domain.model.FinanceSummary
+import br.com.hotwheelscollector.domain.model.FinancialDisposal
 import br.com.hotwheelscollector.domain.model.PeriodSpending
 import br.com.hotwheelscollector.domain.model.SpendingSlice
 import kotlinx.coroutines.flow.Flow
@@ -25,4 +26,10 @@ public interface FinanceRepository {
 
     /** Gastos por mês dentro do intervalo; sem pontas, todo o histórico. */
     public fun observeSpendingByMonth(period: FinancePeriod = FinancePeriod()): Flow<List<PeriodSpending>>
+
+    /**
+     * Vendas e trocas concluídas, da mais recente para a mais antiga (FR-087).
+     * Canceladas não entram: nada saiu do acervo.
+     */
+    public fun observeDisposals(): Flow<List<FinancialDisposal>>
 }

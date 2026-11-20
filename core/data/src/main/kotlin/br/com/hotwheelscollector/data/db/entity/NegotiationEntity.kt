@@ -22,10 +22,17 @@ import androidx.room.PrimaryKey
             childColumns = ["exemplar_id"],
             onDelete = ForeignKey.RESTRICT,
         ),
+        ForeignKey(
+            entity = ExemplarEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["received_exemplar_id"],
+            onDelete = ForeignKey.RESTRICT,
+        ),
     ],
     indices = [
         Index(value = ["exemplar_id", "status"]),
         Index(value = ["status"]),
+        Index(value = ["received_exemplar_id"]),
     ],
 )
 public data class NegotiationEntity(
@@ -52,4 +59,7 @@ public data class NegotiationEntity(
     val currency: String?,
     @ColumnInfo(name = "notes")
     val notes: String?,
+    /** Exemplar recebido na troca (FR-071); nulo em venda ou troca sem item cadastrado. */
+    @ColumnInfo(name = "received_exemplar_id")
+    val receivedExemplarId: String? = null,
 )

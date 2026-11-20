@@ -37,6 +37,8 @@ import br.com.hotwheelscollector.feature.catalog.ExemplarListScreen
 import br.com.hotwheelscollector.feature.catalog.IncompleteEntriesScreen
 import br.com.hotwheelscollector.feature.catalog.VariantFormScreen
 import br.com.hotwheelscollector.feature.dashboard.DashboardScreen
+import br.com.hotwheelscollector.feature.duplicates.DuplicatesScreen
+import br.com.hotwheelscollector.feature.duplicates.NegotiationScreen
 import br.com.hotwheelscollector.feature.finance.FinanceScreen
 import br.com.hotwheelscollector.feature.locations.LocationContentsScreen
 import br.com.hotwheelscollector.feature.locations.LocationsScreen
@@ -124,6 +126,16 @@ public sealed class Destination(public val route: String) {
 
     /** Séries do fabricante, com criação, renomeação e arquivamento (FR-048–FR-049). */
     public data object Series : Destination("catalog/series")
+
+    /** Duplicados por variante, com disponibilidade e negociação (US7). */
+    public data object Duplicates : Destination("duplicates")
+
+    /** Negociação e histórico de um exemplar duplicado (US7). */
+    public data object Negotiation :
+        Destination("duplicates/{${RouteArgs.EXEMPLAR_ID}}/negotiation") {
+        public fun routeFor(exemplarId: String): String =
+            "duplicates/$exemplarId/negotiation"
+    }
 
     /** Lista de desejos (US6). */
     public data object Wishlist : Destination("wishlist")
@@ -237,7 +249,24 @@ public fun AppNavHost(
                     onOpenIncomplete = { navController.navigate(Destination.Incomplete.route) },
                     onOpenSearch = { navController.navigate(Destination.Search.route) },
                     onOpenCollections = { navController.navigate(Destination.Collections.route) },
+                    onOpenDuplicates = { navController.navigate(Destination.Duplicates.route) },
                 )
+            }
+            composable(Destination.Duplicates.route) {
+                DuplicatesScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenNegotiation = { exemplarId ->
+                        navController.navigate(Destination.Negotiation.routeFor(exemplarId))
+                    },
+                )
+            }
+            composable(
+                route = Destination.Negotiation.route,
+                arguments = listOf(
+                    navArgument(RouteArgs.EXEMPLAR_ID) { type = NavType.StringType },
+                ),
+            ) {
+                NegotiationScreen(onBack = { navController.popBackStack() })
             }
             composable(Destination.Collections.route) {
                 CollectionsScreen(

@@ -1,5 +1,7 @@
 package br.com.hotwheelscollector.domain.model
 
+import java.time.Instant
+
 /**
  * Resumo financeiro do acervo, calculado na leitura (FR-077–FR-086).
  *
@@ -38,6 +40,49 @@ public data class PeriodSpending(
     val yearMonth: String,
     val cents: Long,
 )
+
+/**
+ * Venda ou troca concluída (FR-087).
+ *
+ * É registro de saída, não de investimento: o exemplar deixou o acervo (`SOLD`/`TRADED`)
+ * e por isso não entra mais em nenhuma soma de custo. O valor é o recebido na venda;
+ * numa troca pode ser nulo, porque o retorno foi um item, não dinheiro.
+ */
+public data class FinancialDisposal(
+    val negotiationId: String,
+    val exemplarId: String,
+    val internalCode: String,
+    val manufacturerName: String,
+    val modelName: String,
+    val type: NegotiationType,
+    val closedAt: Instant,
+    val amount: MoneyCents? = null,
+    val counterparty: String? = null,
+    val receivedExemplarCode: String? = null,
+)
+
+/**
+ * Histórico financeiro separado do investimento (FR-087).
+ *
+ * Os totais de venda somam **somente** vendas; trocas são contadas à parte. O valor
+ * discutido numa troca não vira receita — o que entrou foi um exemplar, não dinheiro.
+ */
+public data class FinancialHistory(
+    val entries: List<FinancialDisposal> = emptyList(),
+) {
+    public val sales: List<FinancialDisposal>
+        get() = entries.filter { it.type == NegotiationType.SALE }
+
+    public val trades: List<FinancialDisposal>
+        get() = entries.filter { it.type == NegotiationType.TRADE }
+
+    /** Só vendas: valor recebido, em centavos. */
+    public val salesCents: Long get() = sales.sumOf { it.amount?.cents ?: 0L }
+
+    public val salesCount: Int get() = sales.size
+
+    public val tradeCount: Int get() = trades.size
+}
 
 /** Intervalo livre de gastos; pontas nulas significam "sem limite" (FR-078). */
 public data class FinancePeriod(

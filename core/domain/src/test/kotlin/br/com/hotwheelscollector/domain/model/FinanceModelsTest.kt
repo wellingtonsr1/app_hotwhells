@@ -38,12 +38,43 @@ public class FinanceModelsTest {
     }
 
     @Test
+    public fun `historico separa vendas de trocas e soma apenas vendas`() {
+        val history = FinancialHistory(
+            entries = listOf(
+                disposal("n1", NegotiationType.SALE, 15_000),
+                disposal("n2", NegotiationType.TRADE, 20_000),
+                disposal("n3", NegotiationType.SALE, null),
+            ),
+        )
+
+        assertThat(history.salesCount).isEqualTo(2)
+        assertThat(history.tradeCount).isEqualTo(1)
+        // O valor discutido na troca não vira receita: o retorno foi um item.
+        assertThat(history.salesCents).isEqualTo(15_000L)
+    }
+
+    @Test
     public fun `sem nenhum valor informado a media e nula`() {
         val summary = FinanceSummary(ownedExemplars = 3, exemplarsWithValue = 0)
 
         assertThat(summary.averageCostCents).isNull()
         assertThat(summary.exemplarsWithoutValue).isEqualTo(3)
     }
+
+    private fun disposal(
+        id: String,
+        type: NegotiationType,
+        amount: Long?,
+    ): FinancialDisposal = FinancialDisposal(
+        negotiationId = id,
+        exemplarId = "e-$id",
+        internalCode = "HW-0001",
+        manufacturerName = "Mattel",
+        modelName = "Twin Mill",
+        type = type,
+        closedAt = Instant.parse("2026-11-20T12:00:00Z"),
+        amount = amount?.let(::MoneyCents),
+    )
 
     private fun acquisition(
         price: Long?,

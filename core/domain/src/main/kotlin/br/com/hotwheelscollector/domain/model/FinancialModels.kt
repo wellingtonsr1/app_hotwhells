@@ -56,6 +56,8 @@ public data class Negotiation(
     val amount: MoneyCents? = null,
     val currency: String? = null,
     val notes: String? = null,
+    /** Exemplar recebido quando a negociação foi uma troca (FR-071). */
+    val receivedExemplarId: String? = null,
 ) {
     init {
         require(!(status == NegotiationStatus.CLOSED && closedAt == null)) {

@@ -25,6 +25,20 @@ public data class MonthSpendingRow(
     @ColumnInfo(name = "cents") val cents: Long,
 )
 
+/** Venda ou troca concluída, com o exemplar e o recebido resolvidos (FR-087). */
+public data class DisposalRow(
+    @ColumnInfo(name = "negotiation_id") val negotiationId: String,
+    @ColumnInfo(name = "exemplar_id") val exemplarId: String,
+    @ColumnInfo(name = "internal_code") val internalCode: String,
+    @ColumnInfo(name = "manufacturer_name") val manufacturerName: String,
+    @ColumnInfo(name = "model_name") val modelName: String,
+    @ColumnInfo(name = "type") val type: String,
+    @ColumnInfo(name = "closed_at") val closedAt: Long,
+    @ColumnInfo(name = "amount_cents") val amountCents: Long?,
+    @ColumnInfo(name = "counterparty") val counterparty: String?,
+    @ColumnInfo(name = "received_code") val receivedCode: String?,
+)
+
 /**
  * Agregações financeiras (FR-077–FR-081).
  *
@@ -150,4 +164,32 @@ public interface FinanceDao {
         """,
     )
     public fun observeSpendingByMonth(from: String?, to: String?): Flow<List<MonthSpendingRow>>
+
+    /**
+     * Saídas concluídas do acervo (FR-087). Só `CLOSED`: uma negociação cancelada não
+     * vendeu nem trocou nada. O `closed_at` é a data do evento financeiro.
+     */
+    @Query(
+        """
+        SELECT n.id AS negotiation_id,
+               n.exemplar_id AS exemplar_id,
+               e.internal_code AS internal_code,
+               mf.name AS manufacturer_name,
+               cm.name AS model_name,
+               n.type AS type,
+               n.closed_at AS closed_at,
+               n.amount_cents AS amount_cents,
+               n.counterparty AS counterparty,
+               received.internal_code AS received_code
+        FROM negotiation n
+        JOIN exemplar e ON e.id = n.exemplar_id
+        JOIN variant v ON v.id = e.variant_id
+        JOIN car_model cm ON cm.id = v.model_id
+        JOIN manufacturer mf ON mf.id = cm.manufacturer_id
+        LEFT JOIN exemplar received ON received.id = n.received_exemplar_id
+        WHERE n.status = 'CLOSED'
+        ORDER BY n.closed_at DESC
+        """,
+    )
+    public fun observeDisposals(): Flow<List<DisposalRow>>
 }

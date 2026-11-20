@@ -50,6 +50,7 @@ public fun CatalogScreen(
     onOpenIncomplete: () -> Unit,
     onOpenSearch: () -> Unit,
     onOpenCollections: () -> Unit,
+    onOpenDuplicates: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CatalogViewModel = hiltViewModel(),
 ) {
@@ -62,6 +63,7 @@ public fun CatalogScreen(
         onOpenIncomplete = onOpenIncomplete,
         onOpenSearch = onOpenSearch,
         onOpenCollections = onOpenCollections,
+        onOpenDuplicates = onOpenDuplicates,
         modifier = modifier,
     )
 }
@@ -76,6 +78,7 @@ internal fun CatalogContent(
     onOpenIncomplete: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
     onOpenCollections: () -> Unit = {},
+    onOpenDuplicates: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -120,6 +123,12 @@ internal fun CatalogContent(
                         modifier = Modifier.padding(top = 12.dp),
                     ) {
                         Text(stringResource(R.string.collections_open))
+                    }
+                    TextButton(
+                        onClick = onOpenDuplicates,
+                        modifier = Modifier.padding(top = 12.dp),
+                    ) {
+                        Text(stringResource(R.string.duplicates_open))
                     }
                     IconButton(
                         onClick = onOpenSearch,

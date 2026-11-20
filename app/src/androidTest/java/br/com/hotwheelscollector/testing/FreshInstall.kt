@@ -30,6 +30,7 @@ internal fun freshInstallRule(): TestRule = TestRule { base, _ ->
             val database = Room
                 .databaseBuilder(context, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
                 .addCallback(AppDatabase.CALLBACK)
+                .addMigrations(AppDatabase.MIGRATION_1_2)
                 .build()
             try {
                 database.clearAllTables()

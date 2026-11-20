@@ -1,12 +1,17 @@
 package br.com.hotwheelscollector.data.repository
 
 import br.com.hotwheelscollector.data.db.AppDatabase
+import br.com.hotwheelscollector.data.db.dao.DisposalRow
 import br.com.hotwheelscollector.data.db.dao.MonthSpendingRow
 import br.com.hotwheelscollector.data.db.dao.SpendingRow
 import br.com.hotwheelscollector.domain.model.FinancePeriod
 import br.com.hotwheelscollector.domain.model.FinanceSummary
+import br.com.hotwheelscollector.domain.model.FinancialDisposal
+import br.com.hotwheelscollector.domain.model.MoneyCents
+import br.com.hotwheelscollector.domain.model.NegotiationType
 import br.com.hotwheelscollector.domain.model.PeriodSpending
 import br.com.hotwheelscollector.domain.model.SpendingSlice
+import java.time.Instant
 import br.com.hotwheelscollector.domain.repository.FinanceRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -51,8 +56,24 @@ public class FinanceRepositoryImpl @Inject constructor(
             )
             .map { rows -> rows.map { it.toPeriodSpending() } }
 
+    override fun observeDisposals(): Flow<List<FinancialDisposal>> =
+        database.financeDao().observeDisposals().map { rows -> rows.map { it.toDisposal() } }
+
     private fun List<SpendingRow>.toSlices(): List<SpendingSlice> =
         map { SpendingSlice(label = it.label, cents = it.cents) }
+
+    private fun DisposalRow.toDisposal(): FinancialDisposal = FinancialDisposal(
+        negotiationId = negotiationId,
+        exemplarId = exemplarId,
+        internalCode = internalCode,
+        manufacturerName = manufacturerName,
+        modelName = modelName,
+        type = NegotiationType.valueOf(type),
+        closedAt = Instant.ofEpochMilli(closedAt),
+        amount = amountCents?.let(::MoneyCents),
+        counterparty = counterparty,
+        receivedExemplarCode = receivedCode,
+    )
 
     private fun MonthSpendingRow.toPeriodSpending(): PeriodSpending =
         PeriodSpending(yearMonth = month, cents = cents)

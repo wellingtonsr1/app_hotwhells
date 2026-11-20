@@ -29,12 +29,17 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.model.FinanceSummary
+import br.com.hotwheelscollector.domain.model.FinancialDisposal
+import br.com.hotwheelscollector.domain.model.FinancialHistory
+import br.com.hotwheelscollector.domain.model.NegotiationType
 import br.com.hotwheelscollector.domain.model.PeriodSpending
 import br.com.hotwheelscollector.domain.model.SpendingSlice
 import br.com.hotwheelscollector.ui.format.formatIsoDatePtBr
 import br.com.hotwheelscollector.ui.format.formatMoneyPtBr
 import br.com.hotwheelscollector.ui.format.formatYearMonthPtBr
 import br.com.hotwheelscollector.ui.theme.HotWheelsTheme
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 /**
  * Finanças da coleção (US8, FR-077–FR-086).
@@ -155,6 +160,8 @@ internal fun FinanceContent(
             )
         }
 
+        FinancialHistorySection(history = state.history)
+
         SpendingSection(
             title = stringResource(R.string.finance_spending_manufacturer),
             slices = state.byManufacturer,
@@ -210,6 +217,102 @@ internal fun FinanceContent(
         }
     }
 }
+
+/**
+ * Vendas e trocas concluídas (FR-087).
+ *
+ * Fica visível na mesma tela do investido, mas em bloco próprio: são saídas do acervo e
+ * não entram em nenhuma soma de gasto. O custo histórico de aquisição continua o mesmo.
+ */
+@Composable
+private fun FinancialHistorySection(history: FinancialHistory) {
+    Text(
+        text = stringResource(R.string.finance_history_title),
+        style = MaterialTheme.typography.titleMedium,
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        MetricCard(
+            label = stringResource(R.string.finance_history_sales),
+            value = formatMoneyPtBr(history.salesCents),
+            modifier = Modifier.weight(1f),
+        )
+        MetricCard(
+            label = stringResource(R.string.finance_history_trades),
+            value = stringResource(
+                R.string.finance_history_trades_value,
+                history.tradeCount,
+            ),
+            modifier = Modifier.weight(1f),
+        )
+    }
+    Text(
+        text = stringResource(R.string.finance_history_hint),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    if (history.entries.isEmpty()) {
+        Text(
+            text = stringResource(R.string.finance_history_empty),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    } else {
+        history.entries.forEach { entry -> DisposalRowItem(entry) }
+    }
+}
+
+@Composable
+private fun DisposalRowItem(entry: FinancialDisposal) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = "${DISPOSAL_DATE.format(entry.closedAt)} · ${entry.internalCode}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = stringResource(
+                    if (entry.type == NegotiationType.SALE) {
+                        R.string.finance_history_sale
+                    } else {
+                        R.string.finance_history_trade
+                    },
+                ),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Text(
+            text = listOf(entry.manufacturerName, entry.modelName).joinToString(" · "),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        val detail = listOfNotNull(
+            entry.amount?.let { formatMoneyPtBr(it.cents) },
+            entry.counterparty?.let {
+                stringResource(R.string.finance_history_counterparty, it)
+            },
+            entry.receivedExemplarCode?.let {
+                stringResource(R.string.finance_history_received, it)
+            },
+        ).joinToString(" · ")
+        if (detail.isNotBlank()) {
+            Text(
+                text = detail,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+private val DISPOSAL_DATE: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("dd/MM/yyyy").withZone(ZoneId.systemDefault())
 
 @Composable
 private fun MetricCard(label: String, value: String, modifier: Modifier = Modifier) {

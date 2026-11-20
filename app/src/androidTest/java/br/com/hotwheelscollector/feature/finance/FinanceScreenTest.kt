@@ -5,8 +5,13 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import br.com.hotwheelscollector.domain.model.FinanceSummary
+import br.com.hotwheelscollector.domain.model.FinancialDisposal
+import br.com.hotwheelscollector.domain.model.FinancialHistory
+import br.com.hotwheelscollector.domain.model.MoneyCents
+import br.com.hotwheelscollector.domain.model.NegotiationType
 import br.com.hotwheelscollector.domain.model.PeriodSpending
 import br.com.hotwheelscollector.domain.model.SpendingSlice
+import java.time.Instant
 import br.com.hotwheelscollector.ui.theme.HotWheelsTheme
 import org.junit.Rule
 import org.junit.Test
@@ -40,6 +45,21 @@ class FinanceScreenTest {
                         bySeries = listOf(SpendingSlice("Car Culture", 60_000)),
                         byCollection = listOf(SpendingSlice(null, 40_000)),
                         byMonth = listOf(PeriodSpending("2026-11", 70_000)),
+                        history = FinancialHistory(
+                            entries = listOf(
+                                FinancialDisposal(
+                                    negotiationId = "n1",
+                                    exemplarId = "e1",
+                                    internalCode = "HW-0001",
+                                    manufacturerName = "Mattel",
+                                    modelName = "Twin Mill",
+                                    type = NegotiationType.SALE,
+                                    closedAt = Instant.parse("2026-11-20T12:00:00Z"),
+                                    amount = MoneyCents(15_000),
+                                    counterparty = "Ana",
+                                ),
+                            ),
+                        ),
                         loading = false,
                     ),
                     onFromChange = {},
@@ -63,5 +83,17 @@ class FinanceScreenTest {
         composeRule.onNodeWithText("Mattel").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Sem coleção").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("11/2026").performScrollTo().assertIsDisplayed()
+
+        // T097: vendas ficam fora do investido, em bloco próprio e com o valor recebido.
+        composeRule.onNodeWithText("Vendas e trocas").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Total em vendas").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("R$ 150,00").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Contraparte: Ana", substring = true)
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("Venda").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "Vendas e trocas ficam fora do investido; o custo histórico de aquisição não muda.",
+        ).performScrollTo().assertIsDisplayed()
     }
 }

@@ -771,18 +771,18 @@ Decisões registradas nesta entrega:
 
 ### Tests for User Story 7
 
-- [ ] T080 [P] [US7] Teste de agrupamento de duplicados por `variant_id` (nunca por nome do modelo) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/DuplicateQueryTest.kt`
-- [ ] T081 [P] [US7] Teste de índice parcial único: um exemplar não pode ter duas negociações ativas (FR-068) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/NegotiationRepositoryTest.kt`
+- [X] T080 [P] [US7] Teste de agrupamento de duplicados por `variant_id` (nunca por nome do modelo) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/DuplicateQueryTest.kt`
+- [X] T081 [P] [US7] Teste de índice parcial único: um exemplar não pode ter duas negociações ativas (FR-068) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/NegotiationRepositoryTest.kt`
 
 ### Implementation for User Story 7
 
-- [X] T082 [US7] **Obsoleta (2026-11-19).** `negotiation` e `negotiation_event` já nascem no schema v1 (`NegotiationEntity`/`NegotiationEventEntity`, DAOs em `CollectionsDao.kt`); não há migração v5 nem `NegotiationEntities.kt`. O índice parcial único de `OPEN`/`RESERVED` **não** existe: a unicidade de negociação ativa fica na transação do repositório, coberta por T081/T085
-- [ ] T083 [US7] Implementar consulta `GetDuplicatesUseCase` agrupada por variante com contagem (FR-065) em `core/domain/.../usecase/GetDuplicatesUseCase.kt`
-- [ ] T084 [US7] Implementar marcação de disponibilidade (troca, venda, ambos, indisponível) com condição e valor pretendido em `app/.../feature/duplicates/DuplicateActionsSheet.kt`
-- [ ] T085 [US7] Implementar reserva com bloqueio de segunda negociação ativa em `app/.../feature/duplicates/NegotiationScreen.kt`
-- [ ] T086 [US7] Implementar conclusão de venda (`status=SOLD` + evento financeiro com valor e data) em `core/domain/.../usecase/CloseSaleUseCase.kt`
-- [ ] T087 [US7] Implementar conclusão de troca (saída do negociado + entrada do recebido) em `core/domain/.../usecase/CloseTradeUseCase.kt`
-- [ ] T088 [US7] Implementar cancelamento que devolve estado anterior e mantém `negotiation_event` imutável (FR-072–FR-073) em `app/.../feature/duplicates/NegotiationHistoryScreen.kt`
+- [X] T082 [US7] **Obsoleta (2026-11-19).** `negotiation` e `negotiation_event` já nascem no schema v1 (`NegotiationEntity`/`NegotiationEventEntity`, DAOs em `CollectionsDao.kt`); não há migração v5 nem `NegotiationEntities.kt`; a disponibilidade da US7 acabou exigindo a **migração v2**, ver «Evidências — Fase 9 / US7». O índice parcial único de `OPEN`/`RESERVED` **não** existe: a unicidade de negociação ativa fica na transação do repositório, coberta por T081/T085
+- [X] T083 [US7] Implementar consulta `GetDuplicatesUseCase` agrupada por variante com contagem (FR-065) em `core/domain/.../usecase/GetDuplicatesUseCase.kt`
+- [X] T084 [US7] Implementar marcação de disponibilidade (troca, venda, ambos, indisponível) com condição e valor pretendido em `app/.../feature/duplicates/DuplicateActionsSheet.kt`
+- [X] T085 [US7] Implementar reserva com bloqueio de segunda negociação ativa em `app/.../feature/duplicates/NegotiationScreen.kt`
+- [X] T086 [US7] Implementar conclusão de venda (`status=SOLD` + evento financeiro com valor e data) em `core/domain/.../usecase/CloseSaleUseCase.kt`
+- [X] T087 [US7] Implementar conclusão de troca (saída do negociado + entrada do recebido) em `core/domain/.../usecase/CloseTradeUseCase.kt`
+- [X] T088 [US7] Implementar cancelamento que devolve estado anterior e mantém `negotiation_event` imutável (FR-072–FR-073) em `app/.../feature/duplicates/NegotiationHistoryScreen.kt`
 
 **Checkpoint**: US7 evita vender o exemplar errado e mantém rastro da negociação
 
@@ -799,11 +799,76 @@ sobre o número.
 1. O índice parcial único descrito em T082 não existe — as entidades têm só índices não
    únicos (`exemplar_id + status`, `status`). A garantia de «uma negociação ativa por
    exemplar» tem de ser transacional no repositório, e é isso que T081 testa.
-2. A disponibilidade para troca/venda (T084) não tem coluna própria no schema: ou vira
-   `negotiation` do tipo correspondente, ou exige migração nova — decisão a tomar antes de
-   T084, não presumida aqui.
+2. A disponibilidade para troca/venda (T084) não tinha coluna própria no schema. A decisão
+   tomada nesta entrega foi a **migração v2** com a tabela `duplicate_offer` — «ambos» não
+   cabe em `negotiation.type`, e a mesma unidade não pode ter duas ofertas.
 
-**O que falta de fato:** T080, T081 e T083–T088.
+**O que falta de fato:** T080, T081 e T083–T088. **Fechado em 2026-11-19**, ver
+evidências abaixo.
+
+### Evidências — Fase 9 / US7 (2026-11-19)
+
+Entrega: lista de duplicados agrupada por variante, disponibilidade (troca, venda, ambos
+ou indisponível, com condição e valor pretendido), reserva com bloqueio de segunda
+negociação ativa, conclusão de venda e de troca e cancelamento com histórico permanente.
+A tabela escolhida foi **schema v2**: a disponibilidade não cabia em `negotiation` porque
+«ambos» não é nem venda nem troca, e a troca precisava apontar o exemplar recebido.
+
+| Verificação | Comando | Resultado |
+| --- | --- | --- |
+| Duplicados por variante (T080) | `./gradlew :core:data:testDebugUnitTest` | `DuplicateQueryTest`: 4 testes, 0 falhas |
+| Negociação ativa única e conclusões (T081) | `./gradlew :core:data:testDebugUnitTest` | `NegotiationRepositoryTest`: 6 testes, 0 falhas |
+| Migração v1→v2 (R.8) | `./gradlew :core:data:testDebugUnitTest` | `MigrationTest`: 4 testes, 0 falhas (era 3) |
+| Fluxo real no emulador (T084–T088) | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*DuplicatesFlowTest` | `DuplicatesFlowTest`: 1 teste, 0 falhas (emulador `hw_test`, API 36) |
+| Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 39 testes, 0 falhas (3m 46s) |
+| Regressão unitária e lint | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 164 testes, 0 falhas; `0 errors, 7 warnings` |
+| APK | `./gradlew :app:assembleDebug` | `app-debug.apk`, 85.948.092 bytes |
+
+O teste instrumentado percorre o caminho do toque: semeia três exemplares da variante A e
+um da variante B do mesmo modelo, abre **Duplicados** pelo catálogo, confere que só a A
+aparece (o `HW-0004` da B não está na tela), marca venda por R$ 45,00 na folha de
+disponibilidade, reserva o exemplar, vê «Negociação Reservada» e cancela — terminando com
+o histórico em «Venda · Cancelada». O histórico continua na tela depois do cancelamento.
+
+Decisões registradas nesta entrega:
+
+- **Schema v2, sem destruição de dados**: `MIGRATION_1_2` cria `duplicate_offer` (uma linha
+  por exemplar, `ON DELETE CASCADE` porque oferta não é trilha de auditoria) e acrescenta
+  `negotiation.received_exemplar_id` (`ON DELETE RESTRICT`: histórico não pode perder o
+  exemplar recebido). O `2.json` foi exportado e o `MigrationTest` compara a migração com
+  ele.
+- **«Ambos» é valor próprio** (`DuplicateAvailability.BOTH`), não duas linhas: a mesma
+  unidade física não pode estar em duas listas de oferta.
+- **A reserva vive no status da negociação**, não em `exemplar.status`: por isso cancelar
+  devolve o exemplar ao estado anterior sem reescrever nada (FR-072). O exemplar só muda de
+  `OWNED` para `SOLD`/`TRADED` na conclusão.
+- **Unicidade transacional**: o índice parcial único de `OPEN`/`RESERVED` continua não
+  existindo no SQLite; a checagem e a inserção acontecem na mesma transação, e T081 cobre
+  a segunda tentativa.
+- **Eventos appende-only**: abrir, concluir e cancelar inserem `negotiation_event`;
+  `closeSale` grava valor e data no evento e no registro, e a consulta de histórico lê
+  todos os eventos do exemplar numa consulta só (FR-073).
+- **Troca sem exemplar recebido é válida**: o vínculo é opcional; a troca por dinheiro ou
+  por item ainda não cadastrado não inventa um exemplar (FR-071 diz «quando houver»).
+- **Entrada pelo catálogo**: botão «Duplicados» no cabeçalho de `CatalogScreen`, ao lado de
+  Coleções e Incompletos, com as rotas `duplicates` e `duplicates/{exemplarId}/negotiation`.
+
+**Defeitos encontrados na execução:**
+
+1. **`R$` duplicado**: `formatMoneyPtBr` já devolve o prefixo, e as telas novas somavam
+   outro — o teste instrumentado flagrou «Venda · R$ R$ 45,00». Corrigido na linha do
+   duplicado, no histórico e em `negotiation_amount_value`.
+2. **Folha de disponibilidade sem rolagem**: com os cinco chips de condição e os dois
+   campos, «Salvar» saía da tela em aparelho de 1080×2340. A folha passou a ter
+   `verticalScroll`; o teste falhou por «no parent layout with a Scroll SemanticsAction»
+   antes da correção.
+3. **Bancos de `androidTest` sem a migração**: `FreshInstall` e o seed do novo teste abrem
+   `Room` diretamente e não conheciam `MIGRATION_1_2`; no emulador com banco v1 da execução
+   anterior, o teste morreu com «A migration from 1 to 2 was required but not found». Ambos
+   receberam `.addMigrations(AppDatabase.MIGRATION_1_2)`.
+
+**Limites conhecidos:** a quantidade de exemplares por item de coleção continua sem edição
+pela interface (herdado de US5).
 
 ---
 
@@ -826,7 +891,7 @@ sobre o número.
 - [X] T094 [US8] Implementar agregações por período, série, fabricante e coleção (FR-078–FR-080) em `core/data/.../repository/FinanceRepositoryImpl.kt`
 - [X] T095 [US8] Implementar tela de finanças com investido, estimado, diferença e custo médio (FR-077, FR-085) em `app/.../feature/finance/FinanceScreen.kt`
 - [X] T096 [US8] Implementar rótulo obrigatório "estimativa do colecionador" com fonte e data em toda exibição de valor estimado (FR-086) — aplicado no detalhe do exemplar e na tela de finanças com `valuation_hint` e a data das avaliações; não foi necessário um `EstimateLabel.kt` separado.
-- [ ] T097 [US8] Implementar histórico financeiro separando vendas/trocas do investimento (FR-087) em `core/domain/.../usecase/FinancialHistoryUseCase.kt` — depende das negociações concluídas de US7; o investido já considera só `status = 'OWNED'`.
+- [X] T097 [US8] Implementar histórico financeiro separando vendas/trocas do investimento (FR-087) em `core/domain/.../usecase/FinancialHistoryUseCase.kt` — depende das negociações concluídas de US7; o investido já considera só `status = 'OWNED'`.
 - [X] T098 [US8] Implementar formatação pt-BR de moeda (centavos) e data centralizada em `core/ui/src/main/kotlin/br/com/hotwheelscollector/ui/format/Formatters.kt`
 
 ### Evidências — aquisição e avaliações (primeira entrega de US8, 2026-11-18)
@@ -852,8 +917,8 @@ Decisões registradas:
 - O painel passa a refletir avaliações reais; antes o «Estimado» era sempre zero.
 
 Pendências de US8 nesta entrega: T089, T091, T092, T094–T096 e T098; todas fechadas
-na entrega do financeiro abaixo. Continua aberta apenas T097 (vendas/trocas separadas
-do investido), que depende de US7.
+na entrega do financeiro abaixo. **T097 foi fechada em 2026-11-19**, ver «Evidências —
+histórico financeiro».
 
 ### Evidências — financeiro e custo médio (US8, 2026-11-18)
 
@@ -876,6 +941,37 @@ Decisões registradas:
   custo desconhecido não vira zero nem frete solto (FR-075).
 - Gastos por coleção podem repetir o custo de um exemplar que está em mais de uma coleção;
   é gasto por coleção, não um segundo total do acervo.
+
+### Evidências — histórico financeiro (T097, 2026-11-19)
+
+Entrega: bloco **Vendas e trocas** na tela de Finanças, separado do investido. Vendas
+somam o valor recebido; trocas são contadas à parte, porque o retorno foi um item, não
+dinheiro. Cada linha traz data, exemplar, tipo, contraparte/histórico e — na troca — o
+exemplar recebido. O investido continua vindo só de exemplares `OWNED`; nenhuma aquisição
+é reescrita ou reavaliada (FR-087).
+
+| Verificação | Comando | Resultado |
+| --- | --- | --- |
+| Totais de vendas/trocas (domínio) | `./gradlew :core:domain:test` | `FinanceModelsTest`: 5 testes, 0 falhas (era 4) |
+| Consulta e exclusão de canceladas | `./gradlew :core:data:testDebugUnitTest` | `FinanceRepositoryTest`: 5 testes, 0 falhas (era 4) |
+| Tela de Finanças | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*FinanceScreenTest` | `FinanceScreenTest`: 1 teste, 0 falhas (emulador `hw_test`, API 36) |
+| Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 39 testes, 0 falhas (3m 41s) |
+| Regressão unitária e lint | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 166 testes, 0 falhas; `0 errors, 7 warnings` |
+
+O teste de repositório prova a regra inteira em banco real: cenário com três exemplares e
+R$ 400,00 investidos; venda concluída num, troca concluída noutro e uma negociação
+cancelada no terceiro. Depois, o investido cai para zero (só resta um exemplar sem preço),
+as duas saídas aparecem no histórico — a venda com R$ 150,00 e contraparte, a troca sem
+valor — e a cancelada não aparece.
+
+Decisões registradas:
+
+- **Só `CLOSED` entra**: cancelada não é saída do acervo, mesmo com histórico preservado.
+- **Receita de venda é o valor recebido**; o valor discutido numa troca não vira receita.
+- **Nada é recalculado**: as consultas de investido e de agrupamentos continuam filtrando
+  `status = 'OWNED'`; a aquisição do exemplar vendido permanece intacta.
+- **`FinancialHistoryUseCase`** é o ponto de entrada da tela; o repositório devolve as
+  saídas e o modelo de domínio calcula totais e separação por tipo.
 - Moeda é BRL fixo na interface; outras moedas estão fora de escopo (FR-076).
 
 **Checkpoint**: US8 entrega o módulo de maior valor de longo prazo

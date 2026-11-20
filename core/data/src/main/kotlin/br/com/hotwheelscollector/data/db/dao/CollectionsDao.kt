@@ -185,6 +185,17 @@ public interface NegotiationEventDao {
     @Query("SELECT * FROM negotiation_event WHERE negotiation_id = :negotiationId ORDER BY at")
     public fun observeByNegotiation(negotiationId: String): Flow<List<NegotiationEventEntity>>
 
+    /** Histórico completo do exemplar, de todas as negociações (FR-073). */
+    @Query(
+        """
+        SELECT ne.* FROM negotiation_event ne
+        JOIN negotiation n ON n.id = ne.negotiation_id
+        WHERE n.exemplar_id = :exemplarId
+        ORDER BY ne.at
+        """,
+    )
+    public fun observeByExemplar(exemplarId: String): Flow<List<NegotiationEventEntity>>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun insert(entity: NegotiationEventEntity)
 }

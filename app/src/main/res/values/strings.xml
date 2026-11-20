@@ -439,4 +439,82 @@
     <string name="location_type_display">Vitrine</string>
     <string name="location_type_compartment">Compartimento</string>
     <string name="location_type_custom">Personalizado</string>
+
+    <!-- Duplicados e negociação (US7). -->
+    <string name="duplicates_open">Duplicados</string>
+    <string name="duplicates_title">Duplicados</string>
+    <string name="duplicates_back">Voltar</string>
+    <string name="duplicates_loading">Carregando duplicados…</string>
+    <string name="duplicates_empty_title">Nenhum duplicado</string>
+    <string name="duplicates_empty_hint">Quando você tiver mais de um exemplar da mesma variante, os repetidos aparecem aqui.</string>
+    <string name="duplicates_offer_action">Disponibilidade</string>
+    <string name="duplicates_negotiate_action">Negociar</string>
+    <string name="duplicates_reserved">Em negociação</string>
+    <string name="duplicates_availability_trade">Troca</string>
+    <string name="duplicates_availability_sale">Venda</string>
+    <string name="duplicates_availability_both">Troca e venda</string>
+    <string name="duplicates_availability_unavailable">Indisponível</string>
+    <plurals name="duplicates_count">
+        <item quantity="one">%1$d exemplar nesta variante</item>
+        <item quantity="other">%1$d exemplares nesta variante</item>
+    </plurals>
+    <string name="duplicates_sheet_title">Disponibilidade do exemplar</string>
+    <string name="duplicates_sheet_availability">Oferecer para</string>
+    <string name="duplicates_sheet_condition">Condição</string>
+    <string name="duplicates_sheet_price">Valor pretendido (R$)</string>
+    <string name="duplicates_sheet_notes">Observações da negociação</string>
+    <string name="duplicates_sheet_save">Salvar</string>
+    <string name="duplicates_sheet_cancel">Cancelar</string>
+
+    <string name="negotiation_title">Negociação</string>
+    <string name="negotiation_exemplar_unknown">Exemplar</string>
+    <string name="negotiation_loading">Carregando negociação…</string>
+    <string name="negotiation_open_title">Nova negociação</string>
+    <string name="negotiation_open_hint">Abrir uma negociação reserva o exemplar: ele não pode entrar em outra enquanto esta estiver ativa.</string>
+    <string name="negotiation_counterparty">Contraparte</string>
+    <string name="negotiation_channel">Canal</string>
+    <string name="negotiation_amount">Valor discutido (R$)</string>
+    <string name="negotiation_notes">Observações</string>
+    <string name="negotiation_reserve">Reservar o exemplar</string>
+    <string name="negotiation_open_action">Abrir negociação</string>
+    <string name="negotiation_type_sale">Venda</string>
+    <string name="negotiation_type_trade">Troca</string>
+    <string name="negotiation_status_open">Aberta</string>
+    <string name="negotiation_status_reserved">Reservada</string>
+    <string name="negotiation_status_closed">Concluída</string>
+    <string name="negotiation_status_cancelled">Cancelada</string>
+    <string name="negotiation_active_title">Negociação %1$s</string>
+    <string name="negotiation_counterparty_value">Contraparte: %1$s</string>
+    <string name="negotiation_channel_value">Canal: %1$s</string>
+    <string name="negotiation_amount_value">Valor: %1$s</string>
+    <string name="negotiation_close_sale">Concluir venda</string>
+    <string name="negotiation_close_trade">Concluir troca</string>
+    <string name="negotiation_cancel">Cancelar negociação</string>
+    <string name="negotiation_close_sale_title">Concluir venda</string>
+    <string name="negotiation_received_value">Valor recebido (R$)</string>
+    <string name="negotiation_close_date">Data (dd/MM/aaaa)</string>
+    <string name="negotiation_confirm">Concluir</string>
+    <string name="negotiation_close_trade_title">Concluir troca</string>
+    <string name="negotiation_trade_received">Exemplar recebido</string>
+    <string name="negotiation_trade_none">Nenhum (só saída)</string>
+    <string name="negotiation_trade_note">Observação da troca</string>
+    <string name="negotiation_cancel_title">Cancelar negociação?</string>
+    <string name="negotiation_cancel_hint">O exemplar volta a ficar disponível e o cancelamento continua no histórico.</string>
+    <string name="negotiation_cancel_confirm">Confirmar cancelamento</string>
+    <string name="negotiation_keep">Manter</string>
+    <string name="negotiation_history_title">Histórico</string>
+    <string name="negotiation_history_empty">Nenhuma negociação registrada para este exemplar.</string>
+    <string name="negotiation_history_started">Início: %1$s</string>
+
+    <!-- Histórico de vendas e trocas (T097, FR-087). -->
+    <string name="finance_history_title">Vendas e trocas</string>
+    <string name="finance_history_sales">Total em vendas</string>
+    <string name="finance_history_trades">Trocas concluídas</string>
+    <string name="finance_history_trades_value">%1$d</string>
+    <string name="finance_history_hint">Vendas e trocas ficam fora do investido; o custo histórico de aquisição não muda.</string>
+    <string name="finance_history_empty">Nenhuma venda ou troca concluída.</string>
+    <string name="finance_history_sale">Venda</string>
+    <string name="finance_history_trade">Troca</string>
+    <string name="finance_history_counterparty">Contraparte: %1$s</string>
+    <string name="finance_history_received">Recebido: %1$s</string>
 </resources>

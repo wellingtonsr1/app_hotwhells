@@ -2,6 +2,7 @@ package br.com.hotwheelscollector.data.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import br.com.hotwheelscollector.data.db.dao.AcquisitionDao
 import br.com.hotwheelscollector.data.db.dao.AppSettingDao
@@ -11,6 +12,7 @@ import br.com.hotwheelscollector.data.db.dao.CollectionDao
 import br.com.hotwheelscollector.data.db.dao.CollectionItemDao
 import br.com.hotwheelscollector.data.db.dao.ColorDao
 import br.com.hotwheelscollector.data.db.dao.DashboardDao
+import br.com.hotwheelscollector.data.db.dao.DuplicateDao
 import br.com.hotwheelscollector.data.db.dao.ExemplarDao
 import br.com.hotwheelscollector.data.db.dao.FinanceDao
 import br.com.hotwheelscollector.data.db.dao.HistoryDao
@@ -36,6 +38,7 @@ import br.com.hotwheelscollector.data.db.entity.CarModelEntity
 import br.com.hotwheelscollector.data.db.entity.CollectionEntity
 import br.com.hotwheelscollector.data.db.entity.CollectionItemEntity
 import br.com.hotwheelscollector.data.db.entity.ColorEntity
+import br.com.hotwheelscollector.data.db.entity.DuplicateOfferEntity
 import br.com.hotwheelscollector.data.db.entity.ExemplarEntity
 import br.com.hotwheelscollector.data.db.entity.HistoryEntryEntity
 import br.com.hotwheelscollector.data.db.entity.LocationEntity
@@ -54,7 +57,10 @@ import br.com.hotwheelscollector.data.db.entity.VariantSecondaryColorEntity
 import br.com.hotwheelscollector.data.db.entity.WishlistItemEntity
 
 /**
- * Banco local, versão 1, com todas as tabelas de `data-model.md`.
+ * Banco local, versão 2, com todas as tabelas de `data-model.md`.
+ *
+ * A v2 acrescenta `duplicate_offer` (disponibilidade para troca/venda, FR-066–FR-067)
+ * e `negotiation.received_exemplar_id` (exemplar recebido na troca, FR-071).
  *
  * Regras que valem para toda abertura:
  * - `PRAGMA foreign_keys = ON` — sem isso o SQLite ignora as FKs declaradas (Art. I.5);
@@ -90,8 +96,9 @@ import br.com.hotwheelscollector.data.db.entity.WishlistItemEntity
         HistoryEntryEntity::class,
         AppSettingEntity::class,
         SearchIndexEntity::class,
+        DuplicateOfferEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 public abstract class AppDatabase : RoomDatabase() {
@@ -134,6 +141,8 @@ public abstract class AppDatabase : RoomDatabase() {
 
     public abstract fun negotiationEventDao(): NegotiationEventDao
 
+    public abstract fun duplicateDao(): DuplicateDao
+
     public abstract fun recognitionResultDao(): RecognitionResultDao
 
     public abstract fun historyDao(): HistoryDao
@@ -153,6 +162,44 @@ public abstract class AppDatabase : RoomDatabase() {
 
     public companion object {
         public const val DATABASE_NAME: String = "hotwheels.db"
+
+        /**
+         * v1 → v2: nova tabela de disponibilidade e o vínculo do exemplar recebido.
+         * Nada é destruído; as colunas novas são nulas por padrão.
+         */
+        public val MIGRATION_1_2: Migration = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `duplicate_offer` (
+                        `id` TEXT NOT NULL,
+                        `exemplar_id` TEXT NOT NULL,
+                        `availability` TEXT NOT NULL,
+                        `condition` TEXT,
+                        `asking_price_cents` INTEGER,
+                        `notes` TEXT,
+                        `created_at` INTEGER NOT NULL,
+                        `updated_at` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`),
+                        FOREIGN KEY(`exemplar_id`) REFERENCES `exemplar`(`id`)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS " +
+                        "`index_duplicate_offer_exemplar_id` ON `duplicate_offer` (`exemplar_id`)",
+                )
+                db.execSQL(
+                    "ALTER TABLE `negotiation` ADD COLUMN `received_exemplar_id` TEXT " +
+                        "REFERENCES `exemplar`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS " +
+                        "`index_negotiation_received_exemplar_id` ON `negotiation` (`received_exemplar_id`)",
+                )
+            }
+        }
 
         /** Executado em toda abertura; `onCreate` roda só na criação do arquivo. */
         public val CALLBACK: Callback = object : Callback() {

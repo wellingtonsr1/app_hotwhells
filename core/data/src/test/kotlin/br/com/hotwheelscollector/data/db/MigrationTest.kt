@@ -57,6 +57,39 @@ public class MigrationTest {
         }
     }
 
+    /**
+     * v1 → v2 (US7): tabela `duplicate_offer` e coluna `negotiation.received_exemplar_id`.
+     * `runMigrationsAndValidate` compara o banco migrado com `2.json`: se a migração
+     * esquecer uma coluna ou um índice, o teste falha aqui, não no aparelho do usuário.
+     */
+    @Test
+    public fun migracaoV1ParaV2AcrescentaDisponibilidadeEExemplarRecebido() {
+        helper.createDatabase(TEST_DB_V2, 1).close()
+
+        helper.runMigrationsAndValidate(
+            TEST_DB_V2,
+            2,
+            true,
+            AppDatabase.MIGRATION_1_2,
+        ).use { db ->
+            val columns = db.query("PRAGMA table_info(negotiation)").use { cursor ->
+                buildList {
+                    while (cursor.moveToNext()) add(cursor.getString(1))
+                }
+            }
+            val tables = db.query(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'duplicate_offer'",
+            ).use { cursor ->
+                buildList {
+                    while (cursor.moveToNext()) add(cursor.getString(0))
+                }
+            }
+
+            assertThat(columns).contains("received_exemplar_id")
+            assertThat(tables).containsExactly("duplicate_offer")
+        }
+    }
+
     @Test
     public fun callbackCriaIndiceUnicoParcialDeFingerprint() {
         val database = openRuntimeDatabase()
@@ -109,6 +142,7 @@ public class MigrationTest {
 
     private companion object {
         const val TEST_DB = "migration-test.db"
+        const val TEST_DB_V2 = "migration-v2-test.db"
         const val RUNTIME_DB = "runtime-test.db"
     }
 }
