@@ -14,12 +14,16 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -44,6 +48,8 @@ public fun IncompleteEntriesScreen(
     viewModel: IncompleteEntriesViewModel = hiltViewModel(),
     onEditModel: (modelId: String) -> Unit = {},
     onEditVariant: (variantId: String) -> Unit = {},
+    message: String? = null,
+    onMessageShown: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
     IncompleteEntriesContent(
@@ -51,6 +57,8 @@ public fun IncompleteEntriesScreen(
         onSelectModel = onSelectModel,
         onEditModel = onEditModel,
         onEditVariant = onEditVariant,
+        message = message,
+        onMessageShown = onMessageShown,
         modifier = modifier,
     )
 }
@@ -62,9 +70,23 @@ internal fun IncompleteEntriesContent(
     modifier: Modifier = Modifier,
     onEditModel: (modelId: String) -> Unit = {},
     onEditVariant: (variantId: String) -> Unit = {},
+    message: String? = null,
+    onMessageShown: () -> Unit = {},
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // A confirmação volta pela navegação: a tela de edição sai no mesmo instante em que
+    // salva, então é aqui que o usuário vê que o registro saiu da lista (Art. IV.4).
+    LaunchedEffect(message) {
+        message?.let {
+            snackbarHostState.showSnackbar(it)
+            onMessageShown()
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(
             modifier = Modifier

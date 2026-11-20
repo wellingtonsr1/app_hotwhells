@@ -259,6 +259,14 @@ backup não mudou. **Limite conhecido:** a edição cobre os campos da tela (cor
 secundárias, ano, rodas, base, decoração, série e código do fabricante); números de
 coleção/série, edição e embalagem continuam preservados do registro, sem campo na tela.
 
+**Retorno para a lista (2026-11-20):** a tela de edição sai no mesmo instante em que salva,
+então a confirmação é exibida pela própria lista de incompletos, via `SavedStateHandle` da
+entrada de navegação: «Variante completada.» ou «Modelo atualizado.». Essa entrega também
+expôs um **bug de rota**: `VariantEdit` usava o mesmo caminho de `VariantForm`
+(`catalog/variant/{id}`), e o NavHost resolvia «Editar variante» para a tela de **criação**.
+A rota passou a ser `catalog/variant/{variantId}/edit`, e o teste instrumentado cobre o
+fluxo real (abrir, preencher cor e ano, salvar, ver a confirmação e a linha sair).
+
 ### Evidências — T043 (2026-11-20)
 
 O que faltava: o modelo podia ser criado, mas não **editado**, e o veículo real não tinha

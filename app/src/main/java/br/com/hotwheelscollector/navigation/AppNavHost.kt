@@ -15,7 +15,9 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -156,9 +158,15 @@ public sealed class Destination(public val route: String) {
 
     public data object Finance : Destination("finance")
 
-    /** Edição de variante incompleta: cor principal e ano (FR-029). */
-    public data object VariantEdit : Destination("catalog/variant/{${RouteArgs.VARIANT_ID}}") {
-        public fun routeFor(variantId: String): String = "catalog/variant/$variantId"
+    /**
+     * Edição de variante incompleta: cor principal e ano (FR-029).
+     *
+     * O sufixo `/edit` não é decorativo: `VariantForm` já ocupa
+     * `catalog/variant/{modelId}` e as duas rotas seriam idênticas para o NavHost, que
+     * resolveria a edição para a tela de criação.
+     */
+    public data object VariantEdit : Destination("catalog/variant/{${RouteArgs.VARIANT_ID}}/edit") {
+        public fun routeFor(variantId: String): String = "catalog/variant/$variantId/edit"
     }
 
     /** Árvore de localizações físicas (US9). */
@@ -187,6 +195,9 @@ public object RouteArgs {
     public const val WISHLIST_ITEM_ID: String = "itemId"
     public const val COLLECTION_ID: String = "collectionId"
     public const val LOCATION_ID: String = "locationId"
+
+    /** Confirmação que a tela de edição devolve para a lista de incompletos. */
+    public const val INCOMPLETE_MESSAGE: String = "incompleteMessage"
 }
 
 /** Aba da barra inferior: rota, rótulo e ícone. Só rotas de primeiro nível entram aqui. */
@@ -332,7 +343,13 @@ public fun AppNavHost(
             }
             // Cadastro da miniatura em dois passos: o modelo é resolvido primeiro e a
             // variante (com o primeiro exemplar e as fotos) vem em seguida.
-            composable(Destination.Incomplete.route) {
+            composable(Destination.Incomplete.route) { entry ->
+                // A confirmação vem da tela que editou: ela sai antes de a mensagem ser
+                // lida, então o resultado viaja pelo SavedStateHandle da própria lista.
+                val messages = remember(entry) {
+                    entry.savedStateHandle.getStateFlow<String?>(RouteArgs.INCOMPLETE_MESSAGE, null)
+                }
+                val message by messages.collectAsState()
                 IncompleteEntriesScreen(
                     onSelectModel = { modelId ->
                         navController.navigate(Destination.VariantForm.routeFor(modelId))
@@ -343,15 +360,26 @@ public fun AppNavHost(
                     onEditVariant = { variantId ->
                         navController.navigate(Destination.VariantEdit.routeFor(variantId))
                     },
+                    message = message,
+                    onMessageShown = {
+                        entry.savedStateHandle[RouteArgs.INCOMPLETE_MESSAGE] = null
+                    },
                 )
             }
             composable(
                 route = Destination.VariantEdit.route,
                 arguments = listOf(navArgument(RouteArgs.VARIANT_ID) { type = NavType.StringType }),
             ) {
+                val variantUpdated = stringResource(R.string.incomplete_variant_updated)
                 VariantEditScreen(
                     variantId = it.arguments?.getString(RouteArgs.VARIANT_ID).orEmpty(),
-                    onSaved = { navController.popBackStack() },
+                    onSaved = {
+                        navController.previousBackStackEntry?.savedStateHandle?.set(
+                            RouteArgs.INCOMPLETE_MESSAGE,
+                            variantUpdated,
+                        )
+                        navController.popBackStack()
+                    },
                 )
             }
             composable(
@@ -360,9 +388,16 @@ public fun AppNavHost(
                     navArgument(RouteArgs.MODEL_ID) { type = NavType.StringType },
                 ),
             ) {
+                val modelUpdated = stringResource(R.string.incomplete_model_updated)
                 ModelFormScreen(
                     onBack = { navController.popBackStack() },
-                    onSaved = { navController.popBackStack() },
+                    onSaved = {
+                        navController.previousBackStackEntry?.savedStateHandle?.set(
+                            RouteArgs.INCOMPLETE_MESSAGE,
+                            modelUpdated,
+                        )
+                        navController.popBackStack()
+                    },
                 )
             }
             composable(Destination.CreateEntry.route) {

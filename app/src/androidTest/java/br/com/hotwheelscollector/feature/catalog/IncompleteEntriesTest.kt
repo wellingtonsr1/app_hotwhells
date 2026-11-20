@@ -77,8 +77,37 @@ class IncompleteEntriesTest {
         composeRule.onNodeWithText("Bone Shaker").assertExists()
         composeRule.onNodeWithText("Falta: cor principal, ano").assertExists()
 
-        // Ainda não há tela de edição de variante: o cartão não pode parecer clicável.
+        // Quem abre a edição é o botão; o cartão continua sem fingir ser clicável.
         composeRule.onNodeWithText("Bone Shaker").assertHasNoClickAction()
+        composeRule.onNodeWithText("Editar variante").assertHasClickAction()
+    }
+
+    @Test
+    fun completarVarianteVoltaParaAListaComConfirmacao() {
+        createModel(manufacturer = "Mattel", model = "Bone Shaker")
+        composeRule.onNodeWithText("Salvar variante e exemplar").performScrollTo().performClick()
+        waitForText("1 exemplar", substring = true)
+        waitForText("Incompletos (1)")
+
+        composeRule.onNodeWithText("Incompletos (1)").performClick()
+        waitForText("Cadastros incompletos")
+        composeRule.onNodeWithText("Editar variante").performClick()
+        waitForText("Salvar alterações")
+
+        composeRule.onAllNodes(hasSetTextAction())[0].apply {
+            performClick()
+            performTextInput("Vermelho")
+        }
+        composeRule.onAllNodes(hasSetTextAction())[1].apply {
+            performClick()
+            performTextInput("2024")
+        }
+        composeRule.onNodeWithText("Salvar alterações").performScrollTo().performClick()
+
+        // A confirmação é da lista, não da tela que fechou (Art. IV.4).
+        waitForText("Variante completada.")
+        waitForText("Nenhum cadastro incompleto. Todo modelo cadastrado já tem variante.")
+        composeRule.onNodeWithText("Bone Shaker").assertDoesNotExist()
     }
 
     /** Modelo criado pelo fluxo real, parando na tela de variante. */

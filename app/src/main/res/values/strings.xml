@@ -548,6 +548,8 @@
     <string name="model_form_error_storage">Não foi possível salvar. Tente de novo.</string>
     <string name="incomplete_edit_model">Editar modelo</string>
     <string name="incomplete_edit_variant">Editar variante</string>
+    <string name="incomplete_variant_updated">Variante completada.</string>
+    <string name="incomplete_model_updated">Modelo atualizado.</string>
     <!-- Backup manual (T119/T120, FR-140–FR-145). -->
     <string name="backup_title">Backup e restauração</string>
     <string name="backup_back">Voltar</string>
