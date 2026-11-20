@@ -53,6 +53,22 @@ public interface CarModelRepository {
         brandId: String? = null,
         realVehicleId: String? = null,
     ): DomainResult<CarModel>
+
+    /**
+     * Completa ou corrige o modelo (FR-014), inclusive o vínculo com o veículo real.
+     * Recusa nome/escala que colidam com outro modelo do mesmo fabricante (FR-035).
+     */
+    public suspend fun update(
+        id: String,
+        name: String,
+        scale: String,
+        bodyType: String? = null,
+        material: String? = null,
+        countryOfManufacture: String? = null,
+        notes: String? = null,
+        realVehicleId: String? = null,
+    ): DomainResult<CarModel>
+
     public suspend fun archive(id: String): DomainResult<Unit>
 
     /**
@@ -86,6 +102,14 @@ public interface VariantRepository {
     public suspend fun findById(id: String): Variant?
     public suspend fun findActiveByFingerprint(fingerprint: String): Variant?
     public suspend fun create(variant: Variant): DomainResult<Variant>
+
+    /**
+     * Completa ou corrige uma variante existente sem tocá-la em outra coisa (FR-029).
+     *
+     * O `id` e o `createdAt` são os do registro atual — os exemplares apontam para eles —
+     * e a checagem de fingerprint continua sendo feita aqui, não na tela (Art. I.3).
+     */
+    public suspend fun update(variant: Variant): DomainResult<Variant>
     public suspend fun archive(id: String): DomainResult<Unit>
     public suspend fun mergeVariants(targetId: String, absorbedId: String): DomainResult<Unit>
 }

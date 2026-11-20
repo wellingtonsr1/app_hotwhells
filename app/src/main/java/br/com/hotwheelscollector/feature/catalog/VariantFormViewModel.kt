@@ -10,9 +10,12 @@ import br.com.hotwheelscollector.domain.repository.ColorRepository
 import br.com.hotwheelscollector.domain.repository.NewExemplar
 import br.com.hotwheelscollector.domain.repository.PhotoRepository
 import br.com.hotwheelscollector.domain.repository.SeriesRepository
+import br.com.hotwheelscollector.domain.repository.VariantRepository
 import br.com.hotwheelscollector.domain.usecase.AddExemplarUseCase
 import br.com.hotwheelscollector.domain.usecase.CreateVariantInput
 import br.com.hotwheelscollector.domain.usecase.CreateVariantUseCase
+import br.com.hotwheelscollector.domain.usecase.UpdateVariantInput
+import br.com.hotwheelscollector.domain.usecase.UpdateVariantUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
@@ -51,6 +54,10 @@ public data class VariantFormUiState(
     val exemplarCode: String? = null,
     /** Preenchido só quando variante, exemplar e fotos terminaram: a tela navega. */
     val savedVariantId: String? = null,
+    /** `true` quando a tela está completando uma variante existente, não criando outra. */
+    val editing: Boolean = false,
+    /** Edição: enquanto carrega, os campos vazios não podem ser salvos por engano. */
+    val loading: Boolean = false,
 )
 
 /**
@@ -70,10 +77,14 @@ public class VariantFormViewModel @Inject constructor(
     private val models: CarModelRepository,
     private val colors: ColorRepository,
     private val seriesRepository: SeriesRepository,
+    private val variants: VariantRepository,
+    private val updateVariant: UpdateVariantUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(VariantFormUiState())
     public val state: StateFlow<VariantFormUiState> = _state.asStateFlow()
+
+    private var editingVariantId: String? = null
 
     public fun onPrimaryColorChange(value: String) = _state.update { it.copy(primaryColor = value) }
 
@@ -141,6 +152,10 @@ public class VariantFormViewModel @Inject constructor(
         _state.update { it.copy(saving = true) }
         viewModelScope.launch {
             try {
+                if (current.editing) {
+                    updateExisting(current, year)
+                    return@launch
+                }
                 val variantId = current.createdVariantId ?: createVariantFor(modelId, current, year)
                     .also { id -> _state.update { it.copy(createdVariantId = id) } }
 
@@ -239,6 +254,87 @@ public class VariantFormViewModel @Inject constructor(
             )
         }
         return failed
+    }
+
+    /**
+     * Carrega a variante para edição (FR-029): mesmos campos do cadastro, preenchidos, e
+     * sem o bloco de exemplar/fotos — completar cor e ano não cria uma segunda unidade.
+     */
+    public fun loadForEdit(variantId: String) {
+        if (_state.value.editing || _state.value.loading) return
+        _state.update { it.copy(editing = true, loading = true) }
+        viewModelScope.launch {
+            try {
+                val variant = variants.findById(variantId)
+                    ?: throw DomainError.NotFound
+                if (variant.archivedAt != null) {
+                    throw DomainError.Validation("Variante arquivada não pode ser editada.")
+                }
+                val colorNames = colors.observeAll().first().associateBy { it.id }
+                val manufacturerId = models.findById(variant.modelId)?.manufacturerId
+                val seriesName = manufacturerId?.let { id ->
+                    seriesRepository.observeByManufacturer(id).first()
+                        .firstOrNull { it.id == variant.seriesId }
+                        ?.name
+                }.orEmpty()
+                editingVariantId = variantId
+                _state.update {
+                    it.copy(
+                        editing = true,
+                        loading = false,
+                        primaryColor = variant.primaryColorId
+                            ?.let { id -> colorNames[id]?.name }
+                            .orEmpty(),
+                        secondaryColors = variant.secondaryColorIds
+                            .mapNotNull { id -> colorNames[id]?.name }
+                            .joinToString(", "),
+                        wheelsType = variant.wheelsType.orEmpty(),
+                        baseType = variant.baseType.orEmpty(),
+                        decoration = variant.decoration.orEmpty(),
+                        seriesName = seriesName,
+                        releaseYearText = variant.releaseYear?.toString().orEmpty(),
+                        manufacturerCode = variant.manufacturerCode.orEmpty(),
+                    )
+                }
+            } catch (error: Throwable) {
+                _state.update { it.copy(loading = false, message = error.toMessage()) }
+            }
+        }
+    }
+
+    private suspend fun updateExisting(current: VariantFormUiState, year: Int?) {
+        val variantId = editingVariantId ?: throw DomainError.NotFound
+        updateVariant(
+            variantId,
+            UpdateVariantInput(
+                seriesId = resolveSeriesForVariant(current.seriesName),
+                primaryColorId = resolveColor(current.primaryColor),
+                secondaryColorIds = current.secondaryColors
+                    .split(",", ";")
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                    .map { name -> colors.findOrCreate(name).getOrThrow().id },
+                wheelsType = current.wheelsType,
+                baseType = current.baseType,
+                decoration = current.decoration,
+                releaseYear = year,
+                manufacturerCode = current.manufacturerCode,
+            ),
+        ).getOrThrow()
+        _state.update {
+            it.copy(
+                saving = false,
+                savedVariantId = variantId,
+                message = "Variante atualizada.",
+            )
+        }
+    }
+
+    /** A série é resolvida no fabricante do modelo da variante, nunca presumindo taxonomia. */
+    private suspend fun resolveSeriesForVariant(name: String): String? {
+        val variantId = editingVariantId ?: throw DomainError.NotFound
+        val modelId = variants.findById(variantId)?.modelId ?: throw DomainError.NotFound
+        return resolveSeries(modelId, name)
     }
 
     private fun Throwable.toMessage(): String = when (this) {

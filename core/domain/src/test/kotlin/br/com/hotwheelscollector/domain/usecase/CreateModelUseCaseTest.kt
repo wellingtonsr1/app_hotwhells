@@ -153,6 +153,17 @@ public class CreateModelUseCaseTest {
 
         override suspend fun archive(id: String): DomainResult<Unit> = Result.success(Unit)
 
+        override suspend fun update(
+            id: String,
+            name: String,
+            scale: String,
+            bodyType: String?,
+            material: String?,
+            countryOfManufacture: String?,
+            notes: String?,
+            realVehicleId: String?,
+        ): DomainResult<CarModel> = Result.failure(DomainError.NotFound)
+
         override fun observeIncomplete(): Flow<List<IncompleteEntry>> = flowOf(emptyList())
     }
 }

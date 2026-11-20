@@ -6,6 +6,7 @@ import br.com.hotwheelscollector.data.db.TransactionRunner
 import br.com.hotwheelscollector.data.db.entity.LocationEntity
 import br.com.hotwheelscollector.data.db.entity.MovementEntity
 import br.com.hotwheelscollector.data.db.entity.VariantEntity
+import br.com.hotwheelscollector.data.db.entity.VariantSecondaryColorEntity
 import br.com.hotwheelscollector.data.mapper.toDomain
 import br.com.hotwheelscollector.domain.error.DomainError
 import br.com.hotwheelscollector.domain.error.DomainResult
@@ -96,11 +97,70 @@ public class VariantRepositoryImpl @Inject constructor(
                     updatedAt = variant.updatedAt.toEpochMilli(),
                 ),
             )
+            writeSecondaryColors(variant.id, variant.secondaryColorIds)
             auditLogWriter.record("variant", variant.id, "created", null, variant.fingerprint, "app")
         }
         Result.success(variant)
     } catch (error: Throwable) {
         Result.failure(if (error is DomainError) error else DomainError.Storage(error.message ?: "Falha ao criar variante."))
+    }
+
+    /**
+     * Edição de variante (FR-029). O `createdAt` do registro atual é mantido — os
+     * exemplares e fotos continuam apontando para o mesmo `id` — e o fingerprint é o que
+     * o caso de uso calculou; a colisão com outra variante ativa é recusada aqui também,
+     * porque a tela não é confiável para a regra (Art. I.3).
+     */
+    override suspend fun update(variant: Variant): DomainResult<Variant> = try {
+        transactionRunner.inTransaction {
+            val current = database.variantDao().findById(variant.id) ?: throw DomainError.NotFound
+            database.variantDao().findActiveByFingerprint(variant.fingerprint)?.let {
+                if (it.id != variant.id) throw DomainError.Duplicate
+            }
+            database.variantDao().update(
+                VariantEntity(
+                    id = variant.id,
+                    modelId = current.modelId,
+                    fingerprint = variant.fingerprint,
+                    seriesId = variant.seriesId,
+                    primaryColorId = variant.primaryColorId,
+                    wheelsType = variant.wheelsType,
+                    baseType = variant.baseType,
+                    decoration = variant.decoration,
+                    releaseYear = variant.releaseYear,
+                    collectionNumber = variant.collectionNumber,
+                    seriesNumber = variant.seriesNumber,
+                    edition = variant.edition,
+                    manufacturerCode = variant.manufacturerCode,
+                    packagingType = variant.packagingType,
+                    archivedAt = current.archivedAt,
+                    createdAt = current.createdAt,
+                    updatedAt = variant.updatedAt.toEpochMilli(),
+                ),
+            )
+            writeSecondaryColors(variant.id, variant.secondaryColorIds)
+            auditLogWriter.record(
+                "variant",
+                variant.id,
+                "updated",
+                current.fingerprint,
+                variant.fingerprint,
+                "app",
+            )
+        }
+        Result.success(variant)
+    } catch (error: Throwable) {
+        Result.failure(if (error is DomainError) error else DomainError.Storage(error.message ?: "Falha ao atualizar variante."))
+    }
+
+    /** Cores secundárias são um conjunto: regravar é substituir, não somar. */
+    private suspend fun writeSecondaryColors(variantId: String, colorIds: List<String>) {
+        database.variantSecondaryColorDao().deleteByVariant(variantId)
+        if (colorIds.isNotEmpty()) {
+            database.variantSecondaryColorDao().insertAll(
+                colorIds.map { VariantSecondaryColorEntity(variantId = variantId, colorId = it) },
+            )
+        }
     }
 
     override suspend fun archive(id: String): DomainResult<Unit> = try {

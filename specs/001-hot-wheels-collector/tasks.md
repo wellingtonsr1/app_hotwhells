@@ -190,7 +190,7 @@ Fechamento: `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:assem
 
 - [X] T041 [US2] Implementar `CreateModelUseCase` (aviso de mesmo nome+fabricante, opção usar existente) em `core/domain/.../usecase/CreateModelUseCase.kt`
 - [X] T042 [US2] Implementar `CreateVariantUseCase` com cálculo de `fingerprint` e aviso de variante idêntica (FR-040) em `core/domain/.../usecase/CreateVariantUseCase.kt`
-- [ ] T043 [US2] Implementar telas de cadastro de modelo e veículo real em `app/.../feature/catalog/ModelFormScreen.kt`
+- [X] T043 [US2] Implementar telas de cadastro de modelo e veículo real em `app/.../feature/catalog/ModelFormScreen.kt` — o cadastro inicial do modelo segue no fluxo do `+ Mini`; a tela nova edita o modelo e registra/vincula o **veículo real**
 - [X] T044 [US2] Implementar tela de cadastro de variante (cor principal, cores secundárias, rodas, base, decoração, série) em `app/.../feature/catalog/VariantFormScreen.kt`
 - [X] T045 [US2] Implementar captura por câmera e seleção via Photo Picker, com recusa de permissão tratada em `app/.../feature/catalog/PhotoCapture.kt`
 - [X] T046 [US2] Implementar grade de fotos por ângulo com definição de foto principal (transação única) em `app/.../feature/catalog/PhotoGrid.kt`
@@ -205,9 +205,10 @@ Fechamento: `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:assem
 **A fase avançou em 2026-11-18:** o módulo `:app` compila, e T037–T039, T041, T042,
 T044, T047 e T049 têm teste verde (ver «Evidências — Fase 4 / US2 (2026-11-18)»).
 T040, T045, T046 e T048 também ficaram verdes: os testes instrumentados rodam no emulador
-API 36 desde 2026-11-18. Na fase, a única tarefa ainda aberta é T043 — aposentada por
-remoção de código morto, com a parte de **veículo real** que continua sem tela. A tabela
-distingue *artefato pronto* de *execução verificada*.
+API 36 desde 2026-11-18. **T043 foi concluída em 2026-11-20:** o cadastro inicial do modelo
+continua no fluxo do `+ Mini`, e a parte que faltava — editar o modelo e cadastrar/vincular
+o **veículo real** — ganhou tela própria, alcançada por «Editar modelo» em Incompletos. A
+tabela distingue *artefato pronto* de *execução verificada*.
 
 | Tarefa | Estado em 2026-11-18 | Arquivo / observação |
 |---|---|---|
@@ -217,13 +218,72 @@ distingue *artefato pronto* de *execução verificada*.
 | T040 | **verde** — 1 teste, 0 falhas, 7,4 s no emulador API 36 | `CreateCatalogEntryScreenTest.kt` (ver «Evidências — T040») |
 | T041 | **verde** — compila; `CreateModelUseCaseTest` 4 testes, 0 falhas | `CreateModelUseCase` |
 | T042 | **verde** — compila; `CreateVariantUseCaseTest` 4 testes, 0 falhas | `CreateVariantUseCase` |
-| T043 | aposentada em 2026-11-17 (código morto removido) | o cadastro de modelo é o `CreateCatalogEntryScreen` (com `CreateCatalogEntryUseCase`); `ModelFormScreen` devolvia `"new-model-id"`/`"forced-new-model-id"` e não persistia nada |
+| T043 | **verde (2026-11-20)** — 3 testes de ViewModel, 1 teste de tela e 3 de repositório | `ModelFormScreen` + `ModelFormViewModel`; `CarModelRepository.update` e `RealVehicleRepositoryImpl` (ver «Evidências — T043») |
 | T044 | **verde** — compila; `VariantFormViewModelTest` 7 testes, 0 falhas | `VariantFormScreen` + `VariantFormViewModel` |
 | T045 | **verde** — 2 testes (captura e recusa), 0 falhas | `PhotoCapture` + `PhotoCaptureTest` (ver «Evidências — T045 e T046») |
 | T046 | **verde** — 3 testes de grade + `PhotoRepositoryTest.setPrimary`, 0 falhas | `PhotoGrid` + `PhotoGridTest` |
 | T047 | **verde** — 3 testes, 0 falhas | `DraftRepositoryImpl` (+ `DraftRepositoryTest`) |
 | T048 | **verde** — 2 testes de app + 6 de dados, 0 falhas | `CarModelRepository.observeIncomplete` (modelo sem variante + variante sem cor/ano) e `IncompleteEntriesTest` (ver «Evidências — T048») |
 | T049 | **verde** — compila; `AutocompleteTest` 5 testes, 0 falhas | `Autocomplete.kt`: `ModelAutocomplete` e `ManufacturerAutocomplete` ligados ao `CreateCatalogEntryScreen` |
+
+### Evidências — variante incompleta editável (2026-11-20)
+
+Antes: a variante sem cor principal ou sem ano aparecia em Cadastros incompletos, mas o
+cartão não levava a lugar nenhum — completar exigia editar o banco à mão.
+
+- `UpdateVariantUseCase` (domínio): carrega a variante, valida o ano, recalcula o
+  `fingerprint` com `CreateVariantUseCase.calculateFingerprint` (mesma regra da criação) e
+  recusa a edição quando ela tornaria a variante idêntica a outra ativa
+  (`DomainError.Duplicate`). `id`, `createdAt` e os exemplares ficam intactos (Art. I.4).
+- `VariantRepository.update` + `VariantRepositoryImpl`: grava a variante e regrava as cores
+  secundárias como conjunto, em transação, registrando `updated` na auditoria. O
+  `fingerprint` recalculado passa a ser gravado também na criação das secundárias — antes
+  elas eram lidas mas nunca persistidas (correção da mesma regra, Art. II.5).
+- `VariantFormViewModel`: modo edição (`loadForEdit`, `editing`, `loading`), sem criar
+  exemplar nem variante; `VariantFormScreen` teve o conteúdo extraído e é reusado por
+  `VariantEditScreen`, que esconde condição e fotos.
+- Navegação: `Destination.VariantEdit` (`catalog/variant/{variantId}`); o cartão de
+  variante incompleta ganhou «Editar variante», e a lista continua derivada — a linha sai
+  quando cor e ano são preenchidos.
+
+| Verificação | Comando | Resultado |
+| --- | --- | --- |
+| Repositório e caso de uso | `./gradlew :core:data:testDebugUnitTest --tests '*VariantRepositoryTest'` | 5 testes, 0 falhas (novo arquivo) |
+| ViewModel (criação + edição) | `./gradlew :app:testDebugUnitTest --tests '*VariantFormViewModelTest'` | 10 testes, 0 falhas (eram 7) |
+| Tela de edição | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*VariantEditScreenTest` | 1 teste, 0 falhas |
+| Regressão unitária e lint | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 192 testes, 0 falhas; `0 errors, 7 warnings` |
+| Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 46 testes, 0 falhas (4m 49s) |
+
+**Sem migração:** `variant` já tinha `primary_color_id` e `release_year`; o formato do
+backup não mudou. **Limite conhecido:** a edição cobre os campos da tela (cor, cores
+secundárias, ano, rodas, base, decoração, série e código do fabricante); números de
+coleção/série, edição e embalagem continuam preservados do registro, sem campo na tela.
+
+### Evidências — T043 (2026-11-20)
+
+O que faltava: o modelo podia ser criado, mas não **editado**, e o veículo real não tinha
+repositório, tela nem vínculo — `car_model.real_vehicle_id` ficava sempre `NULL`.
+
+- `CarModelRepository.update` (domínio + `CarModelRepositoryImpl`) grava nome, escala,
+  carroceria, material, país, observações e `realVehicleId`, recusando escala fora de `1:N`
+  e identidade repetida no mesmo fabricante.
+- `RealVehicleRepositoryImpl` implementa o repositório que só existia como interface
+  (estava sem binding no Hilt), exigindo marca/modelo e recusando ano implausível.
+- `ModelFormScreen`/`ModelFormViewModel`: campos do modelo, chips com os veículos reais
+  existentes (ou «Nenhum») e bloco «Novo veículo real» — um veículo digitado é criado e
+  vinculado no mesmo «Salvar», sem cadastro órfão. Entrada: «Editar modelo» no cartão de
+  Incompletos, apenas para modelo sem variante.
+
+| Verificação | Comando | Resultado |
+| --- | --- | --- |
+| Repositório de modelo e veículo real | `./gradlew :core:data:testDebugUnitTest --tests '*CarModelRepositoryTest'` | 9 testes, 0 falhas (eram 6) |
+| ViewModel | `./gradlew :app:testDebugUnitTest --tests '*ModelFormViewModelTest'` | 3 testes, 0 falhas |
+| Tela | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*ModelFormScreenTest` | 1 teste, 0 falhas |
+| Regressão unitária e lint | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 184 testes, 0 falhas; `0 errors, 7 warnings` |
+| Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 45 testes, 0 falhas (3m 42s) |
+
+**Limite conhecido:** o modelo não pode ser arquivado pela interface (só por repositório), e
+a marca (`brand_id`) continua sem tela própria.
 
 ### Evidências — Fase 4 / US2 (2026-11-18)
 
@@ -503,13 +563,14 @@ excluída junto com a string `model_form_title`. O cadastro de **veículo real**
 estava agrupado em T043) continua não existindo: o campo opcional `real_vehicle_id` do
 modelo segue sem tela, e isso precisa virar tarefa própria se for retomado.
 
-**T048 (2026-11-17, ampliada em 2026-11-18):** a primeira entrega mostrava só **modelo ativo
-sem variante ativa** — o buraco que o fluxo em dois passos abriu. Em 2026-11-18 o outro caso
-de FR-029 entrou: **variante ativa sem cor principal ou sem ano** também é listada, com o
-motivo no cartão («Falta: cor principal, ano»). O que continua fora é a **complementação**
-da variante — exige tela de edição que preserve `fingerprint` e histórico, e as fotos
-(que pertencem ao exemplar) não cabem nela. Por isso o cartão da variante aparece, mas
-não é clicável: não existe para onde ir. Só o modelo sem variante retoma o cadastro.
+**T048 (2026-11-17, ampliada em 2026-11-18 e 2026-11-20):** a primeira entrega mostrava só
+**modelo ativo sem variante ativa** — o buraco que o fluxo em dois passos abriu. Em 2026-11-18
+o outro caso de FR-029 entrou: **variante ativa sem cor principal ou sem ano** também é
+listada, com o motivo no cartão («Falta: cor principal, ano»). Em 2026-11-20 a
+**complementação** passou a existir: o cartão da variante abre «Editar variante», que grava
+pela mesma regra de `fingerprint` da criação e não cria segundo exemplar nem segunda
+variante (ver «Evidências — variante incompleta editável»). As fotos continuam fora da
+edição porque pertencem ao exemplar, não à variante.
 
 Quais campos contam como faltando é decisão de produto, registrada em código:
 `MissingField` tem só `PRIMARY_COLOR` e `RELEASE_YEAR`. FR-014 admite campo desconhecido

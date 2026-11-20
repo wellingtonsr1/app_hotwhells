@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.model.Condition
+import br.com.hotwheelscollector.domain.model.PhotoAngle
 import kotlinx.coroutines.launch
 
 /**
@@ -47,6 +48,95 @@ public fun VariantFormScreen(
     viewModel: VariantFormViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+
+    LaunchedEffect(state.savedVariantId) {
+        state.savedVariantId?.let(onVariantSaved)
+    }
+
+    VariantFormContent(
+        state = state,
+        onPrimaryColorChange = viewModel::onPrimaryColorChange,
+        onSecondaryColorsChange = viewModel::onSecondaryColorsChange,
+        onWheelsTypeChange = viewModel::onWheelsTypeChange,
+        onBaseTypeChange = viewModel::onBaseTypeChange,
+        onDecorationChange = viewModel::onDecorationChange,
+        onSeriesChange = viewModel::onSeriesChange,
+        onReleaseYearChange = viewModel::onReleaseYearChange,
+        onManufacturerCodeChange = viewModel::onManufacturerCodeChange,
+        onConditionChange = viewModel::onConditionChange,
+        onAddPhoto = viewModel::onAddPhoto,
+        onSetPrimary = viewModel::onSetPrimary,
+        onRemovePhoto = viewModel::onRemovePhoto,
+        onSave = { viewModel.onSave(modelId) },
+        onMessageShown = viewModel::onMessageShown,
+        showExemplarSection = true,
+        modifier = modifier,
+    )
+}
+
+/**
+ * Completa uma variante que ficou sem cor principal ou sem ano (FR-029).
+ *
+ * É o mesmo formulário, com o bloco do exemplar escondido: a variante já tem seus
+ * exemplares, e completar um campo não pode criar uma segunda unidade física. A tela só
+ * existe depois que a lista de incompletos entrega o `variantId`.
+ */
+@Composable
+public fun VariantEditScreen(
+    variantId: String,
+    onSaved: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: VariantFormViewModel = hiltViewModel(),
+) {
+    val state by viewModel.state.collectAsState()
+
+    LaunchedEffect(variantId) { viewModel.loadForEdit(variantId) }
+    LaunchedEffect(state.savedVariantId) {
+        if (state.savedVariantId != null) onSaved()
+    }
+
+    VariantFormContent(
+        state = state,
+        onPrimaryColorChange = viewModel::onPrimaryColorChange,
+        onSecondaryColorsChange = viewModel::onSecondaryColorsChange,
+        onWheelsTypeChange = viewModel::onWheelsTypeChange,
+        onBaseTypeChange = viewModel::onBaseTypeChange,
+        onDecorationChange = viewModel::onDecorationChange,
+        onSeriesChange = viewModel::onSeriesChange,
+        onReleaseYearChange = viewModel::onReleaseYearChange,
+        onManufacturerCodeChange = viewModel::onManufacturerCodeChange,
+        onConditionChange = viewModel::onConditionChange,
+        onAddPhoto = viewModel::onAddPhoto,
+        onSetPrimary = viewModel::onSetPrimary,
+        onRemovePhoto = viewModel::onRemovePhoto,
+        // Em edição o modelo não é criado nem alterado: o id já está no ViewModel.
+        onSave = { viewModel.onSave(modelId = "") },
+        onMessageShown = viewModel::onMessageShown,
+        showExemplarSection = false,
+        modifier = modifier,
+    )
+}
+
+@Composable
+internal fun VariantFormContent(
+    state: VariantFormUiState,
+    onPrimaryColorChange: (String) -> Unit,
+    onSecondaryColorsChange: (String) -> Unit,
+    onWheelsTypeChange: (String) -> Unit,
+    onBaseTypeChange: (String) -> Unit,
+    onDecorationChange: (String) -> Unit,
+    onSeriesChange: (String) -> Unit,
+    onReleaseYearChange: (String) -> Unit,
+    onManufacturerCodeChange: (String) -> Unit,
+    onConditionChange: (Condition) -> Unit,
+    onAddPhoto: (ByteArray, PhotoAngle) -> Unit,
+    onSetPrimary: (String) -> Unit,
+    onRemovePhoto: (String) -> Unit,
+    onSave: () -> Unit,
+    onMessageShown: () -> Unit,
+    showExemplarSection: Boolean,
+    modifier: Modifier = Modifier,
+) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val permissionDeniedMessage = stringResource(R.string.photo_permission_denied)
@@ -54,11 +144,8 @@ public fun VariantFormScreen(
     LaunchedEffect(state.message) {
         state.message?.let { message ->
             snackbarHostState.showSnackbar(message)
-            viewModel.onMessageShown()
+            onMessageShown()
         }
-    }
-    LaunchedEffect(state.savedVariantId) {
-        state.savedVariantId?.let(onVariantSaved)
     }
 
     Scaffold(
@@ -74,11 +161,23 @@ public fun VariantFormScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
-                text = stringResource(R.string.variant_form_title),
+                text = stringResource(
+                    if (showExemplarSection) {
+                        R.string.variant_form_title
+                    } else {
+                        R.string.variant_edit_title
+                    },
+                ),
                 style = MaterialTheme.typography.headlineSmall,
             )
             Text(
-                text = stringResource(R.string.variant_form_hint),
+                text = stringResource(
+                    if (showExemplarSection) {
+                        R.string.variant_form_hint
+                    } else {
+                        R.string.variant_edit_hint
+                    },
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -86,14 +185,14 @@ public fun VariantFormScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = state.primaryColor,
-                    onValueChange = viewModel::onPrimaryColorChange,
+                    onValueChange = onPrimaryColorChange,
                     label = { Text(stringResource(R.string.create_entry_color)) },
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                 )
                 OutlinedTextField(
                     value = state.releaseYearText,
-                    onValueChange = viewModel::onReleaseYearChange,
+                    onValueChange = onReleaseYearChange,
                     label = { Text(stringResource(R.string.create_entry_year)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
@@ -103,7 +202,7 @@ public fun VariantFormScreen(
 
             OutlinedTextField(
                 value = state.secondaryColors,
-                onValueChange = viewModel::onSecondaryColorsChange,
+                onValueChange = onSecondaryColorsChange,
                 label = { Text(stringResource(R.string.variant_secondary_colors)) },
                 placeholder = { Text(stringResource(R.string.variant_secondary_colors_hint)) },
                 singleLine = true,
@@ -112,7 +211,7 @@ public fun VariantFormScreen(
 
             OutlinedTextField(
                 value = state.wheelsType,
-                onValueChange = viewModel::onWheelsTypeChange,
+                onValueChange = onWheelsTypeChange,
                 label = { Text(stringResource(R.string.variant_wheels)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -120,7 +219,7 @@ public fun VariantFormScreen(
 
             OutlinedTextField(
                 value = state.baseType,
-                onValueChange = viewModel::onBaseTypeChange,
+                onValueChange = onBaseTypeChange,
                 label = { Text(stringResource(R.string.variant_base)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -128,7 +227,7 @@ public fun VariantFormScreen(
 
             OutlinedTextField(
                 value = state.decoration,
-                onValueChange = viewModel::onDecorationChange,
+                onValueChange = onDecorationChange,
                 label = { Text(stringResource(R.string.variant_decoration)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -137,60 +236,70 @@ public fun VariantFormScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = state.seriesName,
-                    onValueChange = viewModel::onSeriesChange,
+                    onValueChange = onSeriesChange,
                     label = { Text(stringResource(R.string.variant_series)) },
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                 )
                 OutlinedTextField(
                     value = state.manufacturerCode,
-                    onValueChange = viewModel::onManufacturerCodeChange,
+                    onValueChange = onManufacturerCodeChange,
                     label = { Text(stringResource(R.string.create_entry_code)) },
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                 )
             }
 
-            Text(
-                text = stringResource(R.string.variant_condition),
-                style = MaterialTheme.typography.labelLarge,
-            )
-            Condition.entries.chunked(3).forEach { rowConditions ->
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    rowConditions.forEach { condition ->
-                        FilterChip(
-                            selected = state.condition == condition,
-                            onClick = { viewModel.onConditionChange(condition) },
-                            label = { Text(stringResource(condition.labelRes())) },
-                        )
+            if (showExemplarSection) {
+                Text(
+                    text = stringResource(R.string.variant_condition),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                Condition.entries.chunked(3).forEach { rowConditions ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        rowConditions.forEach { condition ->
+                            FilterChip(
+                                selected = state.condition == condition,
+                                onClick = { onConditionChange(condition) },
+                                label = { Text(stringResource(condition.labelRes())) },
+                            )
+                        }
                     }
                 }
+
+                PhotoGrid(
+                    photos = state.photos.map { pending ->
+                        PhotoTile(
+                            id = pending.id,
+                            angle = pending.angle,
+                            isPrimary = pending.isPrimary,
+                            source = pending.bytes,
+                            pending = true,
+                        )
+                    },
+                    onAddPhotoBytes = onAddPhoto,
+                    onSetPrimary = onSetPrimary,
+                    onRemovePhoto = onRemovePhoto,
+                    onPermissionDenied = {
+                        scope.launch { snackbarHostState.showSnackbar(permissionDeniedMessage) }
+                    },
+                )
             }
 
-            PhotoGrid(
-                photos = state.photos.map { pending ->
-                    PhotoTile(
-                        id = pending.id,
-                        angle = pending.angle,
-                        isPrimary = pending.isPrimary,
-                        source = pending.bytes,
-                        pending = true,
-                    )
-                },
-                onAddPhotoBytes = viewModel::onAddPhoto,
-                onSetPrimary = viewModel::onSetPrimary,
-                onRemovePhoto = viewModel::onRemovePhoto,
-                onPermissionDenied = {
-                    scope.launch { snackbarHostState.showSnackbar(permissionDeniedMessage) }
-                },
-            )
-
             Button(
-                onClick = { viewModel.onSave(modelId) },
-                enabled = !state.saving,
+                onClick = onSave,
+                enabled = !state.saving && !state.loading,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(stringResource(R.string.variant_form_save))
+                Text(
+                    stringResource(
+                        if (showExemplarSection) {
+                            R.string.variant_form_save
+                        } else {
+                            R.string.variant_edit_save
+                        },
+                    ),
+                )
             }
         }
     }

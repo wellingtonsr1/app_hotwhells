@@ -193,6 +193,56 @@ public class CarModelRepositoryTest {
     }
 
     @Test
+    fun `update grava campos opcionais e o vinculo com o veiculo real`() = runBlocking {
+        val manufacturer = manufacturerRepository.add("Hot Wheels", "EUA").getOrThrow()
+        val model = modelRepository.add(manufacturer.id, "Twin Mill", "1:64").getOrThrow()
+        val vehicles = RealVehicleRepositoryImpl(database)
+        val vehicle = vehicles.add("Plymouth", "Road Runner", 1970, "EUA").getOrThrow()
+
+        val updated = modelRepository.update(
+            id = model.id,
+            name = "Twin Mill",
+            scale = "1:64",
+            bodyType = "Cupê",
+            material = "Metal",
+            countryOfManufacture = "EUA",
+            notes = "Primeira edição",
+            realVehicleId = vehicle.id,
+        ).getOrThrow()
+
+        assertThat(updated.bodyType).isEqualTo("Cupê")
+        assertThat(updated.realVehicleId).isEqualTo(vehicle.id)
+        assertThat(modelRepository.findById(model.id)?.notes).isEqualTo("Primeira edição")
+    }
+
+    @Test
+    fun `update recusa identidade repetida no mesmo fabricante`() = runBlocking {
+        val manufacturer = manufacturerRepository.add("Matchbox", "Reino Unido").getOrThrow()
+        modelRepository.add(manufacturer.id, "Route Master", "1:64").getOrThrow()
+        val second = modelRepository.add(manufacturer.id, "Convoy", "1:64").getOrThrow()
+
+        val result = modelRepository.update(
+            id = second.id,
+            name = "Route Master",
+            scale = "1:64",
+        )
+
+        assertThat(result.isFailure).isTrue()
+        assertThat(result.exceptionOrNull()).isInstanceOf(DomainError.Validation::class.java)
+        assertThat(modelRepository.findById(second.id)?.name).isEqualTo("Convoy")
+    }
+
+    @Test
+    fun `veiculo real exige marca e modelo e recusa ano impossivel`() = runBlocking {
+        val vehicles = RealVehicleRepositoryImpl(database)
+
+        assertThat(vehicles.add(" ", "Road Runner", 1970, null).isFailure).isTrue()
+        assertThat(vehicles.add("Plymouth", "", 1970, null).isFailure).isTrue()
+        assertThat(vehicles.add("Plymouth", "Road Runner", 1800, null).isFailure).isTrue()
+        assertThat(vehicles.add("Plymouth", "Road Runner", 1970, null).isSuccess).isTrue()
+    }
+
+    @Test
     fun `arquivar modelo remove da lista de ativos`() = runBlocking {
         val manufacturer = manufacturerRepository.add("Matchbox", "Reino Unido").getOrThrow()
         val model = modelRepository.add(manufacturer.id, "Route Master", "1:64").getOrThrow()

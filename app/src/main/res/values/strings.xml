@@ -92,6 +92,9 @@
     <string name="variant_form_title">Cadastrar variante</string>
     <string name="variant_form_hint">A variante e o primeiro exemplar são criados juntos. As fotos ficam vinculadas a este exemplar.</string>
     <string name="variant_form_save">Salvar variante e exemplar</string>
+    <string name="variant_edit_title">Editar variante</string>
+    <string name="variant_edit_hint">Complete a cor principal e o ano. A variante mantém o mesmo identificador e os exemplares que já tem.</string>
+    <string name="variant_edit_save">Salvar alterações</string>
     <string name="variant_condition">Condição do exemplar</string>
     <string name="variant_wheels">Tipo de rodas (ex: 5SP, Real Riders)</string>
     <string name="variant_base">Tipo de base (Metal ou Plástico)</string>
@@ -518,6 +521,33 @@
     <string name="finance_history_counterparty">Contraparte: %1$s</string>
     <string name="finance_history_received">Recebido: %1$s</string>
 
+    <!-- Modelo e veículo real (T043, FR-014). -->
+    <string name="model_form_title">Modelo e veículo real</string>
+    <string name="model_form_back">Voltar</string>
+    <string name="model_form_name">Nome do modelo</string>
+    <string name="model_form_scale">Escala</string>
+    <string name="model_form_body">Tipo de carroceria</string>
+    <string name="model_form_material">Material</string>
+    <string name="model_form_country">País de fabricação</string>
+    <string name="model_form_notes">Observações</string>
+    <string name="model_form_real_vehicle">Veículo real</string>
+    <string name="model_form_real_vehicle_hint">Opcional: o carro do mundo real que a miniatura representa.</string>
+    <string name="model_form_real_vehicle_none">Nenhum</string>
+    <string name="model_form_new_vehicle">Novo veículo real</string>
+    <string name="model_form_new_vehicle_hint">Preencha marca e modelo para criar e vincular junto com o salvamento.</string>
+    <string name="model_form_make">Marca</string>
+    <string name="model_form_vehicle_model">Modelo do veículo</string>
+    <string name="model_form_vehicle_year">Ano</string>
+    <string name="model_form_vehicle_country">País</string>
+    <string name="model_form_save">Salvar</string>
+    <string name="model_form_saving">Salvando…</string>
+    <string name="model_form_error_name">Informe o nome do modelo.</string>
+    <string name="model_form_error_scale">Escala deve estar no formato 1:N.</string>
+    <string name="model_form_error_duplicate">Já existe um modelo com esse nome e escala.</string>
+    <string name="model_form_error_year">Ano do veículo real inválido.</string>
+    <string name="model_form_error_storage">Não foi possível salvar. Tente de novo.</string>
+    <string name="incomplete_edit_model">Editar modelo</string>
+    <string name="incomplete_edit_variant">Editar variante</string>
     <!-- Backup manual (T119/T120, FR-140–FR-145). -->
     <string name="backup_title">Backup e restauração</string>
     <string name="backup_back">Voltar</string>

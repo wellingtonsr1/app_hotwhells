@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,20 +34,23 @@ import br.com.hotwheelscollector.domain.model.MissingField
  * ficou sem cor principal ou sem ano.
  *
  * A lista é derivada da consulta, não armazenada — no momento em que o campo é preenchido,
- * a linha sai sozinha. Só o modelo sem variante é retomável: tocar no cartão abre a tela de
- * variante. A variante incompleta aparece marcada, mas ainda não é editável — complementá-la
- * exige uma tela de edição que preserve `fingerprint` e histórico.
+ * a linha sai sozinha. Modelo sem variante abre «Editar modelo»; variante sem cor ou sem
+ * ano abre «Editar variante». Nenhum dos dois caminhos apaga ou recria o registro.
  */
 @Composable
 public fun IncompleteEntriesScreen(
     onSelectModel: (modelId: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: IncompleteEntriesViewModel = hiltViewModel(),
+    onEditModel: (modelId: String) -> Unit = {},
+    onEditVariant: (variantId: String) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
     IncompleteEntriesContent(
         state = state,
         onSelectModel = onSelectModel,
+        onEditModel = onEditModel,
+        onEditVariant = onEditVariant,
         modifier = modifier,
     )
 }
@@ -56,6 +60,8 @@ internal fun IncompleteEntriesContent(
     state: IncompleteEntriesUiState,
     onSelectModel: (modelId: String) -> Unit,
     modifier: Modifier = Modifier,
+    onEditModel: (modelId: String) -> Unit = {},
+    onEditVariant: (variantId: String) -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -87,6 +93,8 @@ internal fun IncompleteEntriesContent(
                         IncompleteModelCard(
                             entry = entry,
                             onClick = { onSelectModel(entry.modelId) },
+                            onEditModel = { onEditModel(entry.modelId) },
+                            onEditVariant = { entry.variantId?.let(onEditVariant) },
                         )
                     }
                 }
@@ -105,6 +113,8 @@ private fun MissingField.labelRes(): Int = when (this) {
 private fun IncompleteModelCard(
     entry: IncompleteEntry,
     onClick: () -> Unit,
+    onEditModel: () -> Unit,
+    onEditVariant: () -> Unit,
 ) {
     // Só o modelo sem variante tem para onde voltar. Um cartão que parece clicável e não
     // faz nada seria pior que um cartão sem toque.
@@ -155,6 +165,21 @@ private fun IncompleteModelCard(
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(top = 6.dp),
             )
+            if (!entry.hasVariant) {
+                TextButton(
+                    onClick = onEditModel,
+                    modifier = Modifier.padding(top = 2.dp),
+                ) {
+                    Text(stringResource(R.string.incomplete_edit_model))
+                }
+            } else if (entry.variantId != null) {
+                TextButton(
+                    onClick = onEditVariant,
+                    modifier = Modifier.padding(top = 2.dp),
+                ) {
+                    Text(stringResource(R.string.incomplete_edit_variant))
+                }
+            }
         }
     }
 }

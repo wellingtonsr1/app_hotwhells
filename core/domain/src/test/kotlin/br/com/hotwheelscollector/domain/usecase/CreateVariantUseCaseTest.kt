@@ -1,6 +1,7 @@
 package br.com.hotwheelscollector.domain.usecase
 
 import br.com.hotwheelscollector.domain.error.DomainResult
+import br.com.hotwheelscollector.domain.error.DomainError
 import br.com.hotwheelscollector.domain.model.CarModel
 import br.com.hotwheelscollector.domain.model.IncompleteEntry
 import br.com.hotwheelscollector.domain.model.Variant
@@ -149,6 +150,17 @@ public class CreateVariantUseCaseTest {
         }
 
         override suspend fun archive(id: String): DomainResult<Unit> = Result.success(Unit)
+
+        override suspend fun update(
+            id: String,
+            name: String,
+            scale: String,
+            bodyType: String?,
+            material: String?,
+            countryOfManufacture: String?,
+            notes: String?,
+            realVehicleId: String?,
+        ): DomainResult<CarModel> = Result.failure(DomainError.NotFound)
         override fun observeIncomplete(): Flow<List<IncompleteEntry>> = flowOf(emptyList())
     }
 
@@ -164,6 +176,11 @@ public class CreateVariantUseCaseTest {
 
         override suspend fun create(variant: Variant): DomainResult<Variant> {
             items.add(variant)
+            return Result.success(variant)
+        }
+
+        override suspend fun update(variant: Variant): DomainResult<Variant> {
+            items.replaceAll { if (it.id == variant.id) variant else it }
             return Result.success(variant)
         }
 

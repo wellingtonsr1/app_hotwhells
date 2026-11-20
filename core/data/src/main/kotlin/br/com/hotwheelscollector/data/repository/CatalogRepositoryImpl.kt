@@ -153,6 +153,52 @@ public class CarModelRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun update(
+        id: String,
+        name: String,
+        scale: String,
+        bodyType: String?,
+        material: String?,
+        countryOfManufacture: String?,
+        notes: String?,
+        realVehicleId: String?,
+    ): DomainResult<CarModel> {
+        val current = database.carModelDao().findById(id)
+            ?: return Result.failure(DomainError.NotFound)
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) {
+            return Result.failure(DomainError.Validation("Nome do modelo é obrigatório."))
+        }
+        val normalizedScale = scale.trim()
+        if (!SCALE_PATTERN.matches(normalizedScale)) {
+            return Result.failure(DomainError.Validation("Escala deve estar no formato 1:N."))
+        }
+        val duplicate = database.carModelDao()
+            .findByIdentity(current.manufacturerId, trimmed, normalizedScale)
+        if (duplicate != null && duplicate.id != id) {
+            return Result.failure(
+                DomainError.Validation("Já existe um modelo com esse nome e escala."),
+            )
+        }
+
+        val updated = current.copy(
+            name = trimmed,
+            scale = normalizedScale,
+            bodyType = bodyType?.trim()?.takeIf { it.isNotEmpty() },
+            material = material?.trim()?.takeIf { it.isNotEmpty() },
+            countryOfManufacture = countryOfManufacture?.trim()?.takeIf { it.isNotEmpty() },
+            notes = notes?.trim()?.takeIf { it.isNotEmpty() },
+            realVehicleId = realVehicleId,
+            updatedAt = Instant.now(clock).toEpochMilli(),
+        )
+        return try {
+            database.carModelDao().update(updated)
+            Result.success(updated.toDomain())
+        } catch (error: Throwable) {
+            Result.failure(DomainError.Storage(error.message ?: "Falha ao salvar modelo."))
+        }
+    }
+
     override suspend fun archive(id: String): DomainResult<Unit> {
         database.carModelDao().archive(id, Instant.now(clock).toEpochMilli())
         return Result.success(Unit)

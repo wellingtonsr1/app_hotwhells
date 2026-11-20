@@ -16,6 +16,7 @@ import br.com.hotwheelscollector.data.repository.ManufacturerRepositoryImpl
 import br.com.hotwheelscollector.data.repository.LocationRepositoryImpl
 import br.com.hotwheelscollector.data.repository.NegotiationRepositoryImpl
 import br.com.hotwheelscollector.data.repository.PhotoRepositoryImpl
+import br.com.hotwheelscollector.data.repository.RealVehicleRepositoryImpl
 import br.com.hotwheelscollector.data.repository.SearchRepositoryImpl
 import br.com.hotwheelscollector.data.repository.SeriesRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ValuationRepositoryImpl
@@ -38,6 +39,7 @@ import br.com.hotwheelscollector.domain.repository.ManufacturerRepository
 import br.com.hotwheelscollector.domain.repository.LocationRepository
 import br.com.hotwheelscollector.domain.repository.NegotiationRepository
 import br.com.hotwheelscollector.domain.repository.PhotoRepository
+import br.com.hotwheelscollector.domain.repository.RealVehicleRepository
 import br.com.hotwheelscollector.domain.repository.SearchRepository
 import br.com.hotwheelscollector.domain.repository.SeriesRepository
 import br.com.hotwheelscollector.domain.repository.ValuationRepository
@@ -139,6 +141,12 @@ public abstract class RepositoryModule {
     @Binds
     @Singleton
     public abstract fun bindCarModelRepository(impl: CarModelRepositoryImpl): CarModelRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindRealVehicleRepository(
+        impl: RealVehicleRepositoryImpl,
+    ): RealVehicleRepository
 
     @Binds
     @Singleton

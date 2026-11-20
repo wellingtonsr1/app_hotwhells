@@ -35,6 +35,8 @@ import br.com.hotwheelscollector.feature.catalog.CreateCatalogEntryScreen
 import br.com.hotwheelscollector.feature.catalog.ExemplarDetailScreen
 import br.com.hotwheelscollector.feature.catalog.ExemplarListScreen
 import br.com.hotwheelscollector.feature.catalog.IncompleteEntriesScreen
+import br.com.hotwheelscollector.feature.catalog.ModelFormScreen
+import br.com.hotwheelscollector.feature.catalog.VariantEditScreen
 import br.com.hotwheelscollector.feature.catalog.VariantFormScreen
 import br.com.hotwheelscollector.feature.dashboard.DashboardScreen
 import br.com.hotwheelscollector.feature.duplicates.DuplicatesScreen
@@ -86,6 +88,11 @@ public sealed class Destination(public val route: String) {
 
     /** Modelos que pararam no primeiro passo e ainda não têm variante (FR-029). */
     public data object Incomplete : Destination("catalog/incomplete")
+
+    /** Edição do modelo e do veículo real que ele representa (T043). */
+    public data object ModelForm : Destination("catalog/model/{${RouteArgs.MODEL_ID}}") {
+        public fun routeFor(modelId: String): String = "catalog/model/$modelId"
+    }
 
     /**
      * Cadastro rápido de exemplar (US1). O `variantId` chega por argumento e é lido do
@@ -148,6 +155,11 @@ public sealed class Destination(public val route: String) {
     }
 
     public data object Finance : Destination("finance")
+
+    /** Edição de variante incompleta: cor principal e ano (FR-029). */
+    public data object VariantEdit : Destination("catalog/variant/{${RouteArgs.VARIANT_ID}}") {
+        public fun routeFor(variantId: String): String = "catalog/variant/$variantId"
+    }
 
     /** Árvore de localizações físicas (US9). */
     public data object Locations : Destination("locations")
@@ -325,6 +337,32 @@ public fun AppNavHost(
                     onSelectModel = { modelId ->
                         navController.navigate(Destination.VariantForm.routeFor(modelId))
                     },
+                    onEditModel = { modelId ->
+                        navController.navigate(Destination.ModelForm.routeFor(modelId))
+                    },
+                    onEditVariant = { variantId ->
+                        navController.navigate(Destination.VariantEdit.routeFor(variantId))
+                    },
+                )
+            }
+            composable(
+                route = Destination.VariantEdit.route,
+                arguments = listOf(navArgument(RouteArgs.VARIANT_ID) { type = NavType.StringType }),
+            ) {
+                VariantEditScreen(
+                    variantId = it.arguments?.getString(RouteArgs.VARIANT_ID).orEmpty(),
+                    onSaved = { navController.popBackStack() },
+                )
+            }
+            composable(
+                route = Destination.ModelForm.route,
+                arguments = listOf(
+                    navArgument(RouteArgs.MODEL_ID) { type = NavType.StringType },
+                ),
+            ) {
+                ModelFormScreen(
+                    onBack = { navController.popBackStack() },
+                    onSaved = { navController.popBackStack() },
                 )
             }
             composable(Destination.CreateEntry.route) {

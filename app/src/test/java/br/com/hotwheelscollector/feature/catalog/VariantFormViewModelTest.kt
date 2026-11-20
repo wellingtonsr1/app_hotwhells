@@ -25,6 +25,7 @@ import br.com.hotwheelscollector.domain.repository.SeriesRepository
 import br.com.hotwheelscollector.domain.repository.VariantRepository
 import br.com.hotwheelscollector.domain.usecase.AddExemplarUseCase
 import br.com.hotwheelscollector.domain.usecase.CreateVariantUseCase
+import br.com.hotwheelscollector.domain.usecase.UpdateVariantUseCase
 import com.google.common.truth.Truth.assertThat
 import java.time.Clock
 import java.time.Instant
@@ -78,6 +79,8 @@ class VariantFormViewModelTest {
         models = models,
         colors = colors,
         seriesRepository = series,
+        variants = variants,
+        updateVariant = UpdateVariantUseCase(variants, fixedClock),
     )
 
     @Test
@@ -185,6 +188,63 @@ class VariantFormViewModelTest {
         assertThat(exemplars.addCalls).isEqualTo(1)
     }
 
+    @Test
+    fun `edicao carrega os campos da variante sem tocar em exemplares`() = runTest {
+        variants.editable = variantOf("variante-1").copy(
+            primaryColorId = "color-vermelho",
+            secondaryColorIds = listOf("color-azul"),
+            releaseYear = 2023,
+            wheelsType = "5SP",
+            manufacturerCode = "HXY12",
+        )
+        colors.all += ColorItem(id = "color-vermelho", name = "Vermelho")
+        colors.all += ColorItem(id = "color-azul", name = "Azul")
+        val model = viewModel()
+
+        model.loadForEdit("variante-1")
+
+        val state = model.state.value
+        assertThat(state.editing).isTrue()
+        assertThat(state.loading).isFalse()
+        assertThat(state.primaryColor).isEqualTo("Vermelho")
+        assertThat(state.secondaryColors).isEqualTo("Azul")
+        assertThat(state.releaseYearText).isEqualTo("2023")
+        assertThat(state.wheelsType).isEqualTo("5SP")
+        assertThat(state.manufacturerCode).isEqualTo("HXY12")
+    }
+
+    @Test
+    fun `salvar em edicao atualiza a mesma variante e nao cria exemplar nem variante`() = runTest {
+        variants.editable = variantOf("variante-1")
+        colors.all += ColorItem(id = "color-vermelho", name = "Vermelho")
+        val model = viewModel()
+        model.loadForEdit("variante-1")
+        model.onPrimaryColorChange("Vermelho")
+        model.onReleaseYearChange("2024")
+
+        model.onSave(modelId = "")
+
+        assertThat(variants.createCalls).isEqualTo(0)
+        assertThat(exemplars.addCalls).isEqualTo(0)
+        val updated = variants.updated
+        assertThat(updated).isNotNull()
+        assertThat(updated!!.id).isEqualTo("variante-1")
+        assertThat(updated.primaryColorId).isEqualTo("color-vermelho")
+        assertThat(updated.releaseYear).isEqualTo(2024)
+        assertThat(model.state.value.savedVariantId).isEqualTo("variante-1")
+        assertThat(model.state.value.message).isEqualTo("Variante atualizada.")
+    }
+
+    @Test
+    fun `edicao de variante inexistente mostra mensagem e nao salva`() = runTest {
+        val model = viewModel()
+
+        model.loadForEdit("sumiu")
+
+        assertThat(model.state.value.message).isNotNull()
+        assertThat(model.state.value.editing).isTrue()
+    }
+
     private companion object {
         const val MODEL_ID = "model-1"
     }
@@ -221,6 +281,17 @@ private class FakeCarModelRepository : CarModelRepository {
         realVehicleId: String?,
     ): DomainResult<CarModel> = Result.failure(DomainError.NotFound)
 
+    override suspend fun update(
+        id: String,
+        name: String,
+        scale: String,
+        bodyType: String?,
+        material: String?,
+        countryOfManufacture: String?,
+        notes: String?,
+        realVehicleId: String?,
+    ): DomainResult<CarModel> = Result.failure(DomainError.NotFound)
+
     override suspend fun archive(id: String): DomainResult<Unit> = Result.success(Unit)
 
     override fun observeIncomplete(): Flow<List<IncompleteEntry>> = flowOf(emptyList())
@@ -240,12 +311,15 @@ private class FakeVariantRepository : VariantRepository {
     var createCalls: Int = 0
     var lastCreated: Variant? = null
     var existingFingerprintVariant: Variant? = null
+    var editable: Variant? = null
+    var updated: Variant? = null
 
     override fun observeSummaries(): Flow<List<VariantSummary>> = flowOf(emptyList())
 
     override fun observeByModel(modelId: String): Flow<List<Variant>> = flowOf(emptyList())
 
-    override suspend fun findById(id: String): Variant? = lastCreated?.takeIf { it.id == id }
+    override suspend fun findById(id: String): Variant? =
+        editable?.takeIf { it.id == id } ?: lastCreated?.takeIf { it.id == id }
 
     override suspend fun findActiveByFingerprint(fingerprint: String): Variant? =
         existingFingerprintVariant
@@ -253,6 +327,11 @@ private class FakeVariantRepository : VariantRepository {
     override suspend fun create(variant: Variant): DomainResult<Variant> {
         createCalls++
         lastCreated = variant
+        return Result.success(variant)
+    }
+
+    override suspend fun update(variant: Variant): DomainResult<Variant> {
+        updated = variant
         return Result.success(variant)
     }
 
@@ -352,7 +431,9 @@ private class FakePhotoRepository : PhotoRepository {
 
 private class FakeColorRepository : ColorRepository {
 
-    override fun observeAll(): Flow<List<ColorItem>> = flowOf(emptyList())
+    val all: MutableList<ColorItem> = mutableListOf()
+
+    override fun observeAll(): Flow<List<ColorItem>> = flowOf(all.toList())
 
     override suspend fun findOrCreate(name: String, hex: String?): DomainResult<ColorItem> =
         Result.success(
