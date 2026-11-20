@@ -22,9 +22,12 @@ O pacote de release usa o pacote `br.com.hotwheelscollector`; o de debug,
 `br.com.hotwheelscollector.debug`. **São dois apps distintos** — instalar um não atualiza o
 outro e os dados de um não aparecem no outro sem backup/restauração.
 
-O app não declara permissão de internet: nenhuma parte do acervo sai do aparelho por conta
-dele. A câmera só é usada quando você escolhe tirar uma foto; a galeria usa o seletor do
-sistema (Photo Picker), sem permissão ampla de armazenamento.
+O app **não faz chamadas de rede**: nenhum fluxo lê ou envia dados pela internet. O
+manifesto final, porém, herda permissões das bibliotecas: `INTERNET` de
+`com.google.android.datatransport:transport-backend-cct` (transporte do ML Kit) e
+`ACCESS_NETWORK_STATE` de `androidx.work:work-runtime`. A revisão que comprova a ausência
+de tráfego é a T139, ainda aberta. A câmera só é usada quando você escolhe tirar uma foto;
+a galeria usa o seletor do sistema (Photo Picker), sem permissão ampla de armazenamento.
 
 ## 2. Instalação
 

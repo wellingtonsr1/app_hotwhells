@@ -1277,7 +1277,7 @@ com dupla confirmação segue na T146.
 
 **Purpose**: requisitos transversais que atravessam todas as histórias
 
-- [ ] T130 [P] Auditar acessibilidade (TalkBack, alvos 48 dp, fonte do sistema até 200%, contraste 4.5:1) e corrigir desvios em `app/src/main/res/values/dimens.xml`
+- [ ] T130 [P] Auditar acessibilidade (TalkBack, alvos 48 dp, fonte do sistema até 200%, contraste 4.5:1) e corrigir desvios em `app/src/main/res/values/dimens.xml` — **5 defeitos já reproduzidos em 2026-11-20**, ver «Evidências — T138», seção 5 de `docs/validacao.md`
 - [ ] T131 [P] Externalizar 100% das strings em pt-BR e remover texto fixo de Composable, com lint limpo em `app/src/main/res/values/strings.xml`
 - [X] T132 [P] Implementar política de privacidade offline dentro do app (FR-172) em `app/.../feature/settings/PrivacyPolicyScreen.kt`
 - [X] T133 [P] Implementar tela "Sobre" com versão e identificador do pacote (FR-171) em `app/.../feature/settings/AboutScreen.kt` — a versão vem do pacote instalado; não há data de build em `BuildConfig`
@@ -1285,7 +1285,7 @@ com dupla confirmação segue na T146.
 - [ ] T135 Otimizar desempenho: índices faltantes, consultas N+1, Baseline Profile e startup < 2 s em `app/src/main/baseline-prof.txt`
 - [X] T136 [P] Configurar assinatura de release, AAB e `keystore.properties` fora do versionamento (R.15) em `app/build.gradle.kts` — chave gerada localmente (`keystore/release.jks`), `keystore.properties` e `.jks` no `.gitignore`; APK e AAB assinados verificados
 - [X] T137 [P] Escrever documentação operacional (instalação, backup, restauração, solução de problemas) em `docs/operacao.md` — **concluída (2026-11-20)**: ver «Evidências — T137»
-- [ ] T138 Executar os 14 cenários do `quickstart.md` no aparelho e registrar evidências em `docs/validacao.md`, com verificação explícita e assinada de SC-003, SC-005, SC-009, SC-011, SC-012 e SC-014
+- [ ] T138 Executar os 14 cenários do `quickstart.md` no aparelho e registrar evidências em `docs/validacao.md`, com verificação explícita e assinada de SC-003, SC-005, SC-009, SC-011, SC-012 e SC-014 — **parcial (2026-11-20)**: 4 dos 6 SCs verificados; SC-011 sem medição e SC-012 reprovado em fonte 200% (ver «Evidências — T138»)
 - [ ] T139 Revisar segurança e privacidade: zero chamadas de rede, nenhum segredo, permissões mínimas, nenhuma telemetria (Art. III) em `docs/revisao-seguranca.md`
 
 ### T131 — parcial (2026-11-17)
@@ -1306,6 +1306,38 @@ mensagens de snackbar dos ViewModels (`AddExemplarViewModel`, `CreateCatalogEntr
 na Fase 8, quando Desejos e Ajustes ganharam tela própria. Padronizar o restante exige
 decidir se as mensagens de estado viram `@StringRes` no ViewModel ou códigos de erro
 resolvidos na tela.
+
+### Evidências — T138 (2026-11-20, parcial)
+
+`docs/validacao.md` registra a execução: commit `e925c98`, build debug `0.1.0`, emulador
+`hw_test` (API 36, x86_64, Pixel 5), **modo avião ligado** durante toda a suíte.
+
+```text
+$ ./gradlew :app:connectedDebugAndroidTest
+Starting 51 tests on hw_test(AVD) - 16
+Finished 51 tests on hw_test(AVD) - 16
+BUILD SUCCESSFUL in 4m 14s
+EXIT=0
+
+Abertura fria (3x): TotalTime 2123ms / 2475ms / 2558ms
+Painel: 2 exemplares, 1 modelo, 1 variante, R$ 60,00 investido, R$ 70,00 estimado
+```
+
+**Veredito dos seis SCs pedidos:** SC-003 verificado (escopo da v1, offline), SC-005
+verificado (duplicados), SC-009 verificado com ressalva — nenhum uso de API de rede no
+código, mas o manifesto herda `INTERNET`/`ACCESS_NETWORK_STATE` de ML Kit/WorkManager e a
+prova de tráfego é a T139 —, SC-014 verificado (painel é a primeira tela; abertura fria
+< 3 s). **SC-011 não verificado** (exige medição com usuários) e **SC-012 reprovado**: cinco
+defeitos reproduzidos em fonte 200% (título de Ajustes sob a barra de status, rótulos de
+painel e da barra inferior quebrando no meio da palavra, FAB «+ Mini» cortado e legenda do
+cartão do catálogo quebrada), com capturas em `docs/validacao-*.png`; TalkBack não testado.
+
+**Por que não fecha:** além de SC-011 e SC-012, faltam o ciclo manual de backup pelo
+seletor SAF (cenário 9), a simulação de morte de processo em formulário (cenário 10), a
+T149 (armazenamento cheio, cenário 14), a T058 (volume, cenário 6) e a execução do release
+assinado em aparelho ARM — o emulador x86_64 não instala o APK filtrado para
+`arm64-v8a`/`armeabi-v7a`. Os cenários 7, 8 e 13 dependem de importação, relatórios e
+reconhecimento, fora do escopo declarado da v1.
 
 ### Evidências — T137 (2026-11-20)
 
@@ -1611,9 +1643,9 @@ backup. A lista abaixo é o recorte por decisão, não por ordem do arquivo.
 | T146 | Art. III.7: exportação integral já existe no pacote de backup, mas **exclusão total dos dados** com dupla confirmação não | **feito em 2026-11-20** — `DataControlScreen` com exportação aberta e exclusão em duas confirmações (ver «Evidências — T146») |
 | T153 | R.6/Art. V: restauração só está provada em escala pequena; SC-013 pede 1.000 exemplares e 2.000 fotos | **feito em 2026-11-20** — 554 ms com 1.000 exemplares e 2.000 fotos (ver «Evidências — T153») |
 | T149 | Art. I.6/FR-153: cadastro com foto em aparelho sem espaço precisa provar que não grava foto parcial | teste não existe |
-| T138 | Fechar a v1 exige os 14 cenários do `quickstart.md` executados e registrados (SC-003, SC-005, SC-009, SC-011, SC-012, SC-014) | `docs/validacao.md` não existe |
+| T138 | Fechar a v1 exige os 14 cenários do `quickstart.md` executados e registrados (SC-003, SC-005, SC-009, SC-011, SC-012, SC-014) | **parcial em 2026-11-20** — `docs/validacao.md` existe; SC-003/005/009/014 verificados, SC-011 não medido, SC-012 reprovado em fonte 200% |
 | T137 | Sem documentação de instalação/backup/restauração, o próprio usuário não recupera a coleção sozinho | **feito em 2026-11-20** — `docs/operacao.md` |
-| T130 | Art. IV.6: acessibilidade (TalkBack, 48 dp, fonte até 200%, contraste) nunca foi auditada | não iniciada |
+| T130 | Art. IV.6: acessibilidade (TalkBack, 48 dp, fonte até 200%, contraste) nunca foi auditada | não iniciada; a T138 já reproduziu 5 defeitos em fonte 200% |
 | T150 | Art. V.1–V.2: matriz SC→teste com build falhando em SC órfão | não iniciada |
 | T147 / T148 | R.5 e Art. III.10: inventário de dependências e verificação de vulnerabilidade no release | não iniciadas |
 | T139 | Art. III: provar zero rede, zero segredo, permissões mínimas | relatório não existe |
