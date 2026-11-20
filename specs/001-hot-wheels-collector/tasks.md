@@ -1145,7 +1145,8 @@ banco injetado é fechado, a tela pede para reabrir o app e reinicia o processo.
 | Tela (T120 parcial) | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*BackupScreenTest` | `BackupScreenTest`: 2 testes, 0 falhas (emulador `hw_test`, API 36) |
 | Lembrete de backup | `./gradlew :app:testDebugUnitTest --tests '*BackupReminderTest'` | `BackupReminderTest`: 4 testes, 0 falhas (vencimento exato, nunca feito, desligado) |
 | Cartão do lembrete em Ajustes | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*SettingsScreenTest` | `SettingsScreenTest`: 3 testes, 0 falhas (aviso, atalho e troca de intervalo) |
-| Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 43 testes, 0 falhas (3m 38s) |
+| Validação no SQLite do Android (FTS4) | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*BackupIntegrityTest` | `BackupIntegrityTest`: 1 teste, 0 falhas |
+| Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 44 testes, 0 falhas (3m 29s) |
 | Regressão unitária e lint | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 178 testes, 0 falhas; `0 errors, 7 warnings` |
 
 **Lembrete de backup (T120):** `BackupReminder` calcula o vencimento a partir do último
@@ -1155,6 +1156,14 @@ compacta, no mesmo formato das demais opções — «A cada 30 dias · atrasado�
 quando vencido —, e abre os detalhes ao toque: último backup, aviso de atraso, escolha do
 intervalo (7, 30 padrão, 90 dias ou desligado) e o atalho «Fazer backup agora». É um
 lembrete **dentro do app**, não uma notificação.
+
+**Defeito encontrado no aparelho (2026-11-20):** ao restaurar, a validação recusava o
+pacote com «o banco do backup está corrompido (unable to validate the inverted index for
+FTS4 table main.search_index: attempt to write a readonly database)». O `PRAGMA
+integrity_check` valida o índice invertido do FTS4 e o SQLite recusa isso em banco aberto
+como somente leitura; o Robolectric não reproduzia. A cópia temporária passou a ser aberta
+para escrita (`OPEN_READWRITE`) só durante a validação, e `BackupIntegrityTest` roda no
+SQLite real do Android — reproduziu a falha antes da correção e passou depois dela.
 
 **Assinatura (T136):** `app/build.gradle.kts` lê `keystore.properties` da raiz (ausente em
 outro checkout: o release continua sem assinatura, sem quebrar o build) e assina o release

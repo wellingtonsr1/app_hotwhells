@@ -462,7 +462,11 @@ public class FileBackupService @Inject constructor(
             ?: throw BackupException(BackupFailure.NOT_A_PACKAGE, "O manifesto não traz as contagens.")
         val declaredCounts = counts.keys().asSequence().associateWith { counts.optInt(it, -1) }
 
-        SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READONLY).use { db ->
+        // Aberto para escrita, embora só leiamos: o `integrity_check` do FTS4 valida o
+        // índice invertido do `search_index` e o SQLite recusa isso em banco readonly
+        // («attempt to write a readonly database»). É uma cópia temporária, então escrever
+        // aqui não toca nos dados do usuário.
+        SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READWRITE).use { db ->
             if (db.version != schemaVersion) {
                 throw BackupException(
                     BackupFailure.INVALID_DATABASE,
