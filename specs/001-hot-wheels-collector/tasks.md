@@ -1349,7 +1349,7 @@ reexecutada como roteiro em aparelho limpo; essa execução é a T138.
 - [ ] T150 Criar a matriz SC→teste cobrindo os 14 critérios de sucesso, com a tarefa ou teste responsável por cada um, e falhar o build quando algum SC ficar órfão (FR-133, Art. V.1–V.2) em `docs/matriz-sc-testes.md`
 - [ ] T151 Testar importação de 1.000 linhas com pré-visualização completa e relatório de erro por linha dentro do tempo aceitável (SC-006) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/importexport/ImportScaleTest.kt`
 - [ ] T152 Testar geração de PDF de 1.000 exemplares em menos de 10 segundos, com totais iguais aos do painel (SC-007) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/importexport/PdfPerformanceTest.kt`
-- [ ] T153 Testar restauração completa de 1.000 exemplares e 2.000 fotos em menos de 5 minutos, com vínculos de imagem preservados (SC-013) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/storage/RestorePerformanceTest.kt`
+- [X] T153 Testar restauração completa de 1.000 exemplares e 2.000 fotos em menos de 5 minutos, com vínculos de imagem preservados (SC-013) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/storage/RestorePerformanceTest.kt` — **concluída (2026-11-20)**: 554 ms medidos, ver «Evidências — T153»
 
 ### Evidências — ciclo de vida do exemplar (T141/T142, 2026-11-18)
 
@@ -1428,6 +1428,38 @@ Decisões registradas nesta entrega:
 **Limites conhecidos:** o modo mesclar do backup (T119) continua pendente; a exportação usa
 SAF e grava um único ZIP, com as fotos referenciadas por `photo.path` — arquivo ausente em
 disco é apenas omitido, como no backup.
+
+### Evidências — T153 (2026-11-20)
+
+`RestorePerformanceTest` monta o cenário de SC-013 no banco real e no `filesDir`:
+1.000 exemplares em uma variante (1 fabricante, 1 modelo) e **2.000 arquivos de foto** em
+`images/<exemplar>/`, cada um com `photo.path` e checksum SHA-256. O pacote é criado pelo
+`FileBackupService` de produção (banco, fotos, JSON e CSV), o acervo é zerado com
+`clearAllTables` + remoção das imagens, e então a restauração é medida com
+`System.nanoTime`.
+
+```text
+$ ./gradlew :core:data:testDebugUnitTest
+BUILD SUCCESSFUL in 20s
+EXIT=0
+
+RestorePerformanceTest: tests="1" skipped="0" failures="0" errors="0"
+  T153 — pacote de 779 KB; restauração de 1000 exemplares e 2000 fotos em 554ms
+core:data: 110 testes, 0 falhas (era 109)
+```
+
+Depois da restauração, o teste reabre o banco e verifica o que SC-013 pede: 1.000
+exemplares, 2.000 linhas de `photo`, **todos** os arquivos presentes em disco com checksum
+igual ao gravado, `PRAGMA foreign_key_check` vazio e os exemplares das pontas recuperados
+pelo `internal_code`. O limite de 5 minutos é conferido por asserção
+(`restoreMillis < 300_000`), então uma regressão de tempo quebra o build.
+
+**Limite declarado:** as fotos do teste têm 512 bytes, não o tamanho de uma foto real
+(até 1,5 MB). O que fica provado é a escala em **linhas e arquivos**, a validação completa
+do pacote e a integridade dos vínculos — não o volume de I/O de 2.000 fotos cheias, que
+num aparelho real domina o tempo. Em vez de inventar 3 GB de dados de teste, o número
+medido serve como piso; o teto de 5 min continua sendo critério de aceite em aparelho
+(T138).
 
 ---
 
@@ -1565,7 +1597,7 @@ Revisão visual em `docs/icone-preview.html` (máscara circular, squircle, 48/72
 
 ## Revisão de fechamento da v1 (2026-11-20)
 
-**Estado (atualizado em 2026-11-20):** 38 tarefas abertas de 153. Tudo das fases 1–9 e da
+**Estado (atualizado em 2026-11-20):** 37 tarefas abertas de 153. Tudo das fases 1–9 e da
 maior parte da fase 13 está verde, com 200 testes unitários, 47 instrumentados (mais os 4
 novos de `DataControlScreenTest`, verde no emulador) e lint `0 errors, 7 warnings`. O que
 resta não é "falta implementar o app": é (a) o bloco de importação/relatórios, (b) o bloco
@@ -1577,7 +1609,7 @@ backup. A lista abaixo é o recorte por decisão, não por ordem do arquivo.
 | Tarefa | Por que bloqueia | Situação |
 | --- | --- | --- |
 | T146 | Art. III.7: exportação integral já existe no pacote de backup, mas **exclusão total dos dados** com dupla confirmação não | **feito em 2026-11-20** — `DataControlScreen` com exportação aberta e exclusão em duas confirmações (ver «Evidências — T146») |
-| T153 | R.6/Art. V: restauração só está provada em escala pequena; SC-013 pede 1.000 exemplares e 2.000 fotos | teste não existe |
+| T153 | R.6/Art. V: restauração só está provada em escala pequena; SC-013 pede 1.000 exemplares e 2.000 fotos | **feito em 2026-11-20** — 554 ms com 1.000 exemplares e 2.000 fotos (ver «Evidências — T153») |
 | T149 | Art. I.6/FR-153: cadastro com foto em aparelho sem espaço precisa provar que não grava foto parcial | teste não existe |
 | T138 | Fechar a v1 exige os 14 cenários do `quickstart.md` executados e registrados (SC-003, SC-005, SC-009, SC-011, SC-012, SC-014) | `docs/validacao.md` não existe |
 | T137 | Sem documentação de instalação/backup/restauração, o próprio usuário não recupera a coleção sozinho | **feito em 2026-11-20** — `docs/operacao.md` |
@@ -1619,8 +1651,8 @@ e, no caso de ML Kit, nada muda no esquema atual até a fase começar.
 
 ### Ordem sugerida, se for retomar
 
-1. ~~T146 (exclusão com dupla confirmação)~~ — feito em 2026-11-20 — e T153 (restauração
-   em escala) — fecham o ciclo de não perder dados.
+1. ~~T146 (exclusão com dupla confirmação)~~ — feito em 2026-11-20 — e ~~T153 (restauração
+   em escala)~~ — também feito em 2026-11-20. O ciclo de não perder dados está fechado.
 2. T138 (cenários no aparelho) — fecha a v1 de fato; a documentação operacional (T137)
    foi escrita em 2026-11-20.
 3. T149, T130, T150 — robustez e conformidade com a constituição.
