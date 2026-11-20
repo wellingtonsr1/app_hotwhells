@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
 /** Projeção da lista: o que a tela mostra, contado na consulta (Art. I.2). */
 public data class VariantSummaryRow(
     @ColumnInfo(name = "variant_id") val variantId: String,
+    @ColumnInfo(name = "model_id") val modelId: String,
     @ColumnInfo(name = "model_name") val modelName: String,
     @ColumnInfo(name = "manufacturer_name") val manufacturerName: String,
     @ColumnInfo(name = "color_name") val colorName: String?,
@@ -39,6 +40,7 @@ public interface VariantDao {
     @Query(
         """
         SELECT v.id AS variant_id,
+               m.id AS model_id,
                m.name AS model_name,
                mf.name AS manufacturer_name,
                c.name AS color_name,

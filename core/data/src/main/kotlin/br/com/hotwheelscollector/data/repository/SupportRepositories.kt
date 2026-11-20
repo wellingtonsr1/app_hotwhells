@@ -47,6 +47,7 @@ public class VariantRepositoryImpl @Inject constructor(
             rows.map {
                 VariantSummary(
                     variantId = it.variantId,
+                    modelId = it.modelId,
                     modelName = it.modelName,
                     manufacturerName = it.manufacturerName,
                     colorName = it.colorName,

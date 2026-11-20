@@ -190,6 +190,7 @@
 
     <!-- Exemplares da variante, edição, movimentação e arquivamento (FR-028, FR-091). -->
     <string name="catalog_open_exemplars">Ver exemplares</string>
+    <string name="catalog_edit_model">Editar modelo</string>
     <string name="exemplars_title">Exemplares</string>
     <string name="exemplars_add">+ Exemplar</string>
     <string name="exemplars_empty_title">Nenhum exemplar ativo</string>

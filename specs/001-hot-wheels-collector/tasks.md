@@ -226,6 +226,31 @@ tabela distingue *artefato pronto* de *execução verificada*.
 | T048 | **verde** — 2 testes de app + 6 de dados, 0 falhas | `CarModelRepository.observeIncomplete` (modelo sem variante + variante sem cor/ano) e `IncompleteEntriesTest` (ver «Evidências — T048») |
 | T049 | **verde** — compila; `AutocompleteTest` 5 testes, 0 falhas | `Autocomplete.kt`: `ModelAutocomplete` e `ManufacturerAutocomplete` ligados ao `CreateCatalogEntryScreen` |
 
+### Evidências — edição do modelo pelo catálogo (2026-11-20)
+
+O catálogo lista **variantes**, não modelos. Para o modelo ter um segundo caminho de
+edição além de Cadastros incompletos, a lista passou a levar o modelo dono:
+
+- `VariantSummary` ganhou `modelId` e a consulta `VariantDao.observeSummaries` passou a
+  projetar `m.id AS model_id` — sem mudança de esquema nem de formato de backup.
+- O cartão do catálogo ganhou «Editar modelo», que navega para a mesma `ModelFormScreen`
+  já usada em Incompletos (`catalog/model/{modelId}`). Corrigir escala, nome e vínculo com
+  o veículo real deixou de depender de o modelo estar incompleto.
+
+**Regressão encontrada e corrigida no caminho:** com as ações do cartão em uma linha
+própria embaixo do texto, o centro do cartão caía sobre «Editar modelo». Os fluxos
+`CatalogFlowTest` e `DemoRecordingTest`, que clicam no nome do modelo, passaram a abrir a
+tela errada e falharam por timeout. As ações voltaram para a direita, empilhadas, e os dois
+fluxos voltaram a passar — a correção foi de layout, não de teste.
+
+| Verificação | Resultado |
+| --- | --- |
+| Projeção com modelo dono (`VariantRepositoryTest`) | 6 testes, 0 falhas (+1) |
+| Atalho entrega `modelId` (`CatalogModelActionTest`) | 1 teste, 0 falhas |
+| Fluxos de catálogo que quebraram (`CatalogFlowTest`, `DemoRecordingTest`) | 2 testes, 0 falhas após a correção |
+| Regressão unitária e lint | 193 testes, 0 falhas; `0 errors, 7 warnings` |
+| Regressão instrumentada | 47 testes, 0 falhas (4m 40s) |
+
 ### Evidências — variante incompleta editável (2026-11-20)
 
 Antes: a variante sem cor principal ou sem ano aparecia em Cadastros incompletos, mas o

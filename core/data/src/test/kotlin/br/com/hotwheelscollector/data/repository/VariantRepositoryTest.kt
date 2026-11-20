@@ -178,6 +178,17 @@ public class VariantRepositoryTest {
     }
 
     @Test
+    public fun `lista de variantes leva o modelo dono para a edicao do modelo`() = runBlocking {
+        val model = newModel()
+        variants.create(newVariant(model.id, "fp-lista")).getOrThrow()
+
+        val summary = variants.observeSummaries().first().single()
+
+        assertThat(summary.modelId).isEqualTo(model.id)
+        assertThat(summary.modelName).isEqualTo("Twin Mill")
+    }
+
+    @Test
     public fun `edicao grava cores secundarias como conjunto`() = runBlocking {
         val model = newModel()
         val red = colors.findOrCreate("Vermelho", null).getOrThrow()
