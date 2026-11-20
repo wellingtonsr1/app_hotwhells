@@ -49,7 +49,7 @@ import br.com.hotwheelscollector.feature.organization.SeriesScreen
 import br.com.hotwheelscollector.feature.search.SearchScreen
 import br.com.hotwheelscollector.feature.settings.AboutScreen
 import br.com.hotwheelscollector.feature.settings.PrivacyPolicyScreen
-import br.com.hotwheelscollector.feature.settings.SettingsScreen
+import br.com.hotwheelscollector.feature.settings.SettingsRoute
 import br.com.hotwheelscollector.feature.transfer.BackupScreen
 import br.com.hotwheelscollector.feature.wishlist.WishlistFormScreen
 import br.com.hotwheelscollector.feature.wishlist.WishlistScreen
@@ -422,7 +422,7 @@ public fun AppNavHost(
                 )
             }
             composable(Destination.Settings.route) {
-                SettingsScreen(
+                SettingsRoute(
                     onAbout = { navController.navigate(Destination.SettingsAbout.route) },
                     onPrivacy = { navController.navigate(Destination.SettingsPrivacy.route) },
                     onLocations = { navController.navigate(Destination.Locations.route) },

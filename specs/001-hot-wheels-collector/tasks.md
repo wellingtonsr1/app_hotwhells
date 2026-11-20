@@ -1101,7 +1101,7 @@ Decisões registradas nesta entrega:
 - [ ] T117 [US10] Implementar gerador de PDF com `PdfDocument`, cabeçalho, filtros, totais e paginação (FR-126–FR-128) em `core/data/.../importexport/PdfReportWriter.kt`
 - [ ] T118 [US10] Implementar tela de relatórios com os 11 tipos, progresso e cancelamento seguro (FR-123–FR-132) em `app/.../feature/reports/ReportsScreen.kt`
 - [ ] T119 [US10] Implementar `BackupService` (manifesto, hashes, streaming) e restauração com validação prévia e modos substituir/mesclar em `core/data/.../storage/BackupService.kt` — **parcial (2026-11-19)**: pacote, validação, modo substituir e exportação aberta (JSON/CSV) prontos; modo mesclar pendente
-- [ ] T120 [US10] Implementar tela de backup/restauração com lembrete por intervalo e aviso de cota do Auto Backup em `app/.../feature/transfer/BackupScreen.kt` — **parcial (2026-11-19)**: criar/restaurar com resumo e confirmação; lembrete por intervalo pendente
+- [X] T120 [US10] Implementar tela de backup/restauração com lembrete por intervalo e aviso de cota do Auto Backup em `app/.../feature/transfer/BackupScreen.kt` — lembrete em Ajustes (7/30/90 dias ou desligado), contado a partir do último pacote gravado com sucesso; sem notificação de sistema
 
 **Checkpoint**: US10 garante que a coleção não fica presa ao app
 
@@ -1143,13 +1143,23 @@ banco injetado é fechado, a tela pede para reabrir o app e reinicia o processo.
 | Versão de schema mais nova | idem | `manifestoDeVersaoMaisNovaERecusado`: falha `NEWER_SCHEMA` |
 | Exportação aberta (FR-142) | idem | `data/exemplar.json` e `CSV/exemplar.csv` com o registro semeado, listados e com hash no manifesto |
 | Tela (T120 parcial) | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*BackupScreenTest` | `BackupScreenTest`: 2 testes, 0 falhas (emulador `hw_test`, API 36) |
-| Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 41 testes, 0 falhas (3m 32s) |
-| Regressão unitária e lint | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 174 testes, 0 falhas; `0 errors, 7 warnings` |
+| Lembrete de backup | `./gradlew :app:testDebugUnitTest --tests '*BackupReminderTest'` | `BackupReminderTest`: 4 testes, 0 falhas (vencimento exato, nunca feito, desligado) |
+| Cartão do lembrete em Ajustes | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*SettingsScreenTest` | `SettingsScreenTest`: 3 testes, 0 falhas (aviso, atalho e troca de intervalo) |
+| Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 43 testes, 0 falhas (3m 38s) |
+| Regressão unitária e lint | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 178 testes, 0 falhas; `0 errors, 7 warnings` |
 
-**Limites conhecidos:** não há modo mesclar, lembrete periódico, cancelamento no meio da
-gravação nem exportação XLSX separada (T116). O pacote não é comprimido além do próprio
-ZIP, e o backup inclui apenas as fotos existentes (as ausentes são contadas e avisadas).
-A exclusão total dos dados com dupla confirmação segue na T146.
+**Lembrete de backup (T120):** `BackupReminder` calcula o vencimento a partir do último
+pacote gravado com sucesso (`BackupReminderStore` marca a data em `SharedPreferences`, fora
+do banco, para uma restauração não "enganar" o lembrete). Ajustes mostra o cartão com o
+último backup, o intervalo e, quando vencido — inclusive quando nunca houve backup —, o
+aviso "a coleção está só neste aparelho" com atalho para criar o pacote. Intervalos: 7, 30
+(padrão), 90 dias ou desligado. É um lembrete **dentro do app**, não uma notificação.
+
+**Limites conhecidos:** não há modo mesclar, notificação de sistema nem lembrete em segundo
+plano (dependeria de `WorkManager`, T134), cancelamento no meio da gravação ou exportação
+XLSX separada (T116). O pacote não é comprimido além do próprio ZIP, e o backup inclui
+apenas as fotos existentes (as ausentes são contadas e avisadas). A exclusão total dos dados
+com dupla confirmação segue na T146.
 
 
 ## Phase 13: User Story 11 - Reconhecimento assistido por foto e código de barras (Priority: P4)

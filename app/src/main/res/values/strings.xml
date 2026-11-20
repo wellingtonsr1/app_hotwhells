@@ -566,6 +566,23 @@
     <string name="backup_error_newer_schema">O pacote é de uma versão mais nova do app. Atualize o app antes de restaurar.</string>
     <string name="backup_error_foreign_key">O banco do pacote tem vínculos quebrados.</string>
     <string name="backup_error_write">Não foi possível gravar a restauração. Os dados atuais foram mantidos.</string>
+    <string name="settings_backup_reminder">Lembrete de backup</string>
+    <string name="settings_backup_reminder_never">Nenhum backup feito ainda.</string>
+    <string name="settings_backup_reminder_last">Último backup em %1$s</string>
+    <plurals name="settings_backup_reminder_every">
+        <item quantity="one">A cada %1$d dia</item>
+        <item quantity="other">A cada %1$d dias</item>
+    </plurals>
+    <plurals name="settings_backup_reminder_overdue">
+        <item quantity="one">Último backup há %1$d dia — a coleção está só neste aparelho.</item>
+        <item quantity="other">Último backup há %1$d dias — a coleção está só neste aparelho.</item>
+    </plurals>
+    <string name="settings_backup_reminder_off">Desligado</string>
+    <string name="settings_backup_reminder_overdue_never">Sem backup, a coleção existe só neste aparelho.</string>
+    <string name="settings_backup_reminder_choose">Intervalo do lembrete</string>
+    <string name="settings_backup_reminder_change">Alterar intervalo</string>
+    <string name="settings_backup_reminder_close">Fechar</string>
+    <string name="settings_backup_now">Fazer backup agora</string>
     <string name="settings_backup">Backup e restauração</string>
     <string name="settings_backup_subtitle">Pacote com banco, fotos e manifesto</string>
 </resources>

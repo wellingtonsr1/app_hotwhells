@@ -11,6 +11,7 @@ import br.com.hotwheelscollector.domain.backup.BackupFailure
 import br.com.hotwheelscollector.domain.backup.BackupService
 import br.com.hotwheelscollector.domain.backup.BackupSummary
 import br.com.hotwheelscollector.domain.backup.ValidatedBackup
+import br.com.hotwheelscollector.feature.settings.BackupReminderStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -33,6 +34,7 @@ import kotlinx.coroutines.withContext
 public class BackupViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val backupService: BackupService,
+    private val reminderStore: BackupReminderStore,
 ) : ViewModel() {
 
     public data class State(
@@ -66,11 +68,13 @@ public class BackupViewModel @Inject constructor(
                     }
                 }
             }
-            _state.update { current ->
-                result.fold(
-                    onSuccess = { current.copy(busy = false, created = it) },
-                    onFailure = { current.fail(it) },
-                )
+            val summary = result.getOrNull()
+            if (summary != null) {
+                // Só um pacote gravado com sucesso conta como backup feito (T120).
+                reminderStore.markBackup()
+                _state.update { it.copy(busy = false, created = summary) }
+            } else {
+                _state.update { it.fail(result.exceptionOrNull() ?: IllegalStateException()) }
             }
         }
     }
