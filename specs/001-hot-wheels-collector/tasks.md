@@ -1156,6 +1156,13 @@ quando vencido —, e abre os detalhes ao toque: último backup, aviso de atraso
 intervalo (7, 30 padrão, 90 dias ou desligado) e o atalho «Fazer backup agora». É um
 lembrete **dentro do app**, não uma notificação.
 
+**Assinatura (T136):** `app/build.gradle.kts` lê `keystore.properties` da raiz (ausente em
+outro checkout: o release continua sem assinatura, sem quebrar o build) e assina o release
+com a chave local. Verificado com `apksigner verify`: APK assinado pelo certificado
+`CN=Colecao de Miniaturas` (SHA-256 `45c4bed6…f4775`), esquema v2; AAB gerado. O debug usa
+`br.com.hotwheelscollector.debug` e o release `br.com.hotwheelscollector` — a troca se faz
+com backup no app antigo e restauração no novo (README, «Assinatura e atualização»).
+
 **Limites conhecidos:** não há modo mesclar, notificação de sistema nem lembrete em segundo
 plano (dependeria de `WorkManager`, T134), cancelamento no meio da gravação ou exportação
 XLSX separada (T116). O pacote não é comprimido além do próprio ZIP, e o backup inclui
@@ -1198,7 +1205,7 @@ com dupla confirmação segue na T146.
 - [X] T133 [P] Implementar tela "Sobre" com versão e identificador do pacote (FR-171) em `app/.../feature/settings/AboutScreen.kt` — a versão vem do pacote instalado; não há data de build em `BuildConfig`
 - [ ] T134 Implementar `WorkManager` para importação, backup e restauração com progresso e retomada após segundo plano (FR-150) em `app/.../work/TransferWorkers.kt`
 - [ ] T135 Otimizar desempenho: índices faltantes, consultas N+1, Baseline Profile e startup < 2 s em `app/src/main/baseline-prof.txt`
-- [ ] T136 [P] Configurar assinatura de release, AAB e `keystore.properties` fora do versionamento (R.15) em `app/build.gradle.kts`
+- [X] T136 [P] Configurar assinatura de release, AAB e `keystore.properties` fora do versionamento (R.15) em `app/build.gradle.kts` — chave gerada localmente (`keystore/release.jks`), `keystore.properties` e `.jks` no `.gitignore`; APK e AAB assinados verificados
 - [ ] T137 [P] Escrever documentação operacional (instalação, backup, restauração, solução de problemas) em `docs/operacao.md`
 - [ ] T138 Executar os 14 cenários do `quickstart.md` no aparelho e registrar evidências em `docs/validacao.md`, com verificação explícita e assinada de SC-003, SC-005, SC-009, SC-011, SC-012 e SC-014
 - [ ] T139 Revisar segurança e privacidade: zero chamadas de rede, nenhum segredo, permissões mínimas, nenhuma telemetria (Art. III) em `docs/revisao-seguranca.md`

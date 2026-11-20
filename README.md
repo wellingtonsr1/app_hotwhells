@@ -56,6 +56,21 @@ export ANDROID_AVD_HOME="$PWD/.tools/avd"
 O lint reprova o build com erro (avisos não bloqueiam); o relatório fica em
 `app/build/reports/lint-results-debug.txt`.
 
+## Assinatura e atualização
+
+O release é assinado com `keystore.properties` e `keystore/release.jks`, ambos fora do
+versionamento (`.gitignore`). **Guarde uma cópia dos dois e da senha:** sem essa chave não
+há como instalar uma atualização por cima — só reinstalar do zero.
+
+```bash
+./gradlew :app:assembleRelease   # app/build/outputs/apk/release/app-release.apk
+./gradlew :app:bundleRelease     # app/build/outputs/bundle/release/app-release.aab
+```
+
+O debug usa o pacote `br.com.hotwheelscollector.debug`; o release, `br.com.hotwheelscollector`.
+Para trocar de um para o outro sem perder a coleção: crie um backup no app instalado,
+instale o release e restaure o pacote em **Ajustes → Backup e restauração**.
+
 ## Estado atual
 
 - **Fases 1–5** verificadas no emulador (API 36): banco v1, US1 (cadastro rápido de
