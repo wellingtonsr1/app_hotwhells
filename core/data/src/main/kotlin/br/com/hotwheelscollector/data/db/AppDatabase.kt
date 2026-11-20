@@ -166,9 +166,16 @@ public abstract class AppDatabase : RoomDatabase() {
         /**
          * v1 → v2: nova tabela de disponibilidade e o vínculo do exemplar recebido.
          * Nada é destruído; as colunas novas são nulas por padrão.
+         *
+         * `index_variant_fingerprint_active` é criado pelo callback, não pelo `@Entity`, e
+         * por isso não aparece no schema exportado. O Room lê **todos** os índices da tabela
+         * ao validar a migração, então um banco real (que tem o índice) falharia mesmo com a
+         * migração correta. Ele é removido antes da validação e recriado em `CALLBACK.onOpen`;
+         * toda migração futura que altere `variant` precisa repetir esse par.
          */
         public val MIGRATION_1_2: Migration = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP INDEX IF EXISTS `index_variant_fingerprint_active`")
                 db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS `duplicate_offer` (
@@ -205,17 +212,24 @@ public abstract class AppDatabase : RoomDatabase() {
         public val CALLBACK: Callback = object : Callback() {
             override fun onOpen(db: SupportSQLiteDatabase) {
                 db.execSQL("PRAGMA foreign_keys = ON")
+                // Recriado aqui, e não só em `onCreate`: a validação de migração exige que o
+                // índice parcial não exista, então ele precisa voltar depois dela.
+                createPartialFingerprintIndex(db)
                 // Índice de busca auto-mantido; idempotente a cada abertura (FR-114–FR-122).
                 SearchIndexSync.install(db)
             }
 
             override fun onCreate(db: SupportSQLiteDatabase) {
-                db.execSQL(
-                    "CREATE UNIQUE INDEX IF NOT EXISTS " +
-                        "index_variant_fingerprint_active " +
-                        "ON variant(fingerprint) WHERE archived_at IS NULL",
-                )
+                createPartialFingerprintIndex(db)
             }
+        }
+
+        private fun createPartialFingerprintIndex(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS " +
+                    "index_variant_fingerprint_active " +
+                    "ON variant(fingerprint) WHERE archived_at IS NULL",
+            )
         }
     }
 }

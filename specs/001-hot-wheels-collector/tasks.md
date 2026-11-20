@@ -818,11 +818,11 @@ A tabela escolhida foi **schema v2**: a disponibilidade não cabia em `negotiati
 | --- | --- | --- |
 | Duplicados por variante (T080) | `./gradlew :core:data:testDebugUnitTest` | `DuplicateQueryTest`: 4 testes, 0 falhas |
 | Negociação ativa única e conclusões (T081) | `./gradlew :core:data:testDebugUnitTest` | `NegotiationRepositoryTest`: 6 testes, 0 falhas |
-| Migração v1→v2 (R.8) | `./gradlew :core:data:testDebugUnitTest` | `MigrationTest`: 4 testes, 0 falhas (era 3) |
+| Migração v1→v2 (R.8) | `./gradlew :core:data:testDebugUnitTest` | `MigrationTest`: 5 testes, 0 falhas (era 3; inclui o caso do índice parcial do callback) |
 | Fluxo real no emulador (T084–T088) | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*DuplicatesFlowTest` | `DuplicatesFlowTest`: 1 teste, 0 falhas (emulador `hw_test`, API 36) |
 | Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 39 testes, 0 falhas (3m 46s) |
-| Regressão unitária e lint | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 164 testes, 0 falhas; `0 errors, 7 warnings` |
-| APK | `./gradlew :app:assembleDebug` | `app-debug.apk`, 85.948.092 bytes |
+| Regressão unitária e lint | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 167 testes, 0 falhas; `0 errors, 7 warnings` |
+| APK | `./gradlew :app:assembleDebug` | `app-debug.apk`, 85.954.592 bytes |
 
 O teste instrumentado percorre o caminho do toque: semeia três exemplares da variante A e
 um da variante B do mesmo modelo, abre **Duplicados** pelo catálogo, confere que só a A
@@ -866,6 +866,14 @@ Decisões registradas nesta entrega:
    `Room` diretamente e não conheciam `MIGRATION_1_2`; no emulador com banco v1 da execução
    anterior, o teste morreu com «A migration from 1 to 2 was required but not found». Ambos
    receberam `.addMigrations(AppDatabase.MIGRATION_1_2)`.
+4. **Migração falhava em aparelho com banco v1 real** (2026-11-19): «Migration didn't properly
+   handle: variant». O índice único parcial `index_variant_fingerprint_active` é criado pelo
+   callback, não está no `@Entity` nem no JSON exportado, mas o Room lê todos os índices na
+   validação — e o `MigrationTestHelper` não executa callbacks, então o teste não reproduzia.
+   `MIGRATION_1_2` passou a remover o índice antes da validação e `CALLBACK.onOpen` a recriá-lo
+   (idempotente, em toda abertura); o novo teste cria o índice à mão antes de migrar e falha
+   sem a correção. Dado do usuário preservado: a transação de migração é revertida e o banco
+   continua em v1.
 
 **Limites conhecidos:** a quantidade de exemplares por item de coleção continua sem edição
 pela interface (herdado de US5).
@@ -956,7 +964,7 @@ exemplar recebido. O investido continua vindo só de exemplares `OWNED`; nenhuma
 | Consulta e exclusão de canceladas | `./gradlew :core:data:testDebugUnitTest` | `FinanceRepositoryTest`: 5 testes, 0 falhas (era 4) |
 | Tela de Finanças | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=*FinanceScreenTest` | `FinanceScreenTest`: 1 teste, 0 falhas (emulador `hw_test`, API 36) |
 | Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 39 testes, 0 falhas (3m 41s) |
-| Regressão unitária e lint | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 166 testes, 0 falhas; `0 errors, 7 warnings` |
+| Regressão unitária e lint | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug` | 167 testes, 0 falhas; `0 errors, 7 warnings` |
 
 O teste de repositório prova a regra inteira em banco real: cenário com três exemplares e
 R$ 400,00 investidos; venda concluída num, troca concluída noutro e uma negociação

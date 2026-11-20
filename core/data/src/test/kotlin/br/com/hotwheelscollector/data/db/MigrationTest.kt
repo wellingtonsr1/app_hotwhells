@@ -90,6 +90,40 @@ public class MigrationTest {
         }
     }
 
+    /**
+     * Regressão do aparelho: no banco real, `variant` tem o índice parcial criado pelo
+     * callback e o Room o inclui na validação da migração. Sem removê-lo antes de validar,
+     * a abertura falha com «Migration didn't properly handle: variant».
+     * `createDatabase` do helper não roda callbacks, por isso o índice é criado à mão.
+     */
+    @Test
+    public fun migracaoAceitaBancoRealComIndiceParcialDeFingerprint() {
+        helper.createDatabase(TEST_DB_V2, 1).use { db ->
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_variant_fingerprint_active " +
+                    "ON variant(fingerprint) WHERE archived_at IS NULL",
+            )
+        }
+
+        helper.runMigrationsAndValidate(
+            TEST_DB_V2,
+            2,
+            true,
+            AppDatabase.MIGRATION_1_2,
+        ).use { db ->
+            val indexCount = db.query(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' " +
+                    "AND name = 'index_variant_fingerprint_active'",
+            ).use { cursor ->
+                cursor.moveToFirst()
+                cursor.getInt(0)
+            }
+
+            // Some daqui para a validação; o callback recria em `onOpen`.
+            assertThat(indexCount).isEqualTo(0)
+        }
+    }
+
     @Test
     public fun callbackCriaIndiceUnicoParcialDeFingerprint() {
         val database = openRuntimeDatabase()
