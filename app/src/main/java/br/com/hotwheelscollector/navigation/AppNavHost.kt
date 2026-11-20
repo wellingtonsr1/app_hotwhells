@@ -258,9 +258,6 @@ public fun AppNavHost(
                     onVariantClick = { variantId ->
                         navController.navigate(Destination.AddExemplar.routeFor(variantId))
                     },
-                    onEditModel = { modelId ->
-                        navController.navigate(Destination.ModelForm.routeFor(modelId))
-                    },
                     onOpenExemplars = { variantId ->
                         navController.navigate(Destination.ExemplarList.routeFor(variantId))
                     },

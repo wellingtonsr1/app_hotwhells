@@ -12,8 +12,6 @@ package br.com.hotwheelscollector.domain.model
  */
 public data class VariantSummary(
     val variantId: String,
-    /** Dono da variante: é o que permite abrir a edição do modelo a partir do catálogo. */
-    val modelId: String,
     val modelName: String,
     val manufacturerName: String,
     val colorName: String?,

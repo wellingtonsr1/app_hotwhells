@@ -48,7 +48,6 @@ import br.com.hotwheelscollector.ui.theme.HotWheelsTheme
 public fun CatalogScreen(
     onVariantClick: (variantId: String) -> Unit,
     onOpenExemplars: (variantId: String) -> Unit,
-    onEditModel: (modelId: String) -> Unit,
     onCreateEntry: () -> Unit,
     onOpenIncomplete: () -> Unit,
     onOpenSearch: () -> Unit,
@@ -62,7 +61,6 @@ public fun CatalogScreen(
         state = state,
         onVariantClick = onVariantClick,
         onOpenExemplars = onOpenExemplars,
-        onEditModel = onEditModel,
         onCreateEntry = onCreateEntry,
         onOpenIncomplete = onOpenIncomplete,
         onOpenSearch = onOpenSearch,
@@ -80,7 +78,6 @@ internal fun CatalogContent(
     onCreateEntry: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenIncomplete: () -> Unit = {},
-    onEditModel: (String) -> Unit = {},
     onOpenSearch: () -> Unit = {},
     onOpenCollections: () -> Unit = {},
     onOpenDuplicates: () -> Unit = {},
@@ -161,7 +158,6 @@ internal fun CatalogContent(
                             variant = variant,
                             onClick = { onVariantClick(variant.variantId) },
                             onOpenExemplars = { onOpenExemplars(variant.variantId) },
-                            onEditModel = { onEditModel(variant.modelId) },
                         )
                     }
                 }
@@ -175,7 +171,6 @@ private fun VariantCard(
     variant: VariantSummary,
     onClick: () -> Unit,
     onOpenExemplars: () -> Unit,
-    onEditModel: () -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -197,16 +192,10 @@ private fun VariantCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            // O cartão continua abrindo o cadastro rápido. As duas ações ficam empilhadas
-            // à direita: lado a lado, o centro do cartão caía em cima de um botão e o toque
-            // no nome podia abrir a tela errada.
-            Column(horizontalAlignment = Alignment.End) {
-                TextButton(onClick = onEditModel) {
-                    Text(stringResource(R.string.catalog_edit_model))
-                }
-                TextButton(onClick = onOpenExemplars) {
-                    Text(stringResource(R.string.catalog_open_exemplars))
-                }
+            // O cartão continua abrindo o cadastro rápido; este atalho leva às unidades
+            // já existentes, onde ficam edição, movimentação e arquivamento (FR-028).
+            TextButton(onClick = onOpenExemplars) {
+                Text(stringResource(R.string.catalog_open_exemplars))
             }
         }
     }
@@ -266,14 +255,13 @@ private fun CatalogPreview() {
         CatalogContent(
             state = CatalogUiState(
                 variants = listOf(
-                    VariantSummary("v1", "m1", "Twin Mill", "Hot Wheels", "Vermelho", 2024, 2),
-                    VariantSummary("v2", "m2", "Bone Shaker", "Hot Wheels", null, null, 0),
+                    VariantSummary("v1", "Twin Mill", "Hot Wheels", "Vermelho", 2024, 2),
+                    VariantSummary("v2", "Bone Shaker", "Hot Wheels", null, null, 0),
                 ),
                 loading = false,
             ),
             onVariantClick = {},
             onOpenExemplars = {},
-            onEditModel = {},
             onCreateEntry = {},
             onOpenIncomplete = {},
             onOpenSearch = {},
