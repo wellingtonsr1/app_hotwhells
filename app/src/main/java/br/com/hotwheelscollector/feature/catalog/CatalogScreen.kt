@@ -1,6 +1,7 @@
 package br.com.hotwheelscollector.feature.catalog
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
@@ -96,49 +98,48 @@ internal fun CatalogContent(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = stringResource(R.string.catalog_title),
                     style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(top = 12.dp, bottom = 4.dp),
                 )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (state.hasIncomplete) {
-                        TextButton(
-                            onClick = onOpenIncomplete,
-                            modifier = Modifier.padding(top = 12.dp),
-                        ) {
-                            Text(
-                                text = stringResource(
-                                    R.string.catalog_incomplete_action,
-                                    state.incompleteCount,
-                                ),
-                            )
-                        }
-                    }
-                    TextButton(
-                        onClick = onOpenCollections,
-                        modifier = Modifier.padding(top = 12.dp),
-                    ) {
-                        Text(stringResource(R.string.collections_open))
-                    }
-                    TextButton(
-                        onClick = onOpenDuplicates,
-                        modifier = Modifier.padding(top = 12.dp),
-                    ) {
-                        Text(stringResource(R.string.duplicates_open))
-                    }
-                    IconButton(
-                        onClick = onOpenSearch,
-                        modifier = Modifier.padding(top = 12.dp),
-                    ) {
-                        Icon(
-                            Icons.Filled.Search,
-                            contentDescription = stringResource(R.string.search_open),
+                IconButton(
+                    onClick = onOpenSearch,
+                    modifier = Modifier.padding(top = 12.dp),
+                ) {
+                    Icon(
+                        Icons.Filled.Search,
+                        contentDescription = stringResource(R.string.search_open),
+                    )
+                }
+            }
+            // Atalhos numa linha própria: no cabeçalho eles não cabiam e «Duplicados»
+            // quebrava uma letra por linha em telas estreitas.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (state.hasIncomplete) {
+                    TextButton(onClick = onOpenIncomplete) {
+                        Text(
+                            text = stringResource(
+                                R.string.catalog_incomplete_action,
+                                state.incompleteCount,
+                            ),
                         )
                     }
+                }
+                TextButton(onClick = onOpenCollections) {
+                    Text(stringResource(R.string.collections_open))
+                }
+                TextButton(onClick = onOpenDuplicates) {
+                    Text(stringResource(R.string.duplicates_open))
                 }
             }
 

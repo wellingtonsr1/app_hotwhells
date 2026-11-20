@@ -1,6 +1,7 @@
 package br.com.hotwheelscollector.data.db
 
 import androidx.room.Room
+import androidx.room.migration.Migration
 import androidx.room.testing.MigrationTestHelper
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.platform.app.InstrumentationRegistry
@@ -99,10 +100,7 @@ public class MigrationTest {
     @Test
     public fun migracaoAceitaBancoRealComIndiceParcialDeFingerprint() {
         helper.createDatabase(TEST_DB_V2, 1).use { db ->
-            db.execSQL(
-                "CREATE UNIQUE INDEX IF NOT EXISTS index_variant_fingerprint_active " +
-                    "ON variant(fingerprint) WHERE archived_at IS NULL",
-            )
+            db.execSQL(PARTIAL_INDEX_SQL)
         }
 
         helper.runMigrationsAndValidate(
@@ -121,6 +119,88 @@ public class MigrationTest {
 
             // Some daqui para a validação; o callback recria em `onOpen`.
             assertThat(indexCount).isEqualTo(0)
+        }
+    }
+
+    /**
+     * Garantia para migrações futuras: qualquer banco real na versão N tem o índice parcial
+     * (o callback o criou na primeira abertura), então toda migração N → N+1 é executada aqui
+     * com o índice presente no banco de partida. Uma migração que altere `variant` sem removê-lo
+     * antes da validação falha neste teste, e não no aparelho do usuário.
+     */
+    @Test
+    public fun cadaMigracaoAceitaBancoComIndiceParcialDeFingerprint() {
+        for (migration in migrations.sortedBy { it.startVersion }) {
+            val name = "migration-step-${migration.startVersion}-${migration.endVersion}.db"
+
+            helper.createDatabase(name, migration.startVersion).use { db ->
+                db.execSQL(PARTIAL_INDEX_SQL)
+            }
+
+            helper.runMigrationsAndValidate(
+                name,
+                migration.endVersion,
+                true,
+                migration,
+            ).close()
+        }
+    }
+
+    /**
+     * Caminho real do aparelho: arquivo em v1 com o índice do callback, aberto pelo `Room`
+     * com as migrações. Depois de migrar e validar, o callback precisa devolver o índice —
+     * senão FR-040 (fingerprint único entre variantes ativas) fica sem efeito.
+     */
+    @Test
+    public fun aberturaDoBancoMigradoRecriaIndiceParcial() {
+        helper.createDatabase(MIGRATED_DB, 1).use { db ->
+            db.execSQL(PARTIAL_INDEX_SQL)
+        }
+
+        val database = Room
+            .databaseBuilder(
+                InstrumentationRegistry.getInstrumentation().targetContext,
+                AppDatabase::class.java,
+                MIGRATED_DB,
+            )
+            .addMigrations(*migrations.toTypedArray())
+            .addCallback(AppDatabase.CALLBACK)
+            .build()
+        try {
+            val readable = database.openHelper.readableDatabase
+            val indexSql = readable.query(
+                "SELECT sql FROM sqlite_master WHERE type = 'index' " +
+                    "AND name = 'index_variant_fingerprint_active'",
+            ).use { cursor ->
+                if (cursor.moveToNext()) cursor.getString(0) else null
+            }
+            assertThat(indexSql).contains("UNIQUE")
+            assertThat(indexSql).contains("archived_at IS NULL")
+        } finally {
+            database.close()
+        }
+    }
+
+    /**
+     * A lista acima é escrita à mão; se uma versão nova entrar no `@Database` sem a migração
+     * correspondente, este teste aponta a lacuna em vez de deixar o aparelho descobrir.
+     */
+    @Test
+    public fun migracoesCobremTodasAsVersoesDoSchema() {
+        // A anotação `@Database` não é retida em runtime; a versão vem de um banco novo.
+        val currentVersion = openRuntimeDatabase().let { database ->
+            try {
+                database.openHelper.readableDatabase.version
+            } finally {
+                database.close()
+            }
+        }
+        val steps = migrations.sortedBy { it.startVersion }
+
+        assertThat(steps.first().startVersion).isEqualTo(1)
+        assertThat(steps.last().endVersion).isEqualTo(currentVersion)
+        steps.zipWithNext().forEach { (previous, next) ->
+            assertThat(previous.endVersion).isEqualTo(next.startVersion)
         }
     }
 
@@ -174,9 +254,16 @@ public class MigrationTest {
         .addCallback(AppDatabase.CALLBACK)
         .build()
 
+    /** Toda migração registrada no banco; a ordem vem de `startVersion`. */
+    private val migrations: List<Migration> = listOf(AppDatabase.MIGRATION_1_2)
+
     private companion object {
         const val TEST_DB = "migration-test.db"
         const val TEST_DB_V2 = "migration-v2-test.db"
         const val RUNTIME_DB = "runtime-test.db"
+        const val MIGRATED_DB = "migrated-runtime-test.db"
+        const val PARTIAL_INDEX_SQL =
+            "CREATE UNIQUE INDEX IF NOT EXISTS index_variant_fingerprint_active " +
+                "ON variant(fingerprint) WHERE archived_at IS NULL"
     }
 }
