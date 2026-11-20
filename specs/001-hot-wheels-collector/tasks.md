@@ -1510,3 +1510,67 @@ APK: app/build/outputs/apk/debug/app-debug.apk — 81 MB (debug)
 Revisão visual em `docs/icone-preview.html` (máscara circular, squircle, 48/72/96 px, monochrome): a silhueta não é cortada pela máscara (ponto mais distante do centro a 28dp, contra 33dp de raio seguro), mas o desenho estava 5dp abaixo do centro — corrigido com `translateY="-5"` no grupo dos dois vetores. Limite assumido: a faixa laranja tem 2dp e só aparece de 72px para cima; em 48px ela cai abaixo de 1 pixel.
 
 **Armadilha de ambiente encontrada:** a pasta precisou nascer como `mipmap-anydpi` (o qualificador `-v26` é redundante com `minSdk 26` e o lint reprova com `ObsoleteSdkInt`), mas o merge incremental do AGP e o build cache local continuaram servindo a saída antiga e vazia — só passou com `--stop` nos daemons, remoção de `build/` e `caches/build-cache-1`, e build com `--no-build-cache`.
+
+---
+
+## Revisão de fechamento da v1 (2026-11-20)
+
+**Estado:** 40 tarefas abertas de 153. Tudo das fases 1–9 e da maior parte da fase 13 está
+verde, com 193 testes unitários, 47 instrumentados e lint `0 errors, 7 warnings`. O que
+resta não é "falta implementar o app": é (a) o bloco de importação/relatórios, (b) o bloco
+de reconhecimento, (c) remediações exigidas pela constituição e (d) um item parcial do
+backup. A lista abaixo é o recorte por decisão, não por ordem do arquivo.
+
+### A. Bloqueia fechar a v1 no uso pessoal (recomendado fazer)
+
+| Tarefa | Por que bloqueia | Situação |
+| --- | --- | --- |
+| T146 | Art. III.7: exportação integral já existe no pacote de backup, mas **exclusão total dos dados** com dupla confirmação não | `DataControlScreen` não existe |
+| T153 | R.6/Art. V: restauração só está provada em escala pequena; SC-013 pede 1.000 exemplares e 2.000 fotos | teste não existe |
+| T149 | Art. I.6/FR-153: cadastro com foto em aparelho sem espaço precisa provar que não grava foto parcial | teste não existe |
+| T138 | Fechar a v1 exige os 14 cenários do `quickstart.md` executados e registrados (SC-003, SC-005, SC-009, SC-011, SC-012, SC-014) | `docs/validacao.md` não existe |
+| T137 | Sem documentação de instalação/backup/restauração, o próprio usuário não recupera a coleção sozinho | `docs/operacao.md` não existe |
+| T130 | Art. IV.6: acessibilidade (TalkBack, 48 dp, fonte até 200%, contraste) nunca foi auditada | não iniciada |
+| T150 | Art. V.1–V.2: matriz SC→teste com build falhando em SC órfão | não iniciada |
+| T147 / T148 | R.5 e Art. III.10: inventário de dependências e verificação de vulnerabilidade no release | não iniciadas |
+| T139 | Art. III: provar zero rede, zero segredo, permissões mínimas | relatório não existe |
+| T140 | Art. V.7: log estruturado com correlação, sem dado sensível | `AppLogger` não existe |
+| T131 | Quase pronto: **nenhum** `Text("…")` fixo encontrado; o que resta de lint é plural candidato e string não usada | 7 avisos |
+| T058 | R.7: busca < 300 ms e lista < 1 s com 10.000 exemplares — hoje é meta, não medição | teste não existe |
+
+### B. Decisão pendente do produto (não é bloqueio técnico)
+
+- **T119 (parcial)**: pacote, validação, restauração por substituição e exportação aberta
+  estão prontos; falta o modo **mesclar**. Restaurar substituindo já cobre o caso de uso
+  pessoal ("trocar de aparelho" / "voltar um backup"); mesclar serve para juntar dois
+  acervos e pode ficar para depois.
+- **T134**: `WorkManager` para importação/backup em segundo plano com retomada. O backup
+  atual roda com a tela aberta; para pacotes grandes isso pode incomodar, mas não perde
+  dado. Só faz sentido junto com importação.
+- **T143 / T144 / T145**: união e separação de variantes. `VariantRepository.mergeVariants`
+  existe e é testado no repositório, mas não há caso de uso nem tela; separar variante
+  (`SplitVariantUseCase`) não existe. Afeta organização do catálogo, não integridade.
+- **T135**: Baseline Profile e startup < 2 s — otimização, sem requisito funcional aberto.
+
+### C. Fora do escopo declarado desta v1 pessoal
+
+Importação e relatórios (fase 10) e reconhecimento (fase 11) foram postos de lado quando o
+app passou a ser de uso pessoal, sem distribuição:
+
+- **T107, T109, T111–T118, T151, T152** — leitores CSV/XLSX, pipeline de importação,
+  relatórios CSV/XLSX/PDF e telas de importação/relatórios.
+- **T121–T129** — `RecognitionProvider`, ML Kit (código de barras e OCR), revisão de
+  sugestões e persistência de `recognition_result`.
+
+Nenhum desses itens é exigido para "a coleção não se perder": o backup com banco, fotos,
+manifesto e exportação aberta já cobre R.6/VI.7. Retomá-los exige uma decisão explícita —
+e, no caso de ML Kit, nada muda no esquema atual até a fase começar.
+
+### Ordem sugerida, se for retomar
+
+1. T146 (exclusão com dupla confirmação) e T153 (restauração em escala) — fecham o ciclo
+   de não perder dados.
+2. T138 (cenários no aparelho) e T137 (documentação operacional) — fecham a v1 de fato.
+3. T149, T130, T150 — robustez e conformidade com a constituição.
+4. T147, T148, T139, T140, T131, T058 — higiene e evidência.
+5. Bloco B por decisão; bloco C só por decisão.
