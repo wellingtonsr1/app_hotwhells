@@ -1150,10 +1150,11 @@ banco injetado é fechado, a tela pede para reabrir o app e reinicia o processo.
 
 **Lembrete de backup (T120):** `BackupReminder` calcula o vencimento a partir do último
 pacote gravado com sucesso (`BackupReminderStore` marca a data em `SharedPreferences`, fora
-do banco, para uma restauração não "enganar" o lembrete). Ajustes mostra o cartão com o
-último backup, o intervalo e, quando vencido — inclusive quando nunca houve backup —, o
-aviso "a coleção está só neste aparelho" com atalho para criar o pacote. Intervalos: 7, 30
-(padrão), 90 dias ou desligado. É um lembrete **dentro do app**, não uma notificação.
+do banco, para uma restauração não "enganar" o lembrete). Em Ajustes ele ocupa uma linha
+compacta, no mesmo formato das demais opções — «A cada 30 dias · atrasado», em vermelho
+quando vencido —, e abre os detalhes ao toque: último backup, aviso de atraso, escolha do
+intervalo (7, 30 padrão, 90 dias ou desligado) e o atalho «Fazer backup agora». É um
+lembrete **dentro do app**, não uma notificação.
 
 **Limites conhecidos:** não há modo mesclar, notificação de sistema nem lembrete em segundo
 plano (dependeria de `WorkManager`, T134), cancelamento no meio da gravação ou exportação

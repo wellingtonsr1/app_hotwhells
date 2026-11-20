@@ -579,8 +579,10 @@
     </plurals>
     <string name="settings_backup_reminder_off">Desligado</string>
     <string name="settings_backup_reminder_overdue_never">Sem backup, a coleção existe só neste aparelho.</string>
+    <string name="settings_backup_reminder_status_none">nenhum backup</string>
+    <string name="settings_backup_reminder_status_overdue">atrasado</string>
+    <string name="settings_backup_reminder_status_ok">em dia</string>
     <string name="settings_backup_reminder_choose">Intervalo do lembrete</string>
-    <string name="settings_backup_reminder_change">Alterar intervalo</string>
     <string name="settings_backup_reminder_close">Fechar</string>
     <string name="settings_backup_now">Fazer backup agora</string>
     <string name="settings_backup">Backup e restauração</string>

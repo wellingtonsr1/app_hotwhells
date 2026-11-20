@@ -61,9 +61,12 @@ public class SettingsScreenTest {
             }
         }
 
+        // O cartão tem o mesmo formato das outras opções: título + uma linha.
         composeRule.onNodeWithText("Lembrete de backup").assertIsDisplayed()
+        composeRule.onNodeWithText("A cada 30 dias · nenhum backup").assertIsDisplayed()
+
+        composeRule.onNodeWithText("Lembrete de backup").performClick()
         composeRule.onNodeWithText("Nenhum backup feito ainda.").assertIsDisplayed()
-        composeRule.onNodeWithText("A cada 30 dias").assertIsDisplayed()
         composeRule
             .onNodeWithText("Sem backup, a coleção existe só neste aparelho.")
             .assertIsDisplayed()
@@ -71,7 +74,7 @@ public class SettingsScreenTest {
         composeRule.onNodeWithText("Fazer backup agora").performClick()
         assertTrue(backup)
 
-        composeRule.onNodeWithText("Alterar intervalo").performClick()
+        composeRule.onNodeWithText("Lembrete de backup").performClick()
         composeRule.onNodeWithText("A cada 7 dias").performClick()
         assertEquals(7, interval)
     }
@@ -94,6 +97,9 @@ public class SettingsScreenTest {
             }
         }
 
+        composeRule.onNodeWithText("A cada 30 dias · atrasado").assertIsDisplayed()
+
+        composeRule.onNodeWithText("Lembrete de backup").performClick()
         composeRule.onNodeWithText("Último backup em ", substring = true).assertIsDisplayed()
         composeRule
             .onNodeWithText("Último backup há 40 dias — a coleção está só neste aparelho.")
