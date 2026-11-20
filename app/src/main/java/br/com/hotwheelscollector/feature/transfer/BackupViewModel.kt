@@ -2,8 +2,6 @@ package br.com.hotwheelscollector.feature.transfer
 
 import android.content.Context
 import android.net.Uri
-import android.os.Build
-import androidx.core.content.pm.PackageInfoCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.hotwheelscollector.domain.backup.BackupException
@@ -64,7 +62,7 @@ public class BackupViewModel @Inject constructor(
                             "Não foi possível abrir o destino escolhido.",
                         )
                     output.use { stream ->
-                        backupService.create(stream, appVersion(), deviceName())
+                        backupService.create(stream, appVersion(context), deviceName())
                     }
                 }
             }
@@ -143,10 +141,4 @@ public class BackupViewModel @Inject constructor(
         failureDetail = failure.message,
     )
 
-    private fun appVersion(): String {
-        val info = context.packageManager.getPackageInfo(context.packageName, 0)
-        return "${info.versionName} (${PackageInfoCompat.getLongVersionCode(info)})"
-    }
-
-    private fun deviceName(): String = "${Build.MANUFACTURER} ${Build.MODEL}".trim()
 }

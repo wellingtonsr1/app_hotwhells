@@ -322,7 +322,7 @@ private fun BackupFailure.messageRes(): Int = when (this) {
     BackupFailure.WRITE_FAILED -> R.string.backup_error_write
 }
 
-private fun formatBytes(bytes: Long): String {
+internal fun formatBytes(bytes: Long): String {
     val megabytes = bytes / (1024.0 * 1024.0)
     return if (megabytes >= 1.0) {
         String.format(LOCALE_PT_BR, "%.1f MB", megabytes)

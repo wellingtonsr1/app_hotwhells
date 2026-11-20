@@ -1284,7 +1284,7 @@ com dupla confirmação segue na T146.
 - [ ] T134 Implementar `WorkManager` para importação, backup e restauração com progresso e retomada após segundo plano (FR-150) em `app/.../work/TransferWorkers.kt`
 - [ ] T135 Otimizar desempenho: índices faltantes, consultas N+1, Baseline Profile e startup < 2 s em `app/src/main/baseline-prof.txt`
 - [X] T136 [P] Configurar assinatura de release, AAB e `keystore.properties` fora do versionamento (R.15) em `app/build.gradle.kts` — chave gerada localmente (`keystore/release.jks`), `keystore.properties` e `.jks` no `.gitignore`; APK e AAB assinados verificados
-- [ ] T137 [P] Escrever documentação operacional (instalação, backup, restauração, solução de problemas) em `docs/operacao.md`
+- [X] T137 [P] Escrever documentação operacional (instalação, backup, restauração, solução de problemas) em `docs/operacao.md` — **concluída (2026-11-20)**: ver «Evidências — T137»
 - [ ] T138 Executar os 14 cenários do `quickstart.md` no aparelho e registrar evidências em `docs/validacao.md`, com verificação explícita e assinada de SC-003, SC-005, SC-009, SC-011, SC-012 e SC-014
 - [ ] T139 Revisar segurança e privacidade: zero chamadas de rede, nenhum segredo, permissões mínimas, nenhuma telemetria (Art. III) em `docs/revisao-seguranca.md`
 
@@ -1307,6 +1307,29 @@ na Fase 8, quando Desejos e Ajustes ganharam tela própria. Padronizar o restant
 decidir se as mensagens de estado viram `@StringRes` no ViewModel ou códigos de erro
 resolvidos na tela.
 
+### Evidências — T137 (2026-11-20)
+
+`docs/operacao.md` escrito a partir do que o app faz hoje, não do que o plano previa:
+instalação por sideload (release assinado e debug), atualização com e sem a mesma chave,
+backup manual (conteúdo do pacote, formato aberto, `manifest.json` e conferência de
+SHA-256), lembrete de backup, Auto Backup do Android **sem as fotos**, restauração com
+validação prévia e cópia `pre-restore`, exportação/exclusão em **Ajustes → Dados da
+coleção**, roteiro de troca de aparelho e 18 sintomas na solução de problemas.
+
+O que foi conferido no código antes de documentar: pacotes `…collector` e
+`…collector.debug` (`app/build.gradle.kts`), `minSdk 26`, ausência de permissão de
+`INTERNET` (`AndroidManifest.xml`), regras de Auto Backup excluindo `images/`
+(`data_extraction_rules.xml` e `backup_rules.xml`), intervalos do lembrete 7/30/90/desligado
+(`BackupReminder.kt`), limite de 1,5 MB por foto e escrita em `.tmp` + rename
+(`ImageStore.kt`), rollback e cópias `pre-restore` (`FileBackupService.kt`).
+
+O documento também registra o que **não** existe nesta v1 — importação de planilha,
+relatórios, reconhecimento, notificação de sistema e backup em segundo plano — para que a
+tela de Ajustes e o guia não prometam caminhos que não existem.
+
+**Limite conhecido:** a documentação foi revisada contra o código e os testes, não
+reexecutada como roteiro em aparelho limpo; essa execução é a T138.
+
 ---
 
 ## Phase 15: Remediação dos achados CRITICAL do `/speckit-analyze` (G5)
@@ -1319,7 +1342,7 @@ resolvidos na tela.
 - [ ] T143 [US2] Implementar `MergeVariantsUseCase`: mover todos os exemplares, itens de coleção e desejos para a variante de destino, recalcular `fingerprint`, registrar `history_entry` e arquivar a origem sem apagar nada (FR-041) em `core/domain/src/main/kotlin/br/com/hotwheelscollector/domain/usecase/MergeVariantsUseCase.kt`
 - [ ] T144 [US2] Implementar `SplitVariantUseCase`: criar nova variante a partir dos exemplares selecionados preservando aquisição, avaliações, fotos e movimentações (FR-042) em `core/domain/src/main/kotlin/br/com/hotwheelscollector/domain/usecase/SplitVariantUseCase.kt`
 - [ ] T145 [P] [US2] Teste de domínio de união e separação de variantes com múltiplos exemplares e históricos (Art. I.3, V.3) em `core/domain/src/test/kotlin/br/com/hotwheelscollector/domain/usecase/VariantMergeSplitTest.kt`
-- [ ] T146 Implementar exportação integral em formato aberto (JSON + CSV + imagens) e exclusão total dos dados do usuário com dupla confirmação e oferta de exportação prévia (FR-142, FR-157, FR-163, Art. III.7) em `app/src/main/java/br/com/hotwheelscollector/feature/settings/DataControlScreen.kt`
+- [X] T146 Implementar exportação integral em formato aberto (JSON + CSV + imagens) e exclusão total dos dados do usuário com dupla confirmação e oferta de exportação prévia (FR-142, FR-157, FR-163, Art. III.7) em `app/src/main/java/br/com/hotwheelscollector/feature/settings/DataControlScreen.kt` — **concluída (2026-11-20)**: ver «Evidências — T146»
 - [ ] T147 [P] Registrar todas as dependências externas com finalidade, versão, licença, custo e plano de substituição (R.5) em `docs/dependencias.md`
 - [ ] T148 Configurar verificação de vulnerabilidades de dependências no build e bloquear release com vulnerabilidade crítica sem correção disponível (Art. III.10) em `build.gradle.kts` e `docs/revisao-dependencias.md`
 - [ ] T149 Testar cadastro com foto em aparelho sem espaço livre: erro acionável, cadastro preservado e nenhuma foto parcial gravada (FR-153) em `app/src/androidTest/java/br/com/hotwheelscollector/feature/catalog/StorageFullTest.kt`
@@ -1361,6 +1384,50 @@ Ambiente: a verificação rodou com JDK 17 e Android SDK locais em `.tools/` (gi
 `local.properties` apontando para eles. O AVD `hw_test` precisa ser um perfil de celular
 (Pixel 5); com 320×640 três testes instrumentados existentes falham por elemento fora da
 tela, sem relação com o código.
+
+### Evidências — T146 (2026-11-20)
+
+Entrega: **Ajustes → Dados da coleção**, com a contagem viva do que está no aparelho,
+**exportação integral** e **exclusão total em duas confirmações**, com a oferta de exportar
+antes no próprio primeiro aviso (FR-142, FR-157, FR-163, Art. III.7).
+
+- `DataControlRepository` (domínio) e `DataControlRepositoryImpl` (dados): contagem por
+  subconsulta nas próprias tabelas (`DataControlDao`) e `deleteAll` que usa
+  `clearAllTables` do Room — uma transação, sem cascata manual e sem deixar tabela de
+  histórico para trás — seguida de `ImageStore.deleteAll()`.
+- `DataControlScreen`/`DataControlViewModel`: exportar grava o **mesmo pacote do backup**
+  (banco, fotos, `data/*.json`, `CSV/*.csv`, manifesto), então a exportação aberta não é
+  uma segunda implementação de formato; excluir só é chamado pela segunda confirmação.
+- Navegação: rota `settings/data` e linha nova em Ajustes; nenhuma migração — só uma
+  consulta e um DAO novos, o schema continua em `version = 2`.
+
+| Verificação | Comando | Resultado |
+| --- | --- | --- |
+| Contagem, exclusão do banco e das fotos, banco reutilizável | `./gradlew :core:data:testDebugUnitTest --tests '*DataControlRepositoryTest'` | 3 testes, 0 falhas |
+| ViewModel (contagem, exclusão, falhas, exportação) | `./gradlew :app:testDebugUnitTest --tests '*DataControlViewModelTest'` | 5 testes, 0 falhas |
+| Tela (duas confirmações, exportar antes, acervo vazio) | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=br.com.hotwheelscollector.feature.settings.DataControlScreenTest` | 4 testes, 0 falhas (emulador `hw_test`, API 36) |
+| Ajustes com a linha nova | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=br.com.hotwheelscollector.feature.settings.SettingsScreenTest` | 3 testes, 0 falhas |
+| Regressão unitária, lint e testes instrumentados compilados | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest :app:lintDebug :app:assembleDebugAndroidTest` | `BUILD SUCCESSFUL`; 200 unitários, 0 falhas; `0 errors, 7 warnings` |
+
+Decisões registradas nesta entrega:
+
+- **Banco antes das fotos**: `clearAllTables` numa transação é a fonte da verdade; se a
+  remoção das imagens falhar, não sobra linha de `photo` apontando para arquivo
+  inexistente — uma nova tentativa remove o resto. A ordem inversa deixaria o acervo
+  quebrado.
+- **Contagem vinda das tabelas**, nunca de contador: a mesma consulta que mostra os números
+  denuncia resíduo depois da exclusão.
+- **Exportação não duplica formato**: o pacote já carrega banco, fotos e JSON/CSV; o botão
+  reusa `BackupService.create` e a tela diz o que há dentro.
+- **Preferência de lembrete preservada**: `BackupReminderStore` fica em `SharedPreferences`
+  fora do banco e não é apagada — os pacotes que o usuário exportou continuam existindo
+  fora do app, e apagar a data faria o lembrete mentir sobre um backup que ainda existe.
+- **Sem desfazer**: a exclusão é imediata depois da segunda confirmação; não há lixeira nem
+  cópia automática anterior (o usuário é quem escolhe exportar antes).
+
+**Limites conhecidos:** o modo mesclar do backup (T119) continua pendente; a exportação usa
+SAF e grava um único ZIP, com as fotos referenciadas por `photo.path` — arquivo ausente em
+disco é apenas omitido, como no backup.
 
 ---
 
@@ -1498,8 +1565,9 @@ Revisão visual em `docs/icone-preview.html` (máscara circular, squircle, 48/72
 
 ## Revisão de fechamento da v1 (2026-11-20)
 
-**Estado:** 40 tarefas abertas de 153. Tudo das fases 1–9 e da maior parte da fase 13 está
-verde, com 193 testes unitários, 47 instrumentados e lint `0 errors, 7 warnings`. O que
+**Estado (atualizado em 2026-11-20):** 38 tarefas abertas de 153. Tudo das fases 1–9 e da
+maior parte da fase 13 está verde, com 200 testes unitários, 47 instrumentados (mais os 4
+novos de `DataControlScreenTest`, verde no emulador) e lint `0 errors, 7 warnings`. O que
 resta não é "falta implementar o app": é (a) o bloco de importação/relatórios, (b) o bloco
 de reconhecimento, (c) remediações exigidas pela constituição e (d) um item parcial do
 backup. A lista abaixo é o recorte por decisão, não por ordem do arquivo.
@@ -1508,11 +1576,11 @@ backup. A lista abaixo é o recorte por decisão, não por ordem do arquivo.
 
 | Tarefa | Por que bloqueia | Situação |
 | --- | --- | --- |
-| T146 | Art. III.7: exportação integral já existe no pacote de backup, mas **exclusão total dos dados** com dupla confirmação não | `DataControlScreen` não existe |
+| T146 | Art. III.7: exportação integral já existe no pacote de backup, mas **exclusão total dos dados** com dupla confirmação não | **feito em 2026-11-20** — `DataControlScreen` com exportação aberta e exclusão em duas confirmações (ver «Evidências — T146») |
 | T153 | R.6/Art. V: restauração só está provada em escala pequena; SC-013 pede 1.000 exemplares e 2.000 fotos | teste não existe |
 | T149 | Art. I.6/FR-153: cadastro com foto em aparelho sem espaço precisa provar que não grava foto parcial | teste não existe |
 | T138 | Fechar a v1 exige os 14 cenários do `quickstart.md` executados e registrados (SC-003, SC-005, SC-009, SC-011, SC-012, SC-014) | `docs/validacao.md` não existe |
-| T137 | Sem documentação de instalação/backup/restauração, o próprio usuário não recupera a coleção sozinho | `docs/operacao.md` não existe |
+| T137 | Sem documentação de instalação/backup/restauração, o próprio usuário não recupera a coleção sozinho | **feito em 2026-11-20** — `docs/operacao.md` |
 | T130 | Art. IV.6: acessibilidade (TalkBack, 48 dp, fonte até 200%, contraste) nunca foi auditada | não iniciada |
 | T150 | Art. V.1–V.2: matriz SC→teste com build falhando em SC órfão | não iniciada |
 | T147 / T148 | R.5 e Art. III.10: inventário de dependências e verificação de vulnerabilidade no release | não iniciadas |
@@ -1551,9 +1619,10 @@ e, no caso de ML Kit, nada muda no esquema atual até a fase começar.
 
 ### Ordem sugerida, se for retomar
 
-1. T146 (exclusão com dupla confirmação) e T153 (restauração em escala) — fecham o ciclo
-   de não perder dados.
-2. T138 (cenários no aparelho) e T137 (documentação operacional) — fecham a v1 de fato.
+1. ~~T146 (exclusão com dupla confirmação)~~ — feito em 2026-11-20 — e T153 (restauração
+   em escala) — fecham o ciclo de não perder dados.
+2. T138 (cenários no aparelho) — fecha a v1 de fato; a documentação operacional (T137)
+   foi escrita em 2026-11-20.
 3. T149, T130, T150 — robustez e conformidade com a constituição.
 4. T147, T148, T139, T140, T131, T058 — higiene e evidência.
 5. Bloco B por decisão; bloco C só por decisão.

@@ -8,6 +8,7 @@ import br.com.hotwheelscollector.data.repository.CarModelRepositoryImpl
 import br.com.hotwheelscollector.data.repository.CollectionRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ColorRepositoryImpl
 import br.com.hotwheelscollector.data.repository.DashboardRepositoryImpl
+import br.com.hotwheelscollector.data.repository.DataControlRepositoryImpl
 import br.com.hotwheelscollector.data.repository.DuplicateRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ExemplarRepositoryImpl
 import br.com.hotwheelscollector.data.repository.FinanceRepositoryImpl
@@ -31,6 +32,7 @@ import br.com.hotwheelscollector.domain.repository.CarModelRepository
 import br.com.hotwheelscollector.domain.repository.CollectionRepository
 import br.com.hotwheelscollector.domain.repository.ColorRepository
 import br.com.hotwheelscollector.domain.repository.DashboardRepository
+import br.com.hotwheelscollector.domain.repository.DataControlRepository
 import br.com.hotwheelscollector.domain.repository.DuplicateRepository
 import br.com.hotwheelscollector.domain.repository.ExemplarRepository
 import br.com.hotwheelscollector.domain.repository.FinanceRepository
@@ -211,4 +213,10 @@ public abstract class RepositoryModule {
     public abstract fun bindNegotiationRepository(
         impl: NegotiationRepositoryImpl,
     ): NegotiationRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindDataControlRepository(
+        impl: DataControlRepositoryImpl,
+    ): DataControlRepository
 }

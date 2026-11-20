@@ -52,6 +52,7 @@ import br.com.hotwheelscollector.feature.organization.CollectionsScreen
 import br.com.hotwheelscollector.feature.organization.SeriesScreen
 import br.com.hotwheelscollector.feature.search.SearchScreen
 import br.com.hotwheelscollector.feature.settings.AboutScreen
+import br.com.hotwheelscollector.feature.settings.DataControlRoute
 import br.com.hotwheelscollector.feature.settings.PrivacyPolicyScreen
 import br.com.hotwheelscollector.feature.settings.SettingsRoute
 import br.com.hotwheelscollector.feature.transfer.BackupScreen
@@ -182,6 +183,9 @@ public sealed class Destination(public val route: String) {
 
     /** Backup manual: pacote com banco, fotos e manifesto (T119/T120). */
     public data object Backup : Destination("settings/backup")
+
+    /** Exportação aberta e exclusão total dos dados do aparelho (T146). */
+    public data object DataControl : Destination("settings/data")
     public data object SettingsAbout : Destination("settings/about")
     public data object SettingsPrivacy : Destination("settings/privacy")
 }
@@ -500,10 +504,14 @@ public fun AppNavHost(
                     onPrivacy = { navController.navigate(Destination.SettingsPrivacy.route) },
                     onLocations = { navController.navigate(Destination.Locations.route) },
                     onBackup = { navController.navigate(Destination.Backup.route) },
+                    onDataControl = { navController.navigate(Destination.DataControl.route) },
                 )
             }
             composable(Destination.Backup.route) {
                 BackupScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Destination.DataControl.route) {
+                DataControlRoute(onBack = { navController.popBackStack() })
             }
             composable(Destination.SettingsAbout.route) {
                 AboutScreen()

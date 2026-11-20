@@ -39,6 +39,9 @@ public interface ImageStore {
 
     public suspend fun delete(relativePath: String)
 
+    /** Remove todas as fotos do app — usado só pela exclusão total (T146). */
+    public suspend fun deleteAll()
+
     public suspend fun exists(relativePath: String): Boolean
 
     public fun absolutePath(relativePath: String): File
@@ -95,6 +98,12 @@ public class FileImageStore @Inject constructor(
         val file = absolutePath(relativePath)
         if (file.exists() && !file.delete()) {
             error("Não foi possível remover a foto ${file.name}.")
+        }
+    }
+
+    override suspend fun deleteAll() = withContext(Dispatchers.IO) {
+        if (root.exists() && !root.deleteRecursively()) {
+            error("Não foi possível remover as fotos do armazenamento interno.")
         }
     }
 

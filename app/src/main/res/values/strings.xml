@@ -619,4 +619,35 @@
     <string name="settings_backup_now">Fazer backup agora</string>
     <string name="settings_backup">Backup e restauração</string>
     <string name="settings_backup_subtitle">Pacote com banco, fotos e manifesto</string>
+
+    <!-- Controle de dados: exportação aberta e exclusão total (T146, FR-142, FR-157, FR-163). -->
+    <string name="settings_data_control">Dados da coleção</string>
+    <string name="settings_data_control_subtitle">Exportar tudo ou excluir do aparelho</string>
+    <string name="data_control_title">Dados da coleção</string>
+    <string name="data_control_back">Voltar</string>
+    <string name="data_control_intro">A exportação grava um pacote com o banco, as fotos e cópias em JSON e CSV que abrem sem o app. A exclusão apaga do aparelho os registros e as fotos do acervo.</string>
+    <string name="data_control_counts_title">O que está no aparelho</string>
+    <string name="data_control_counts_more">Modelos, coleções, desejos, finanças e localizações também entram na exportação e na exclusão.</string>
+    <string name="data_control_empty">Não há dados no aparelho.</string>
+    <string name="data_control_export">Exportar tudo</string>
+    <string name="data_control_export_help">Mesmo pacote do backup: banco, fotos, JSON e CSV, legíveis sem o aplicativo.</string>
+    <string name="data_control_exported_title">Exportação concluída</string>
+    <string name="data_control_exported_body">Pacote de %1$s gravado no local escolhido. Guarde-o fora do aparelho.</string>
+    <string name="data_control_delete">Excluir todos os dados</string>
+    <string name="data_control_delete_help">Remove do aparelho os registros e as fotos. Não há como desfazer.</string>
+    <string name="data_control_busy">Trabalhando…</string>
+    <string name="data_control_confirm_title">Excluir todos os dados?</string>
+    <string name="data_control_confirm_body">Isto apaga %1$s e %2$s deste aparelho, junto com modelos, coleções, desejos, finanças e localizações.</string>
+    <string name="data_control_confirm_export">Exportar antes de excluir</string>
+    <string name="data_control_confirm_continue">Continuar</string>
+    <string name="data_control_final_title">Última confirmação</string>
+    <string name="data_control_final_body">Nem o app nem o backup do Android recuperam o que for apagado agora. Confirme de novo para excluir definitivamente.</string>
+    <string name="data_control_final_action">Excluir definitivamente</string>
+    <string name="data_control_cancel">Cancelar</string>
+    <string name="data_control_deleted_title">Dados excluídos</string>
+    <string name="data_control_deleted_body">O acervo, as fotos e os registros deste aparelho foram apagados.</string>
+    <string name="data_control_deleted_back">Voltar aos Ajustes</string>
+    <string name="data_control_error_title">Não foi possível concluir</string>
+    <string name="data_control_error_export">Não foi possível gravar a exportação. Nada foi apagado.</string>
+    <string name="data_control_error_delete">A exclusão não terminou. Tente de novo para remover o que restou.</string>
 </resources>
