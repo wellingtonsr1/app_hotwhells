@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.androidx.baselineprofile)
 }
 
 /**
@@ -102,7 +103,17 @@ android {
     }
 }
 
+/**
+ * O build `nonMinifiedRelease` existe só para gerar o Baseline Profile e roda no emulador
+ * x86_64; o release de entrega continua arm-only (ver `ndk.abiFilters` acima).
+ */
+afterEvaluate {
+    android.buildTypes.getByName("nonMinifiedRelease").ndk.abiFilters.add("x86_64")
+}
+
 dependencies {
+    baselineProfile(project(":benchmark"))
+
     implementation(project(":core:domain"))
     implementation(project(":core:data"))
     implementation(project(":core:ui"))
@@ -117,6 +128,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.datastore.preferences)
     implementation(libs.work.runtime.ktx)
+    implementation(libs.androidx.profileinstaller)
     ksp(libs.hilt.compiler)
 
     implementation(platform(libs.compose.bom))

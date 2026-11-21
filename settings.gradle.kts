@@ -23,6 +23,7 @@ dependencyResolutionManagement {
 rootProject.name = "hot-wheels-collector"
 
 include(":app")
+include(":benchmark")
 include(":core:domain")
 include(":core:data")
 include(":core:ui")

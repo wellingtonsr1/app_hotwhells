@@ -1331,7 +1331,7 @@ já digitado e código em branco. Verificação: 4 testes instrumentados verdes 
 - [X] T132 [P] Implementar política de privacidade offline dentro do app (FR-172) em `app/.../feature/settings/PrivacyPolicyScreen.kt`
 - [X] T133 [P] Implementar tela "Sobre" com versão e identificador do pacote (FR-171) em `app/.../feature/settings/AboutScreen.kt` — a versão vem do pacote instalado; não há data de build em `BuildConfig`
 - [ ] T134 Implementar `WorkManager` para importação, backup e restauração com progresso e retomada após segundo plano (FR-150) em `app/.../work/TransferWorkers.kt`
-- [ ] T135 Otimizar desempenho: índices faltantes, consultas N+1, Baseline Profile e startup < 2 s em `app/src/main/baseline-prof.txt`
+- [X] T135 Otimizar desempenho: índices faltantes, consultas N+1, Baseline Profile e startup < 2 s em `app/src/main/baseline-prof.txt` — **concluída (2026-11-21)**: perfil gerado por macrobenchmark e empacotado; release frio em 1,46 s (mediana, 10 aberturas), abaixo de 2 s; ver «Evidências — T135»
 - [X] T136 [P] Configurar assinatura de release, AAB e `keystore.properties` fora do versionamento (R.15) em `app/build.gradle.kts` — chave gerada localmente (`keystore/release.jks`), `keystore.properties` e `.jks` no `.gitignore`; APK e AAB assinados verificados
 - [X] T137 [P] Escrever documentação operacional (instalação, backup, restauração, solução de problemas) em `docs/operacao.md` — **concluída (2026-11-20)**: ver «Evidências — T137»
 - [ ] T138 Executar os 14 cenários do `quickstart.md` no aparelho e registrar evidências em `docs/validacao.md`, com verificação explícita e assinada de SC-003, SC-005, SC-009, SC-011, SC-012 e SC-014 — **parcial (2026-11-20)**: 4 dos 6 SCs verificados; SC-011 sem medição e SC-012 corrigido em código
@@ -1385,6 +1385,41 @@ Naquele momento restavam as mensagens de snackbar dos ViewModels — e, nas fase
 seguintes, as dos demais ViewModels (coleção, série, duplicados, negociação, exemplar,
 desejos, financeiro, busca, localizações e reconhecimento). A decisão tomada no fechamento
 foi `@StringRes` no ViewModel via `UiMessage`, resolvido na tela.
+
+### Evidências — T135 (2026-11-21)
+
+**Fechamento:** Baseline Profile gerado e empacotado, auditoria de índices e N+1 do painel, e
+abertura fria do release medida em 10 execuções — mediana de 1.456 ms, dentro da meta de 2 s.
+
+- **Gerador**: novo módulo `:benchmark` (`com.android.test` + plugin
+  `androidx.baselineprofile` 1.4.1). `StartupBaselineProfile` usa `BaselineProfileRule`
+  (`pressHome`, `startActivityAndWait`, espera de idle) contra o build `nonMinifiedRelease`.
+  O resultado foi copiado para `app/src/main/baseline-prof.txt` (15.773 linhas, 1,5 MB); o
+  perfil de startup gerado era idêntico e foi descartado para não duplicar 1,5 MB no APK.
+- **Empacotamento**: `androidx.profileinstaller` 1.4.1 adicionado; o APK de release contém
+  `assets/dexopt/baseline.prof` (7.108 bytes) e `baseline.profm` (1.054 bytes), ou seja, o
+  AGP compilou o texto em perfil binário.
+- **Emulador**: `nonMinifiedRelease` recebe `x86_64` em `afterEvaluate` apenas para o
+  gerador rodar no `hw_test`; o release de entrega continua arm-only (31.517.973 bytes,
+  mesma assinatura `CN=Colecao de Miniaturas`).
+- **Índices**: auditoria do schema v2 — todas as FKs usadas pelo painel têm índice
+  (`exemplar(variant_id,status)`, `valuation(exemplar_id,date,created_at)`,
+  `acquisition(exemplar_id)`, `collection_item(collection_id,...)`, etc.). Nenhum índice
+  novo foi acrescentado: não há coluna filtrada sem índice que justifique migração.
+- **N+1**: as 15 consultas do `DashboardDao` são `Flow`s independentes, cada uma com um
+  único `SELECT` agregado e `JOIN`; nenhuma consulta é emitida por linha. O custo de
+  abertura não vem de N+1.
+
+| Medição (release x86_64, `pm compile -m speed-profile -f`, 10 aberturas frias) | Mediana | Faixa |
+| --- | --- | --- |
+| Sem Baseline Profile | 1.440 ms | 1.301–1.661 ms |
+| Com Baseline Profile | 1.456 ms | 1.212–1.818 ms |
+
+**Limite conhecido:** no emulador com GPU por software a diferença entre com e sem perfil
+ficou dentro do ruído (±300 ms), então **não há ganho medido a atribuir ao perfil**; a meta de
+2 s é cumprida pelo release minificado mesmo sem ele. A medição vale para o emulador
+`hw_test` API 36 (x86_64, swiftshader); falta repetir em aparelho físico, onde o perfil
+tende a pesar mais. A meta de T138/SC-014 (< 3 s) também segue verificada.
 
 ### Evidências — T138 (2026-11-20, parcial)
 
@@ -1744,7 +1779,7 @@ backup. A lista abaixo é o recorte por decisão, não por ordem do arquivo.
 - **T143 / T144 / T145**: união e separação de variantes. `VariantRepository.mergeVariants`
   existe e é testado no repositório, mas não há caso de uso nem tela; separar variante
   (`SplitVariantUseCase`) não existe. Afeta organização do catálogo, não integridade.
-- **T135**: Baseline Profile e startup < 2 s — otimização, sem requisito funcional aberto.
+- ~~**T135**~~: concluída em 2026-11-21 — perfil empacotado e release frio em 1,46 s (mediana); ver «Evidências — T135».
 
 ### C. Fora do escopo declarado desta v1 pessoal
 
