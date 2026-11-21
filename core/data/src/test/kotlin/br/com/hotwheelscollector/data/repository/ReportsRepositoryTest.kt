@@ -8,6 +8,7 @@ import br.com.hotwheelscollector.data.db.entity.ExemplarEntity
 import br.com.hotwheelscollector.data.db.entity.ManufacturerEntity
 import br.com.hotwheelscollector.data.db.entity.PhotoEntity
 import br.com.hotwheelscollector.data.db.entity.VariantEntity
+import br.com.hotwheelscollector.data.importexport.ReportFormat
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -51,7 +52,7 @@ class ReportsRepositoryTest {
         assertThat(byCode.getValue("HW-1").modelName).isEqualTo("Twin Mill")
         assertThat(byCode.getValue("HW-1").condition).isEqualTo("SEALED")
         assertThat(byCode.getValue("HW-1").photoCount).isEqualTo(2)
-        // Sem cor principal na variante, o rótulo fica nulo e o PDF usa "-".
+        // Sem cor principal na variante, o rótulo fica nulo e o relatório usa "não informado".
         assertThat(byCode.getValue("HW-1").variantLabel).isNull()
         assertThat(byCode.getValue("HW-2").photoCount).isEqualTo(0)
     }
@@ -60,12 +61,31 @@ class ReportsRepositoryTest {
     fun `gera PDF do inventario com o total do painel`(): Unit = runBlocking {
         seed()
 
-        val result = repository.buildInventoryPdf()
+        val result = repository.buildInventoryReport(ReportFormat.PDF)
 
         assertThat(result.totalExemplares).isEqualTo(2)
         assertThat(result.pageCount).isEqualTo(1)
         assertThat(result.bytes).isNotEmpty()
         assertThat(String(result.bytes, 0, 4, Charsets.ISO_8859_1)).isEqualTo("%PDF")
+        assertThat(result.fileName).startsWith("colecao-inventario-")
+        assertThat(result.fileName).endsWith(".pdf")
+    }
+
+    @Test
+    fun `gera CSV e XLSX com o inventario e nome datado`(): Unit = runBlocking {
+        seed()
+
+        val csv = repository.buildInventoryReport(ReportFormat.CSV)
+        val csvText = csv.bytes.toString(Charsets.UTF_8).removePrefix("\uFEFF")
+        assertThat(csv.totalExemplares).isEqualTo(2)
+        assertThat(csv.fileName).endsWith(".csv")
+        assertThat(csvText.lines().first()).isEqualTo("Código,Modelo,Variante,Condição,Fotos")
+        assertThat(csvText).contains("HW-1,Twin Mill,não informado,SEALED,2")
+
+        val xlsx = repository.buildInventoryReport(ReportFormat.XLSX)
+        assertThat(xlsx.totalExemplares).isEqualTo(2)
+        assertThat(xlsx.fileName).endsWith(".xlsx")
+        assertThat(xlsx.bytes.copyOfRange(0, 2).toString(Charsets.ISO_8859_1)).isEqualTo("PK")
     }
 
     private suspend fun seed() {

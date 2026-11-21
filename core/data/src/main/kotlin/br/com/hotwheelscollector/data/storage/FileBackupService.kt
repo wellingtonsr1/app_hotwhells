@@ -11,6 +11,7 @@ import br.com.hotwheelscollector.domain.backup.BackupFailure
 import br.com.hotwheelscollector.domain.backup.BackupFileEntry
 import br.com.hotwheelscollector.domain.backup.BackupService
 import br.com.hotwheelscollector.domain.backup.BackupSummary
+import br.com.hotwheelscollector.domain.backup.RestoreMode
 import br.com.hotwheelscollector.domain.backup.ValidatedBackup
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.BufferedInputStream
@@ -22,6 +23,7 @@ import java.security.MessageDigest
 import java.time.Clock
 import java.time.Instant
 import java.time.format.DateTimeParseException
+import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -58,6 +60,7 @@ public class FileBackupService @Inject constructor(
 ) : BackupService {
 
     private val imagesRoot: File get() = File(context.filesDir, IMAGES_DIR)
+    private val foreignKeyCache: MutableMap<String, List<Pair<String, String>>> = HashMap()
 
     override suspend fun create(
         output: OutputStream,
@@ -145,7 +148,15 @@ public class FileBackupService @Inject constructor(
         }
     }
 
-    override suspend fun restore(packageFile: File): BackupSummary = withContext(Dispatchers.IO) {
+    override suspend fun restore(
+        packageFile: File,
+        mode: RestoreMode,
+    ): BackupSummary = when (mode) {
+        RestoreMode.REPLACE -> replace(packageFile)
+        RestoreMode.MERGE -> merge(packageFile)
+    }
+
+    private suspend fun replace(packageFile: File): BackupSummary = withContext(Dispatchers.IO) {
         val workspace = tempDir("backup-restore")
         try {
             // Revalida: entre a inspeção e o "confirmar" o arquivo pode ter mudado.
@@ -219,6 +230,311 @@ public class FileBackupService @Inject constructor(
         }
     }
 
+    /**
+     * Modo mesclar (FR-144): mantém os dois lados e nunca sobrescreve.
+     *
+     * Cada tabela entra na ordem das dependências; as chaves estrangeiras são remapeadas
+     * para os IDs que já existem no banco atual (entidades de catálogo iguais por chave
+     * natural são reaproveitadas). Um exemplar com `codigo_interno` já existente é mantido
+     * como está e contado como ignorado — nada é substituído silenciosamente. Tudo roda em
+     * uma transação; qualquer falha desfaz o lote inteiro.
+     */
+    private suspend fun merge(packageFile: File): BackupSummary = withContext(Dispatchers.IO) {
+        val workspace = tempDir("backup-merge")
+        try {
+            val validated = extract(packageFile, workspace).let { validate(it, packageFile) }
+            val extractedDb = File(workspace, DATABASE_ENTRY)
+            val livePath = database.openHelper.writableDatabase.path
+                ?: throw BackupException(
+                    BackupFailure.INVALID_DATABASE,
+                    "O banco local não tem caminho em disco.",
+                )
+            checkpoint()
+
+            // Conexão própria e curta: o `SQLiteDatabase` do Room é um wrapper, e ATTACH é
+            // por conexão. O pacote é aberto à parte e nada é montado em memória.
+            val outcome: MergeOutcome = SQLiteDatabase.openDatabase(
+                livePath,
+                null,
+                SQLiteDatabase.OPEN_READWRITE,
+            ).use { live ->
+                live.execSQL("PRAGMA foreign_keys = ON")
+                SQLiteDatabase.openDatabase(
+                    extractedDb.path,
+                    null,
+                    SQLiteDatabase.OPEN_READONLY,
+                ).use { backupDb ->
+                    live.beginTransaction()
+                    try {
+                        val merged = mergeTables(live, backupDb)
+                        copyNewImages(File(workspace, IMAGES_DIR), imagesRoot)
+                        recordMerge(live, packageFile.name, merged)
+                        live.setTransactionSuccessful()
+                        merged
+                    } finally {
+                        live.endTransaction()
+                    }
+                }
+            }
+
+            validated.summary.copy(
+                counts = readCounts(livePath),
+                imageCount = countFiles(imagesRoot),
+                missingImages = 0,
+            )
+        } finally {
+            workspace.deleteRecursively()
+        }
+    }
+
+    private data class MergeOutcome(
+        val inserted: Int,
+        val kept: Int,
+        val skipped: Int,
+        val skippedExemplars: List<String>,
+    )
+
+    private class MergeTally {
+        var inserted: Int = 0
+        var kept: Int = 0
+        var skipped: Int = 0
+        val skippedExemplars: MutableList<String> = mutableListOf()
+    }
+
+    private enum class RowOutcome { INSERTED, KEPT, SKIPPED, DEFERRED }
+
+    private data class BackupRow(val values: Map<String, Any?>)
+
+    private fun mergeTables(db: SQLiteDatabase, backupDb: SQLiteDatabase): MergeOutcome {
+        val tally = MergeTally()
+        val mappings = HashMap<String, MutableMap<String, String?>>()
+
+        MERGE_ORDER.forEach { table ->
+            val mapping = mappings.getOrPut(table) { HashMap() }
+            val keys = PRIMARY_KEYS.getValue(table)
+            var pending = readBackupRows(backupDb, table)
+            var passes = 0
+            while (pending.isNotEmpty()) {
+                val deferred = ArrayList<BackupRow>()
+                var progressed = false
+                pending.forEach { row ->
+                    when (mergeRow(db, table, keys, row, mapping, mappings, tally)) {
+                        RowOutcome.INSERTED, RowOutcome.KEPT, RowOutcome.SKIPPED -> progressed = true
+                        RowOutcome.DEFERRED -> deferred.add(row)
+                    }
+                }
+                if (!progressed || ++passes > pending.size + 2) {
+                    // Vínculo que não resolve: fica de fora, contado como ignorado.
+                    tally.skipped += deferred.size
+                    return@forEach
+                }
+                pending = deferred
+            }
+        }
+
+        return MergeOutcome(
+            inserted = tally.inserted,
+            kept = tally.kept,
+            skipped = tally.skipped,
+            skippedExemplars = tally.skippedExemplars.distinct(),
+        )
+    }
+
+    private fun mergeRow(
+        db: SQLiteDatabase,
+        table: String,
+        keys: List<String>,
+        row: BackupRow,
+        mapping: MutableMap<String, String?>,
+        mappings: Map<String, MutableMap<String, String?>>,
+        tally: MergeTally,
+    ): RowOutcome {
+        val values = LinkedHashMap(row.values)
+        val oldId = keys.singleOrNull()
+            ?.takeIf { it == "id" }
+            ?.let { values[it]?.toString() }
+
+        for ((column, parent) in foreignKeys(db, table)) {
+            val raw = values[column] ?: continue
+            val parentMap = mappings[parent] ?: return RowOutcome.DEFERRED
+            val oldParent = raw.toString()
+            if (!parentMap.containsKey(oldParent)) return RowOutcome.DEFERRED
+            val mapped = parentMap[oldParent] ?: return RowOutcome.SKIPPED
+            values[column] = mapped
+        }
+
+        NATURAL_KEYS[table]?.let { columns ->
+            val existing = findLiveValue(db, table, columns, values)
+            if (existing != null) {
+                if (oldId != null) mapping[oldId] = existing
+                tally.kept++
+                return RowOutcome.KEPT
+            }
+        }
+
+        if (table == "app_setting") {
+            val key = values["key"]?.toString() ?: return RowOutcome.SKIPPED
+            if (existsWithKey(db, table, "key", key)) {
+                tally.kept++
+                return RowOutcome.KEPT
+            }
+        }
+
+        if (table == "exemplar") {
+            val code = values["internal_code"]?.toString().orEmpty()
+            if (code.isNotEmpty() && findLiveValue(db, table, listOf("internal_code"), values) != null) {
+                if (oldId != null) mapping[oldId] = null
+                tally.skipped++
+                tally.skippedExemplars += code
+                return RowOutcome.SKIPPED
+            }
+        }
+
+        if (oldId != null && existsWithKey(db, table, "id", oldId)) {
+            mapping[oldId] = oldId
+            tally.kept++
+            return RowOutcome.KEPT
+        }
+
+        val columns = values.keys.toList()
+        val sql = "INSERT INTO \"$table\" (" +
+            columns.joinToString(", ") { "\"$it\"" } +
+            ") VALUES (" +
+            columns.joinToString(", ") { "?" } +
+            ")"
+        return try {
+            db.execSQL(sql, columns.map { values[it] }.toTypedArray())
+            if (oldId != null) mapping[oldId] = oldId
+            tally.inserted++
+            RowOutcome.INSERTED
+        } catch (_: android.database.sqlite.SQLiteConstraintException) {
+            // Conflito de índice único (ex.: mesmo par em uma tabela de junção).
+            if (oldId != null) mapping[oldId] = null
+            tally.skipped++
+            RowOutcome.SKIPPED
+        }
+    }
+
+    private fun readBackupRows(db: SQLiteDatabase, table: String): List<BackupRow> {
+        val rows = ArrayList<BackupRow>()
+        db.rawQuery("SELECT * FROM \"$table\"", null).use { cursor ->
+            val columns = cursor.columnNames
+            while (cursor.moveToNext()) {
+                val values = LinkedHashMap<String, Any?>(columns.size)
+                columns.forEachIndexed { index, column ->
+                    values[column] = when (cursor.getType(index)) {
+                        Cursor.FIELD_TYPE_NULL -> null
+                        Cursor.FIELD_TYPE_INTEGER -> cursor.getLong(index)
+                        Cursor.FIELD_TYPE_FLOAT -> cursor.getDouble(index)
+                        Cursor.FIELD_TYPE_BLOB -> cursor.getBlob(index)
+                        else -> cursor.getString(index)
+                    }
+                }
+                rows += BackupRow(values)
+            }
+        }
+        return rows
+    }
+
+    private fun findLiveValue(
+        db: SQLiteDatabase,
+        table: String,
+        columns: List<String>,
+        values: Map<String, Any?>,
+    ): String? {
+        val selection = columns.joinToString(" AND ") { "\"$it\" IS ?" }
+        val args = columns.map { values[it]?.toString() }.toTypedArray()
+        db.rawQuery("SELECT \"id\" FROM \"$table\" WHERE $selection LIMIT 1", args).use { cursor ->
+            return if (cursor.moveToFirst()) cursor.getString(0) else null
+        }
+    }
+
+    private fun existsWithKey(
+        db: SQLiteDatabase,
+        table: String,
+        column: String,
+        value: String,
+    ): Boolean = db.rawQuery(
+        "SELECT 1 FROM \"$table\" WHERE \"$column\" = ? LIMIT 1",
+        arrayOf(value),
+    ).use { it.moveToFirst() }
+
+    /** Chaves estrangeiras da tabela, em cache para não repetir o PRAGMA por linha. */
+    private fun foreignKeys(db: SQLiteDatabase, table: String): List<Pair<String, String>> {
+        foreignKeyCache[table]?.let { return it }
+        val keys = mutableListOf<Pair<String, String>>()
+        db.rawQuery("PRAGMA foreign_key_list(\"$table\")", null).use { cursor ->
+            while (cursor.moveToNext()) {
+                val parent = cursor.getString(cursor.getColumnIndexOrThrow("table"))
+                val from = cursor.getString(cursor.getColumnIndexOrThrow("from"))
+                keys += from to parent
+            }
+        }
+        foreignKeyCache[table] = keys
+        return keys
+    }
+
+    private fun copyNewImages(source: File?, targetRoot: File) {
+        if (source == null || !source.isDirectory) return
+        source.walkTopDown().filter { it.isFile }.forEach { file ->
+            val destination = File(targetRoot, file.relativeTo(source).path)
+            if (!destination.exists()) {
+                destination.parentFile?.mkdirs()
+                file.copyTo(destination, overwrite = false)
+            }
+        }
+    }
+
+    private fun countFiles(root: File): Int =
+        if (root.isDirectory) root.walkTopDown().count { it.isFile } else 0
+
+    private fun recordMerge(db: SQLiteDatabase, packageName: String, outcome: MergeOutcome) {
+        val at = clock.millis()
+        outcome.skippedExemplars.forEach { code ->
+            insertHistory(
+                db = db,
+                entityType = "exemplar",
+                entityId = code,
+                oldValue = null,
+                newValue = "mantido atual (código já existia)",
+                at = at,
+            )
+        }
+        insertHistory(
+            db = db,
+            entityType = "backup",
+            entityId = packageName,
+            oldValue = null,
+            newValue = "mesclar: inseridos=${outcome.inserted}; mantidos=${outcome.kept}; " +
+                "ignorados=${outcome.skipped}",
+            at = at,
+        )
+    }
+
+    private fun insertHistory(
+        db: SQLiteDatabase,
+        entityType: String,
+        entityId: String,
+        oldValue: String?,
+        newValue: String,
+        at: Long,
+    ) {
+        db.execSQL(
+            "INSERT INTO \"history_entry\" (id, entity_type, entity_id, field, old_value, new_value, at, source) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            arrayOf(
+                UUID.randomUUID().toString(),
+                entityType,
+                entityId,
+                "merge",
+                oldValue,
+                newValue,
+                at,
+                "restore:merge",
+            ),
+        )
+    }
+
     /** Checkpoint antes de copiar: sem isso o arquivo principal não tem tudo que foi escrito. */
     private fun checkpoint() {
         runCatching {
@@ -248,8 +564,10 @@ public class FileBackupService @Inject constructor(
 
     private fun walOf(workspace: File): File? = File(workspace, "hotwheels.db-wal").takeIf { it.isFile }
 
-    private fun readCounts(snapshot: File): Map<String, Int> =
-        SQLiteDatabase.openDatabase(snapshot.path, null, SQLiteDatabase.OPEN_READONLY).use { db ->
+    private fun readCounts(snapshot: File): Map<String, Int> = readCounts(snapshot.path)
+
+    private fun readCounts(path: String): Map<String, Int> =
+        SQLiteDatabase.openDatabase(path, null, SQLiteDatabase.OPEN_READONLY).use { db ->
             TABLES.associateWith { table ->
                 db.rawQuery("SELECT COUNT(*) FROM \"$table\"", null).use { cursor ->
                     if (cursor.moveToFirst()) cursor.getInt(0) else 0
@@ -639,5 +957,31 @@ public class FileBackupService @Inject constructor(
 
         /** Tabelas exportadas em JSON/CSV; `search_index` é derivado e fica de fora. */
         val EXPORT_TABLES: List<String> = TABLES.filter { it != "search_index" }
+
+        /** Ordem topológica usada no modo mesclar: pais antes dos filhos. */
+        val MERGE_ORDER: List<String> = listOf(
+            "manufacturer", "brand", "real_vehicle", "color", "car_model", "series",
+            "location", "variant", "variant_secondary_color", "exemplar", "photo",
+            "acquisition", "valuation", "movement", "collection", "collection_item",
+            "wishlist_item", "negotiation", "negotiation_event", "recognition_result",
+            "history_entry", "app_setting", "duplicate_offer",
+        )
+
+        /** Colunas da chave primária de cada tabela (só as que importam ao mesclar). */
+        val PRIMARY_KEYS: Map<String, List<String>> = mapOf(
+            "variant_secondary_color" to listOf("variant_id", "color_id"),
+            "app_setting" to listOf("key"),
+        ).withDefault { listOf("id") }
+
+        /**
+         * Chave natural das entidades de catálogo: se já existir no banco atual, a linha do
+         * backup é mapeada para a existente em vez de duplicada.
+         */
+        val NATURAL_KEYS: Map<String, List<String>> = mapOf(
+            "manufacturer" to listOf("name"),
+            "brand" to listOf("manufacturer_id", "name"),
+            "color" to listOf("name"),
+            "car_model" to listOf("manufacturer_id", "name", "scale"),
+        )
     }
 }

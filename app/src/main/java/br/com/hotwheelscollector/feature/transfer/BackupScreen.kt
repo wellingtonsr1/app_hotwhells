@@ -67,6 +67,7 @@ public fun BackupScreen(
         onCreate = { createLauncher.launch(defaultBackupName()) },
         onPick = { openLauncher.launch(arrayOf(ZIP_MIME, "application/octet-stream")) },
         onConfirmRestore = viewModel::confirmRestore,
+        onConfirmMerge = viewModel::confirmMerge,
         onDismissPending = viewModel::dismissPending,
         onDismissMessage = viewModel::clearMessage,
         onRestart = { restart(context) },
@@ -81,6 +82,7 @@ internal fun BackupContent(
     onCreate: () -> Unit,
     onPick: () -> Unit,
     onConfirmRestore: () -> Unit,
+    onConfirmMerge: () -> Unit,
     onDismissPending: () -> Unit,
     onDismissMessage: () -> Unit,
     onRestart: () -> Unit,
@@ -177,6 +179,37 @@ internal fun BackupContent(
             }
         }
 
+        state.merged?.let { summary ->
+            Card {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.backup_merged_title),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    CountsText(
+                        exemplars = summary.counts["exemplar"] ?: 0,
+                        photos = summary.imageCount,
+                    )
+                    Text(
+                        text = stringResource(R.string.backup_merged_body),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Button(
+                        onClick = onRestart,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.backup_restart))
+                    }
+                    TextButton(onClick = onDismissMessage) {
+                        Text(stringResource(R.string.backup_dismiss))
+                    }
+                }
+            }
+        }
+
         state.restored?.let { summary ->
             Card {
                 Column(
@@ -245,8 +278,13 @@ internal fun BackupContent(
                 }
             },
             confirmButton = {
-                TextButton(onClick = onConfirmRestore) {
-                    Text(stringResource(R.string.backup_confirm_action))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = onConfirmMerge) {
+                        Text(stringResource(R.string.backup_merge_action))
+                    }
+                    TextButton(onClick = onConfirmRestore) {
+                        Text(stringResource(R.string.backup_confirm_action))
+                    }
                 }
             },
             dismissButton = {

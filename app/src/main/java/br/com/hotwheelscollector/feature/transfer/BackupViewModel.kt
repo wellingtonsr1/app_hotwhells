@@ -8,6 +8,7 @@ import br.com.hotwheelscollector.domain.backup.BackupException
 import br.com.hotwheelscollector.domain.backup.BackupFailure
 import br.com.hotwheelscollector.domain.backup.BackupService
 import br.com.hotwheelscollector.domain.backup.BackupSummary
+import br.com.hotwheelscollector.domain.backup.RestoreMode
 import br.com.hotwheelscollector.domain.backup.ValidatedBackup
 import br.com.hotwheelscollector.feature.settings.BackupReminderStore
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,6 +41,7 @@ public class BackupViewModel @Inject constructor(
         val created: BackupSummary? = null,
         val pending: ValidatedBackup? = null,
         val restored: BackupSummary? = null,
+        val merged: BackupSummary? = null,
         val failure: BackupFailure? = null,
         val failureDetail: String? = null,
     )
@@ -82,7 +84,14 @@ public class BackupViewModel @Inject constructor(
         if (_state.value.busy) return
         viewModelScope.launch {
             _state.update {
-                it.copy(busy = true, pending = null, restored = null, failure = null, failureDetail = null)
+                it.copy(
+                    busy = true,
+                    pending = null,
+                    restored = null,
+                    merged = null,
+                    failure = null,
+                    failureDetail = null,
+                )
             }
             val result = runCatching {
                 withContext(Dispatchers.IO) {
@@ -98,18 +107,33 @@ public class BackupViewModel @Inject constructor(
         }
     }
 
-    /** Só depois da confirmação explícita (FR-163). */
+    /** Só depois da confirmação explícita (FR-163): substitui tudo pelo backup. */
     public fun confirmRestore() {
+        restore(RestoreMode.REPLACE)
+    }
+
+    /** Mescla os dois lados sem sobrescrever nada (FR-144). */
+    public fun confirmMerge() {
+        restore(RestoreMode.MERGE)
+    }
+
+    private fun restore(mode: RestoreMode) {
         val pending = _state.value.pending ?: return
         if (_state.value.busy) return
         viewModelScope.launch {
             _state.update { it.copy(busy = true, pending = null) }
             val result = runCatching {
-                withContext(Dispatchers.IO) { backupService.restore(pending.file) }
+                withContext(Dispatchers.IO) { backupService.restore(pending.file, mode) }
             }
             _state.update { current ->
                 result.fold(
-                    onSuccess = { current.copy(busy = false, restored = it) },
+                    onSuccess = { summary ->
+                        if (mode == RestoreMode.MERGE) {
+                            current.copy(busy = false, merged = summary)
+                        } else {
+                            current.copy(busy = false, restored = summary)
+                        }
+                    },
                     onFailure = { current.fail(it) },
                 )
             }
@@ -121,7 +145,9 @@ public class BackupViewModel @Inject constructor(
     }
 
     public fun clearMessage() {
-        _state.update { it.copy(failure = null, failureDetail = null, created = null) }
+        _state.update {
+            it.copy(failure = null, failureDetail = null, created = null, merged = null)
+        }
     }
 
     private fun copyToCache(source: Uri): File {

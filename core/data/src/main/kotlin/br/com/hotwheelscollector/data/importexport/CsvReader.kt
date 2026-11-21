@@ -59,13 +59,18 @@ public object CsvReader {
         return CsvDocument(headers = headers, rows = rows, delimiter = delimiter, hadBom = hadBom)
     }
 
-    /** Minúsculas, sem acentos e com espaços normalizados (contrato, seção "Colunas"). */
+    /**
+     * Minúsculas, sem acentos e com espaços vira sublinhado (contrato, seção "Colunas"):
+     * `Ano Lançamento` e `ano_lancamento` chegam ao mesmo campo.
+     */
     public fun normalizeHeader(raw: String): String {
         val trimmed = raw.trim()
         if (trimmed.isEmpty()) return ""
         val withoutAccents = Normalizer.normalize(trimmed, Normalizer.Form.NFD)
             .replace(Regex("\\p{M}+"), "")
-        return withoutAccents.lowercase().replace(Regex("\\s+"), " ").trim()
+        return withoutAccents.lowercase()
+            .replace(Regex("\\s+"), "_")
+            .trim('_')
     }
 
     private data class RawRecord(val startLine: Int, val fields: List<String>)

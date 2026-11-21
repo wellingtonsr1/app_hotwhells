@@ -4,7 +4,8 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import br.com.hotwheelscollector.data.importexport.PdfReportResult
+import br.com.hotwheelscollector.data.importexport.ReportFormat
+import br.com.hotwheelscollector.data.repository.InventoryReport
 import br.com.hotwheelscollector.data.repository.ReportsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -17,7 +18,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Relatórios (T118): gera o PDF do inventário e grava no destino escolhido via SAF.
+ * Relatórios (T118/T116): gera o inventário em PDF, CSV ou XLSX e grava no destino
+ * escolhido via SAF.
  *
  * Mesmo padrão do backup: o arquivo só é escrito no `Uri` devolvido pelo seletor de
  * arquivos, em `Dispatchers.IO`, e a tela mostra progresso e resultado.
@@ -30,25 +32,25 @@ public class ReportsViewModel @Inject constructor(
 
     public data class State(
         val busy: Boolean = false,
-        val created: PdfReportResult? = null,
+        val created: InventoryReport? = null,
         val failure: String? = null,
     )
 
     private val _state: MutableStateFlow<State> = MutableStateFlow(State())
     public val state: StateFlow<State> = _state.asStateFlow()
 
-    /** Gera o PDF do inventário e escreve direto no destino escolhido (SAF). */
-    public fun generate(target: Uri) {
+    /** Gera o relatório no [format] pedido e escreve direto no destino escolhido (SAF). */
+    public fun generate(target: Uri, format: ReportFormat) {
         if (_state.value.busy) return
         viewModelScope.launch {
             _state.value = State(busy = true)
             val result = runCatching {
                 withContext(Dispatchers.IO) {
-                    val pdf = reportsRepository.buildInventoryPdf()
+                    val report = reportsRepository.buildInventoryReport(format)
                     val output = context.contentResolver.openOutputStream(target)
                         ?: throw IllegalStateException("Não foi possível abrir o destino escolhido.")
-                    output.use { stream -> stream.write(pdf.bytes) }
-                    pdf
+                    output.use { stream -> stream.write(report.bytes) }
+                    report
                 }
             }
             _state.value = result.fold(

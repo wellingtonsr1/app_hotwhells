@@ -56,6 +56,15 @@ public class BackupException(
     cause: Throwable? = null,
 ) : Exception(message, cause)
 
+/** Como o pacote é aplicado sobre os dados atuais (contrato, "Modos de restauração"). */
+public enum class RestoreMode {
+    /** Apaga o banco atual e grava o backup (primeiro uso em aparelho novo). */
+    REPLACE,
+
+    /** Mantém os dois lados, sem sobrescrever nada silenciosamente (FR-144). */
+    MERGE,
+}
+
 /**
  * Backup manual (FR-140–FR-145, T119): pacote autocontido com o banco, as fotos e um
  * manifesto verificável.
@@ -78,5 +87,8 @@ public interface BackupService {
 
     public suspend fun inspect(packageFile: File): ValidatedBackup
 
-    public suspend fun restore(packageFile: File): BackupSummary
+    public suspend fun restore(
+        packageFile: File,
+        mode: RestoreMode = RestoreMode.REPLACE,
+    ): BackupSummary
 }

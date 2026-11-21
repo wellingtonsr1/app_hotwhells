@@ -97,7 +97,8 @@ public object CsvImportPipeline {
         existingInternalCodes: Set<String>,
         seenCodes: MutableSet<String>,
     ): ImportRowResult {
-        val values = row.values
+        // Colunas desconhecidas são avisadas na pré-visualização e ignoradas aqui (contrato).
+        val values = row.values.filterKeys { it in KNOWN_COLUMNS }
         val problems = ArrayList<ImportProblem>()
 
         fun problem(field: String, code: ImportErrorCode, message: String, value: String = values[field].orEmpty()) {

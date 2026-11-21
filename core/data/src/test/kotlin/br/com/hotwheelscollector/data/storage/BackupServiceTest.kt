@@ -12,6 +12,7 @@ import br.com.hotwheelscollector.data.db.entity.PhotoEntity
 import br.com.hotwheelscollector.data.db.entity.VariantEntity
 import br.com.hotwheelscollector.domain.backup.BackupException
 import br.com.hotwheelscollector.domain.backup.BackupFailure
+import br.com.hotwheelscollector.domain.backup.RestoreMode
 import com.google.common.truth.Truth.assertThat
 import java.io.File
 import java.time.Clock
@@ -166,6 +167,67 @@ public class BackupServiceTest {
         val failure = runCatching { service.inspect(newer) }.exceptionOrNull()
 
         assertThat((failure as BackupException).failure).isEqualTo(BackupFailure.NEWER_SCHEMA)
+    }
+
+    @Test
+    public fun mesclarJuntaOsDoisLadosSemSobrescrever() = runBlocking {
+        val packageFile = createPackage()
+
+        // Depois do backup o usuário apagou o exemplar original e cadastrou outro.
+        database.photoDao().delete("p1")
+        database.exemplarDao().deleteById("e1")
+        database.exemplarDao().insert(
+            ExemplarEntity(
+                id = "e2",
+                variantId = "v1",
+                internalCode = "HW-0002",
+                condition = "LOOSE",
+                packagingCondition = null,
+                locationId = null,
+                status = "OWNED",
+                notes = null,
+                rowVersion = 0,
+                createdAt = 0,
+                updatedAt = 0,
+            ),
+        )
+        context.filesDir.resolve("images").deleteRecursively()
+
+        val summary = service.restore(packageFile, RestoreMode.MERGE)
+
+        // Os dois lados continuam lá: nada foi apagado nem sobrescrito.
+        assertThat(database.exemplarDao().countAll()).isEqualTo(2)
+        assertThat(database.exemplarDao().findById("e2")?.internalCode).isEqualTo("HW-0002")
+        assertThat(database.exemplarDao().findById("e1")?.internalCode).isEqualTo("HW-0001")
+        assertThat(database.photoDao().findById("p1")?.path).isEqualTo(imagePath)
+        assertThat(context.filesDir.resolve(imagePath).readBytes()).isEqualTo(ORIGINAL_IMAGE)
+        assertThat(summary.counts["exemplar"]).isEqualTo(2)
+
+        // Fabricante com o mesmo nome é reaproveitado, não duplicado.
+        val manufacturers = database.openHelper.readableDatabase
+            .query("SELECT COUNT(*) FROM manufacturer")
+            .use { cursor -> cursor.moveToFirst(); cursor.getInt(0) }
+        assertThat(manufacturers).isEqualTo(1)
+
+        val decisions = database.openHelper.readableDatabase
+            .query("SELECT COUNT(*) FROM history_entry WHERE source = 'restore:merge'")
+            .use { cursor -> cursor.moveToFirst(); cursor.getInt(0) }
+        assertThat(decisions).isAtLeast(1)
+    }
+
+    @Test
+    public fun mesclarDuasVezesNaoDuplicaItens() = runBlocking {
+        val packageFile = createPackage()
+
+        database.photoDao().delete("p1")
+        database.exemplarDao().deleteById("e1")
+
+        service.restore(packageFile, RestoreMode.MERGE)
+        service.restore(packageFile, RestoreMode.MERGE)
+
+        // O código interno já existente é mantido; a segunda mesclagem não insere de novo.
+        assertThat(database.exemplarDao().countAll()).isEqualTo(1)
+        assertThat(database.photoDao().countByExemplar("e1")).isEqualTo(1)
     }
 
     @Test

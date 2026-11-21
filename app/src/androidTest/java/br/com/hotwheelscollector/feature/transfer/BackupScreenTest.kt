@@ -46,6 +46,7 @@ class BackupScreenTest {
                     onCreate = {},
                     onPick = {},
                     onConfirmRestore = { confirmed = true },
+                    onConfirmMerge = {},
                     onDismissPending = {},
                     onDismissMessage = {},
                     onRestart = {},
@@ -53,14 +54,14 @@ class BackupScreenTest {
             }
         }
 
-        composeRule.onNodeWithText("Substituir os dados atuais?").assertIsDisplayed()
+        composeRule.onNodeWithText("Como aplicar este backup?").assertIsDisplayed()
         composeRule.onNodeWithText("Criado em", substring = true).assertIsDisplayed()
         composeRule.onNodeWithText("Aparelho de origem: samsung SM-A546E").assertIsDisplayed()
         composeRule.onNodeWithText("3 exemplares · 2 fotos").assertIsDisplayed()
         composeRule.onNodeWithText("Tamanho: 2,4 MB").assertIsDisplayed()
         assertTrue(!confirmed)
 
-        composeRule.onNodeWithText("Restaurar").performClick()
+        composeRule.onNodeWithText("Substituir").performClick()
         assertTrue(confirmed)
     }
 
@@ -77,6 +78,7 @@ class BackupScreenTest {
                     onCreate = {},
                     onPick = {},
                     onConfirmRestore = {},
+                    onConfirmMerge = {},
                     onDismissPending = {},
                     onDismissMessage = {},
                     onRestart = {},

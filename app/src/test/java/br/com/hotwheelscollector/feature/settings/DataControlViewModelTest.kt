@@ -2,6 +2,7 @@ package br.com.hotwheelscollector.feature.settings
 
 import br.com.hotwheelscollector.domain.backup.BackupService
 import br.com.hotwheelscollector.domain.backup.BackupSummary
+import br.com.hotwheelscollector.domain.backup.RestoreMode
 import br.com.hotwheelscollector.domain.backup.ValidatedBackup
 import br.com.hotwheelscollector.domain.error.DomainError
 import br.com.hotwheelscollector.domain.error.DomainResult
@@ -183,6 +184,9 @@ private class FakeBackupService : BackupService {
     override suspend fun inspect(packageFile: File): ValidatedBackup =
         throw UnsupportedOperationException("Não usado na exportação.")
 
-    override suspend fun restore(packageFile: File): BackupSummary =
+    override suspend fun restore(
+        packageFile: File,
+        mode: RestoreMode,
+    ): BackupSummary =
         throw UnsupportedOperationException("Não usado na exportação.")
 }
