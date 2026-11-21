@@ -22,6 +22,15 @@ public data class VariantSummaryRow(
     @ColumnInfo(name = "exemplar_count") val exemplarCount: Int,
 )
 
+/** Projeção do relatório de inventário: exemplar com modelo, variante e contagem de fotos. */
+public data class InventoryReportRow(
+    @ColumnInfo(name = "internal_code") val internalCode: String,
+    @ColumnInfo(name = "model_name") val modelName: String,
+    @ColumnInfo(name = "variant_label") val variantLabel: String?,
+    @ColumnInfo(name = "exemplar_condition") val condition: String,
+    @ColumnInfo(name = "photo_count") val photoCount: Int,
+)
+
 /** Projeção de variante com campo faltando: o outro caso de FR-029. */
 public data class IncompleteVariantRow(
     @ColumnInfo(name = "variant_id") val variantId: String,
@@ -132,11 +141,36 @@ public interface ExemplarDao {
     @Query("SELECT * FROM exemplar WHERE internal_code = :code LIMIT 1")
     public suspend fun findByInternalCode(code: String): ExemplarEntity?
 
+    /**
+     * Linhas do relatório de inventário (T118): exemplares possuídos com o modelo, a cor da
+     * variante e a contagem de fotos, já resolvidos na consulta (sem N+1).
+     */
+    @Query(
+        """
+        SELECT e.internal_code AS internal_code,
+               m.name AS model_name,
+               c.name AS variant_label,
+               e.condition AS exemplar_condition,
+               (SELECT COUNT(*) FROM photo p WHERE p.exemplar_id = e.id) AS photo_count
+        FROM exemplar e
+        JOIN variant v ON v.id = e.variant_id
+        JOIN car_model m ON m.id = v.model_id
+        LEFT JOIN color c ON c.id = v.primary_color_id
+        WHERE e.status = 'OWNED'
+        ORDER BY m.name COLLATE NOCASE, e.internal_code
+        """,
+    )
+    public suspend fun inventoryReportRows(): List<InventoryReportRow>
+
     @Query("SELECT COUNT(*) FROM exemplar WHERE variant_id = :variantId AND status = 'OWNED'")
     public suspend fun countByVariant(variantId: String): Int
 
     @Query("SELECT COUNT(*) FROM exemplar")
     public suspend fun countAll(): Int
+
+    /** Códigos internos já existentes, para a importação detectar duplicata (FR-138). */
+    @Query("SELECT internal_code FROM exemplar")
+    public suspend fun allInternalCodes(): List<String>
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun insert(entity: ExemplarEntity)

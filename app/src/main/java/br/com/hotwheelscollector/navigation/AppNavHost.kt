@@ -56,7 +56,9 @@ import br.com.hotwheelscollector.feature.settings.AboutScreen
 import br.com.hotwheelscollector.feature.settings.DataControlRoute
 import br.com.hotwheelscollector.feature.settings.PrivacyPolicyScreen
 import br.com.hotwheelscollector.feature.settings.SettingsRoute
+import br.com.hotwheelscollector.feature.reports.ReportsScreen
 import br.com.hotwheelscollector.feature.transfer.BackupScreen
+import br.com.hotwheelscollector.feature.transfer.ImportScreen
 import br.com.hotwheelscollector.feature.wishlist.WishlistFormScreen
 import br.com.hotwheelscollector.feature.wishlist.WishlistScreen
 
@@ -184,6 +186,12 @@ public sealed class Destination(public val route: String) {
 
     /** Backup manual: pacote com banco, fotos e manifesto (T119/T120). */
     public data object Backup : Destination("settings/backup")
+
+    /** Relatórios em PDF gerados no aparelho (T118, FR-126–FR-128). */
+    public data object Reports : Destination("settings/reports")
+
+    /** Importação de CSV com pré-visualização (T115, FR-134–FR-139). */
+    public data object Import : Destination("settings/import")
 
     /** Exportação aberta e exclusão total dos dados do aparelho (T146). */
     public data object DataControl : Destination("settings/data")
@@ -513,10 +521,18 @@ public fun AppNavHost(
                     onLocations = { navController.navigate(Destination.Locations.route) },
                     onBackup = { navController.navigate(Destination.Backup.route) },
                     onDataControl = { navController.navigate(Destination.DataControl.route) },
+                    onReports = { navController.navigate(Destination.Reports.route) },
+                    onImport = { navController.navigate(Destination.Import.route) },
                 )
             }
             composable(Destination.Backup.route) {
                 BackupScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Destination.Reports.route) {
+                ReportsScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Destination.Import.route) {
+                ImportScreen(onBack = { navController.popBackStack() })
             }
             composable(Destination.DataControl.route) {
                 DataControlRoute(onBack = { navController.popBackStack() })

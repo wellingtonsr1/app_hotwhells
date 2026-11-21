@@ -47,6 +47,8 @@ public fun SettingsRoute(
     onLocations: () -> Unit,
     onBackup: () -> Unit,
     onDataControl: () -> Unit,
+    onReports: () -> Unit,
+    onImport: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -57,6 +59,8 @@ public fun SettingsRoute(
         onLocations = onLocations,
         onBackup = onBackup,
         onDataControl = onDataControl,
+        onReports = onReports,
+        onImport = onImport,
         modifier = modifier,
         reminder = reminder,
         onIntervalChange = viewModel::setIntervalDays,
@@ -71,6 +75,8 @@ public fun SettingsScreen(
     onLocations: () -> Unit = {},
     onBackup: () -> Unit = {},
     onDataControl: () -> Unit = {},
+    onReports: () -> Unit = {},
+    onImport: () -> Unit = {},
     reminder: BackupReminder? = null,
     onIntervalChange: (Int) -> Unit = {},
     now: Instant = Instant.now(),
@@ -112,6 +118,16 @@ public fun SettingsScreen(
             title = stringResource(R.string.settings_backup),
             subtitle = stringResource(R.string.settings_backup_subtitle),
             onClick = onBackup,
+        )
+        SettingsRow(
+            title = stringResource(R.string.reports_open),
+            subtitle = stringResource(R.string.reports_open_subtitle),
+            onClick = onReports,
+        )
+        SettingsRow(
+            title = stringResource(R.string.import_open),
+            subtitle = stringResource(R.string.import_open_subtitle),
+            onClick = onImport,
         )
         SettingsRow(
             title = stringResource(R.string.settings_data_control),
