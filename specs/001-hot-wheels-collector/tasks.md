@@ -1261,10 +1261,10 @@ com dupla confirmação segue na T146.
 
 ### Implementation for User Story 11
 
-- [ ] T123 [US11] Definir `RecognitionProvider` (sugestões com confiança e origem, sem efeito colateral) em `core/domain/.../domain/recognition/RecognitionProvider.kt`
+- [X] T123 [US11] Definir `RecognitionProvider` (sugestões com confiança e origem, sem efeito colateral) em `core/domain/.../domain/recognition/RecognitionProvider.kt` — **concluída (2026-11-21)**: `RecognitionSuggestion`/`RecognitionProposal` com confiança 0–1, limiar 0,6 (`of` filtra e ordena; `unidentified` não infere), entrada `Image`/`Barcode` e interface pura; `RecognitionSource.CATALOG` adicionado para a origem da correspondência
 - [ ] T124 [US11] Implementar provedor ML Kit `barcode-scanning` on-device em `core/data/.../recognition/MlKitBarcodeProvider.kt`
 - [ ] T125 [US11] Implementar provedor ML Kit `text-recognition` (OCR de embalagem) on-device em `core/data/.../recognition/MlKitTextProvider.kt`
-- [ ] T126 [US11] Implementar busca de correspondências no catálogo local (até 5, ordenadas por confiança) em `core/domain/.../usecase/FindCatalogMatchesUseCase.kt`
+- [X] T126 [US11] Implementar busca de correspondências no catálogo local (até 5, ordenadas por confiança) em `core/domain/.../usecase/FindCatalogMatchesUseCase.kt` — **concluída (2026-11-21)**: consulta o índice textual por cada sugestão, pontua por semelhança normalizada (sem acento), deduplica por variante, inclui itens fora do acervo ativo e devolve até 5 `CatalogMatch` com confiança, campos casados e origem; 8 testes em `FindCatalogMatchesUseCaseTest`
 - [ ] T127 [US11] Implementar tela de revisão com aceite/rejeição campo a campo (FR-104) em `app/.../feature/recognition/RecognitionReviewSheet.kt`
 - [ ] T128 [US11] Implementar fluxo de código de barras: correspondência, conferência, aproveitar dados e guardar código sem criar exemplar (FR-110–FR-113) em `app/.../feature/recognition/BarcodeScanScreen.kt`
 - [ ] T129 [US11] Persistir `recognition_result` com `applied_fields` e garantir degradação sem permissão de câmera (FR-108) em `app/.../feature/recognition/RecognitionViewModel.kt`

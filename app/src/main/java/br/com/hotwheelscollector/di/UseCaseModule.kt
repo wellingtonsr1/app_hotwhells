@@ -7,6 +7,7 @@ import br.com.hotwheelscollector.domain.repository.ExemplarRepository
 import br.com.hotwheelscollector.domain.repository.FinanceRepository
 import br.com.hotwheelscollector.domain.repository.ManufacturerRepository
 import br.com.hotwheelscollector.domain.repository.NegotiationRepository
+import br.com.hotwheelscollector.domain.repository.SearchRepository
 import br.com.hotwheelscollector.domain.repository.VariantRepository
 import br.com.hotwheelscollector.domain.usecase.AddExemplarUseCase
 import br.com.hotwheelscollector.domain.usecase.CloseSaleUseCase
@@ -17,6 +18,7 @@ import br.com.hotwheelscollector.domain.usecase.CreateModelUseCase
 import br.com.hotwheelscollector.domain.usecase.CreateVariantUseCase
 import br.com.hotwheelscollector.domain.usecase.UpdateVariantUseCase
 import br.com.hotwheelscollector.domain.usecase.FinancialHistoryUseCase
+import br.com.hotwheelscollector.domain.usecase.FindCatalogMatchesUseCase
 import br.com.hotwheelscollector.domain.usecase.GetDuplicatesUseCase
 import br.com.hotwheelscollector.domain.usecase.MissingItemsUseCase
 import dagger.Module
@@ -105,4 +107,10 @@ public object UseCaseModule {
     public fun provideFinancialHistoryUseCase(
         financeRepository: FinanceRepository,
     ): FinancialHistoryUseCase = FinancialHistoryUseCase(financeRepository)
+
+    @Provides
+    @Singleton
+    public fun provideFindCatalogMatchesUseCase(
+        searchRepository: SearchRepository,
+    ): FindCatalogMatchesUseCase = FindCatalogMatchesUseCase(searchRepository)
 }

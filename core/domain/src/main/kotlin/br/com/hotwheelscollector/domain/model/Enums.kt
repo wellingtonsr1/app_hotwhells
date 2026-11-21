@@ -26,5 +26,10 @@ public enum class NegotiationStatus { OPEN, RESERVED, CLOSED, CANCELLED }
 
 public enum class WishlistStatus { WANTED, ACQUIRED, DISMISSED }
 
-/** Origem do reconhecimento assistido (FR-102). */
-public enum class RecognitionSource { PHOTO, OCR, BARCODE }
+/**
+ * Origem do reconhecimento assistido (FR-102) e da correspondência no catálogo (FR-110).
+ *
+ * `CATALOG` não é leitura nova: marca a correspondência encontrada no acervo local, para
+ * a tela poder mostrar de onde veio o dado.
+ */
+public enum class RecognitionSource { PHOTO, OCR, BARCODE, CATALOG }
