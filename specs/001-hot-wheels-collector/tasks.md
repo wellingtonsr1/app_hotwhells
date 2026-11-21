@@ -656,7 +656,7 @@ Decisões registradas nesta entrega:
 
 - [X] T056 [P] [US4] Teste de FTS com acentos, caixa e ordem parcial (`skyline r34` → uma variante da mesma frase) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/db/SearchIndexTest.kt`
 - [X] T057 [P] [US4] Teste de filtros combináveis (E entre categorias, múltipla escolha dentro da categoria) e contagem de resultados em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/SearchRepositoryTest.kt` e `app/src/androidTest/java/br/com/hotwheelscollector/feature/search/SearchScreenTest.kt`
-- [ ] T058 [P] [US4] Teste de desempenho com 10.000 exemplares (busca < 300 ms, lista < 1 s) em `app/src/androidTest/java/br/com/hotwheelscollector/perf/SearchPerformanceTest.kt` — **pendente**: sem medição, não há resultado a registrar
+- [ ] T058 [P] [US4] Teste de desempenho com 10.000 exemplares (busca < 300 ms, lista < 1 s) em `app/src/androidTest/java/br/com/hotwheelscollector/perf/SearchPerformanceTest.kt` — **parcial (2026-11-21)**: teste instrumentado implementado (10.000 exemplares, banco real, FTS pelos gatilhos) e compilando; falta rodar em aparelho — sem medição não há resultado a registrar
 
 ### Implementation for User Story 4
 
