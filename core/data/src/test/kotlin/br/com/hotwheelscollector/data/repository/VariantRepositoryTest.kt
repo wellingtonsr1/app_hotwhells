@@ -129,6 +129,38 @@ public class VariantRepositoryTest {
     }
 
     @Test
+    public fun `uniao move exemplares e arquiva a variante absorvida`() = runBlocking {
+        val model = newModel()
+        val target = newVariant(model.id, "fp-target")
+        val absorbed = newVariant(model.id, "fp-absorbed")
+        variants.create(target).getOrThrow()
+        variants.create(absorbed).getOrThrow()
+        val exemplars = database.exemplarDao()
+        exemplars.insert(
+            ExemplarEntity(
+                id = "exemplar-1",
+                variantId = absorbed.id,
+                internalCode = "HW-000001",
+                condition = "SEALED",
+                packagingCondition = null,
+                locationId = null,
+                status = "OWNED",
+                notes = null,
+                createdAt = now.toEpochMilli(),
+                updatedAt = now.toEpochMilli(),
+            ),
+        )
+
+        variants.mergeVariants(target.id, absorbed.id).getOrThrow()
+
+        assertThat(exemplars.countByVariant(target.id)).isEqualTo(1)
+        assertThat(exemplars.countByVariant(absorbed.id)).isEqualTo(0)
+        assertThat(variants.findById(absorbed.id)?.archivedAt).isNotNull()
+        assertThat(database.historyDao().observeFor("variant", target.id).first())
+            .isNotEmpty()
+    }
+
+    @Test
     public fun `edicao recusa variante identica a outra ativa`() = runBlocking {
         val model = newModel()
         val red = colors.findOrCreate("Vermelho", null).getOrThrow()

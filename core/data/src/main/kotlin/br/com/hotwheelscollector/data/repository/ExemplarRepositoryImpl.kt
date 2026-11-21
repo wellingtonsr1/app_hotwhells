@@ -214,6 +214,35 @@ public class ExemplarRepositoryImpl @Inject constructor(
         Result.failure(mapError(error))
     }
 
+    override suspend fun reassignVariant(id: String, toVariantId: String): DomainResult<Unit> = try {
+        transactionRunner.inTransaction {
+            val current = database.exemplarDao().findById(id)
+                ?: throw DomainError.NotFound
+            database.variantDao().findById(toVariantId)
+                ?: throw DomainError.Validation("Variante de destino não encontrada.")
+            val now = Instant.now(clock)
+            val updated = database.exemplarDao().setVariant(
+                id = id,
+                variantId = toVariantId,
+                updatedAt = now.toEpochMilli(),
+                expectedVersion = current.rowVersion,
+            )
+            if (updated == 0) throw DomainError.StaleWrite
+            auditLogWriter.record(
+                entityType = ENTITY_TYPE,
+                entityId = id,
+                field = "variant_id",
+                oldValue = current.variantId,
+                newValue = toVariantId,
+                source = "app",
+                at = now,
+            )
+        }
+        Result.success(Unit)
+    } catch (error: Throwable) {
+        Result.failure(mapError(error))
+    }
+
     override suspend fun countByVariant(variantId: String): Int =
         database.exemplarDao().countByVariant(variantId)
 

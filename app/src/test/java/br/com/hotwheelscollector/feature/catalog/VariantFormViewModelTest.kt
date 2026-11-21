@@ -26,6 +26,8 @@ import br.com.hotwheelscollector.domain.repository.SeriesRepository
 import br.com.hotwheelscollector.domain.repository.VariantRepository
 import br.com.hotwheelscollector.domain.usecase.AddExemplarUseCase
 import br.com.hotwheelscollector.domain.usecase.CreateVariantUseCase
+import br.com.hotwheelscollector.domain.usecase.MergeVariantsUseCase
+import br.com.hotwheelscollector.domain.usecase.SplitVariantUseCase
 import br.com.hotwheelscollector.domain.usecase.UpdateVariantUseCase
 import com.google.common.truth.Truth.assertThat
 import java.time.Clock
@@ -82,6 +84,9 @@ class VariantFormViewModelTest {
         seriesRepository = series,
         variants = variants,
         updateVariant = UpdateVariantUseCase(variants, fixedClock),
+        exemplarRepository = exemplars,
+        mergeVariants = MergeVariantsUseCase(variants),
+        splitVariant = SplitVariantUseCase(variants, exemplars),
     )
 
     @Test
@@ -279,6 +284,73 @@ class VariantFormViewModelTest {
     private companion object {
         const val MODEL_ID = "model-1"
     }
+    @Test
+    fun `arquivar variante fecha a tela e preserva os exemplares`() = runTest {
+        variants.editable = variantOf("variante-1")
+        colors.all += ColorItem(id = "color-vermelho", name = "Vermelho")
+        val model = viewModel()
+        model.loadForEdit("variante-1")
+
+        model.onArchive()
+
+        assertThat(variants.archiveCalls).isEqualTo(1)
+        assertThat(model.state.value.variantClosed).isTrue()
+        assertThat(model.state.value.message?.resId).isEqualTo(R.string.variant_archive_done)
+    }
+
+    @Test
+    fun `unir variante usa a variante de destino e fecha a tela`() = runTest {
+        variants.editable = variantOf("variante-1")
+        variants.sibling = variantOf("variante-2")
+        colors.all += ColorItem(id = "color-vermelho", name = "Vermelho")
+        val model = viewModel()
+        model.loadForEdit("variante-1")
+
+        model.onMergeInto("variante-2")
+
+        assertThat(variants.mergeCalls).isEqualTo(1)
+        assertThat(variants.lastMerge).isEqualTo("variante-2" to "variante-1")
+        assertThat(model.state.value.variantClosed).isTrue()
+        assertThat(model.state.value.message?.resId).isEqualTo(R.string.variant_merge_done)
+    }
+
+    @Test
+    fun `separar exemplares move apenas os marcados`() = runTest {
+        val variant = variantOf("variante-1")
+        variants.editable = variant
+        variants.sibling = variantOf("variante-2")
+        exemplars.found = Exemplar(
+            id = "exemplar-1",
+            variantId = variant.id,
+            internalCode = "HW-000001",
+            condition = Condition.LOOSE,
+            createdAt = Instant.parse("2026-01-01T00:00:00Z"),
+            updatedAt = Instant.parse("2026-01-01T00:00:00Z"),
+        )
+        colors.all += ColorItem(id = "color-vermelho", name = "Vermelho")
+        val model = viewModel()
+        model.loadForEdit("variante-1")
+
+        model.onToggleSplitExemplar("exemplar-1")
+        model.onSplitInto("variante-2")
+
+        assertThat(exemplars.reassignCalls).isEqualTo(1)
+        assertThat(exemplars.lastReassign).isEqualTo("exemplar-1" to "variante-2")
+        assertThat(model.state.value.message?.resId).isEqualTo(R.string.variant_split_done)
+    }
+
+    @Test
+    fun `foto repetida avisa sem bloquear e entra no formulario`() = runTest {
+        val model = viewModel()
+        val bytes = byteArrayOf(1, 2, 3)
+
+        model.onAddPhoto(bytes, PhotoAngle.FRONT)
+        model.onAddPhoto(bytes, PhotoAngle.BACK)
+
+        assertThat(model.state.value.photos).hasSize(2)
+        assertThat(model.state.value.message?.resId).isEqualTo(R.string.photo_duplicate_warning)
+    }
+
 }
 
 private fun variantOf(id: String): Variant = Variant(
@@ -343,14 +415,20 @@ private class FakeVariantRepository : VariantRepository {
     var lastCreated: Variant? = null
     var existingFingerprintVariant: Variant? = null
     var editable: Variant? = null
+    var sibling: Variant? = null
     var updated: Variant? = null
+    var archiveCalls: Int = 0
+    var mergeCalls: Int = 0
+    var lastMerge: Pair<String, String>? = null
 
     override fun observeSummaries(): Flow<List<VariantSummary>> = flowOf(emptyList())
 
     override fun observeByModel(modelId: String): Flow<List<Variant>> = flowOf(emptyList())
 
     override suspend fun findById(id: String): Variant? =
-        editable?.takeIf { it.id == id } ?: lastCreated?.takeIf { it.id == id }
+        editable?.takeIf { it.id == id }
+            ?: sibling?.takeIf { it.id == id }
+            ?: lastCreated?.takeIf { it.id == id }
 
     override suspend fun findActiveByFingerprint(fingerprint: String): Variant? =
         existingFingerprintVariant
@@ -366,22 +444,31 @@ private class FakeVariantRepository : VariantRepository {
         return Result.success(variant)
     }
 
-    override suspend fun archive(id: String): DomainResult<Unit> = Result.success(Unit)
+    override suspend fun archive(id: String): DomainResult<Unit> {
+        archiveCalls++
+        return Result.success(Unit)
+    }
 
-    override suspend fun mergeVariants(targetId: String, absorbedId: String): DomainResult<Unit> =
-        Result.success(Unit)
+    override suspend fun mergeVariants(targetId: String, absorbedId: String): DomainResult<Unit> {
+        mergeCalls++
+        lastMerge = targetId to absorbedId
+        return Result.success(Unit)
+    }
 }
 
 private class FakeExemplarRepository : ExemplarRepository {
 
     var addCalls: Int = 0
     var lastDraft: NewExemplar? = null
+    var found: Exemplar? = null
+    var reassignCalls: Int = 0
+    var lastReassign: Pair<String, String>? = null
 
     override fun observeOwned(): Flow<List<Exemplar>> = flowOf(emptyList())
 
     override fun observeByVariant(variantId: String): Flow<List<Exemplar>> = flowOf(emptyList())
 
-    override suspend fun findById(id: String): Exemplar? = null
+    override suspend fun findById(id: String): Exemplar? = found?.takeIf { it.id == id }
 
     override suspend fun add(draft: NewExemplar): DomainResult<AddExemplarOutcome> {
         addCalls++
@@ -413,6 +500,12 @@ private class FakeExemplarRepository : ExemplarRepository {
 
     override suspend fun move(id: String, toLocationId: String?, note: String?): DomainResult<Unit> =
         Result.success(Unit)
+
+    override suspend fun reassignVariant(id: String, toVariantId: String): DomainResult<Unit> {
+        reassignCalls++
+        lastReassign = id to toVariantId
+        return Result.success(Unit)
+    }
 
     override suspend fun countByVariant(variantId: String): Int = 0
 

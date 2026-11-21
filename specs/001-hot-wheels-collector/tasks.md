@@ -1805,3 +1805,53 @@ e, no caso de ML Kit, nada muda no esquema atual até a fase começar.
 3. T149, T130, T150 — robustez e conformidade com a constituição.
 4. T147, T148, T139, T140, T131, T058 — higiene e evidência.
 5. Bloco B por decisão; bloco C só por decisão.
+
+## Phase 15: Convergence
+
+Achados da convergência de 2026-11-21 (spec ↔ plano ↔ tarefas ↔ código). A T134 (FR-150)
+continua aberta e não foi duplicada aqui.
+
+- [X] T154 [US2] Implementar exclusão e arquivamento **de variante** na interface, com confirmação que descreve o efeito e oferta de arquivamento quando houver dependentes, reutilizando o padrão de `DeleteOrArchiveSheet` (FR-028, T141; `partial`) — **concluída (2026-11-21)**: ação «Arquivar variante» em `VariantEditScreen`, com diálogo que descreve a preservação de exemplares/fotos/histórico; ver «Evidências — Fase 15»
+- [X] T155 [US2] Ligar `MergeVariantsUseCase` a um fluxo de tela para unir variantes duplicadas, preservando exemplares, fotos e históricos (FR-041; `partial`) — **concluída (2026-11-21)**: diálogo escolhe outra variante ativa do mesmo modelo e delega à transação do repositório; o caso de uso foi corrigido (antes chamava `move` de localização)
+- [X] T156 [US2] Ligar `SplitVariantUseCase` a um fluxo de tela para separar exemplares em outra variante, escolhendo os exemplares a mover (FR-042; `partial`) — **concluída (2026-11-21)**: diálogo marca exemplares e escolhe o destino; o caso de uso agora troca `variant_id` com checagem de versão (`reassignVariant`), não a localização
+- [X] T157 [US2] Exigir confirmação antes de remover foto de variante já salva, explicando que o exemplar permanece (FR-101, Art. IV.9; `partial`) — **concluída (2026-11-21)**: remoção no formulário passa por diálogo de confirmação; ver limite registrado nas evidências
+- [X] T158 [US2] Avisar quando a foto anexada for semelhante a outra do mesmo exemplar, sem bloquear (FR-100; `missing`) — **concluída (2026-11-21)**: foto com bytes idênticos a outra do formulário entra com aviso, sem bloqueio
+- [X] T159 [P] Exibir a data de compilação na tela “Sobre”, além da versão e do pacote (FR-171; `partial`) — **concluída (2026-11-21)**: `BuildConfig.BUILD_TIME` gravado pelo Gradle e exibido em «Compilado em …»
+- [X] T160 [US2] Exibir as datas de criação e de última alteração das entidades ao usuário (FR-032; `missing`) — **concluída (2026-11-21)**: datas no detalhe do exemplar e na edição da variante
+
+### Evidências — Fase 15 / Convergence (2026-11-21)
+
+**Fechamento:** as sete lacunas da convergência foram implementadas. O trabalho revelou dois
+defeitos no domínio de variantes: `MergeVariantsUseCase` chamava `exemplars.move` (que muda
+**localização**) e `SplitVariantUseCase` fazia o mesmo com o id da variante de destino — os
+dois teriam corrompido dados se chegassem à tela. Foram corrigidos antes de ligar a interface.
+
+- **T154**: `VariantEditScreen` ganhou «Arquivar variante» com diálogo que explica o efeito.
+  A alternativa preserva exemplares, fotos, aquisições e histórico. Não há exclusão física de
+  variante: arquivar é o caminho oferecido, como já acontece com exemplar, série e coleção.
+- **T155**: «Unir com outra variante» lista as variantes ativas do mesmo modelo e delega a
+  `VariantRepository.mergeVariants`, que move exemplares, arquiva a origem e registra
+  `merged_from` numa transação. O caso de uso valida modelo, auto-união e arquivamento.
+- **T156**: «Separar exemplares» marca exemplares e escolhe a variante de destino; o caso de
+  uso valida que todos pertencem à origem antes de mover. `ExemplarRepository.reassignVariant`
+  troca `variant_id` com `row_version` (Art. I.12) e grava auditoria `variant_id`.
+- **T157**: remover foto no formulário abre confirmação («o exemplar continua como está»)
+  antes de tocar no estado.
+- **T158**: foto com bytes idênticos a outra já anexada entra com aviso, sem bloquear.
+- **T159**: `buildConfigField("BUILD_TIME")` no Gradle e «Compilado em …» em `AboutScreen`.
+- **T160**: datas de criação/alteração aparecem no detalhe do exemplar e na edição da variante.
+
+| Verificação | Comando | Resultado |
+| --- | --- | --- |
+| Domínio (união/separação) | `./gradlew :core:domain:test --tests '*VariantMergeSplitTest'` | 6 testes reais, 0 falhas (antes eram 4 `assertThat(true)`) |
+| Banco (união transacional) | `./gradlew :core:data:testDebugUnitTest --tests '*VariantRepositoryTest'` | 6 testes, 0 falhas — exemplares migrados, origem arquivada e auditoria |
+| ViewModel (ações e foto repetida) | `./gradlew :app:testDebugUnitTest --tests '*VariantFormViewModelTest'` | 4 testes novos, 0 falhas |
+| Regressão unitária | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest` | 284 testes, 0 falhas (64 + 160 + 60) |
+| Telas (ações de variante) | `./gradlew :app:connectedDebugAndroidTest -P...class=...VariantEditScreenTest` | 4 testes, 0 falhas (emulador `hw_test` API 36) |
+| Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 67 testes, 0 falhas (7m 14s) |
+| Lint | `./gradlew :app:lintDebug` | `0 errors, 10 warnings` (mesmos 10 anteriores) |
+
+**Limites conhecidos:** a confirmação de foto (T157) vale para as fotos do formulário; a tela
+de edição ainda não adiciona/remove fotos de um exemplar já salvo. O aviso de foto semelhante
+(T158) cobre bytes idênticos, não similaridade perceptual. A exclusão física de variante não
+foi criada — o fluxo oferece arquivamento, que é o comportamento sem perda já usado no app.

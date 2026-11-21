@@ -202,6 +202,26 @@ public interface ExemplarDao {
     @Query("UPDATE exemplar SET location_id = :locationId, updated_at = :at WHERE id = :id")
     public suspend fun setLocation(id: String, locationId: String?, at: Long)
 
+    /**
+     * Separação de variante (FR-042): troca o vínculo de um exemplar com checagem de
+     * versão, para não sobrescrever outra edição (Art. I.12).
+     */
+    @Query(
+        """
+        UPDATE exemplar
+        SET variant_id = :variantId,
+            updated_at = :updatedAt,
+            row_version = row_version + 1
+        WHERE id = :id AND row_version = :expectedVersion
+        """,
+    )
+    public suspend fun setVariant(
+        id: String,
+        variantId: String,
+        updatedAt: Long,
+        expectedVersion: Long,
+    ): Int
+
     @Query("UPDATE exemplar SET status = :status, updated_at = :at WHERE id = :id")
     public suspend fun setStatus(id: String, status: String, at: Long)
 

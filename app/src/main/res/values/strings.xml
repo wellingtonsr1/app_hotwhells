@@ -27,6 +27,30 @@
     <string name="variant_already_existed">Variante idêntica já existia e foi reaproveitada.</string>
     <string name="variant_success_update">Variante atualizada.</string>
     <string name="variant_failed_photos">%1$d foto(s) não puderam ser gravadas. Toque em salvar para tentar de novo.</string>
+    <string name="variant_archive_done">Variante arquivada. Os exemplares continuam na coleção.</string>
+    <string name="variant_merge_done">Variantes unidas. A variante de destino recebeu os exemplares.</string>
+    <string name="variant_split_done">Exemplares separados para a outra variante.</string>
+    <string name="variant_dates">Criada em %1$s · alterada em %2$s</string>
+
+    <!-- Ações de variante (FR-028, FR-041, FR-042). -->
+    <string name="variant_actions_title">Ações da variante</string>
+    <string name="variant_archive">Arquivar variante</string>
+    <string name="variant_archive_title">Arquivar esta variante?</string>
+    <string name="variant_archive_message">Ela sai das listas e dos cadastros incompletos, mas os exemplares, fotos, aquisições e histórico continuam guardados. Nada é apagado.</string>
+    <string name="variant_archive_confirm">Arquivar</string>
+    <string name="variant_merge">Unir com outra variante</string>
+    <string name="variant_merge_title">Unir variantes</string>
+    <string name="variant_merge_message">Os exemplares desta variante passam para a escolhida, que fica com o histórico da união. Esta variante é arquivada, não apagada.</string>
+    <string name="variant_merge_target">Variante de destino</string>
+    <string name="variant_merge_confirm">Unir</string>
+    <string name="variant_merge_empty">Não há outra variante ativa deste modelo para receber a união.</string>
+    <string name="variant_split">Separar exemplares</string>
+    <string name="variant_split_title">Separar exemplares</string>
+    <string name="variant_split_message">Escolha os exemplares que pertencem a outra variante. Aquisição, avaliações, fotos e movimentações acompanham cada exemplar.</string>
+    <string name="variant_split_select">Exemplares desta variante</string>
+    <string name="variant_split_empty">Esta variante não tem exemplares ativos para separar.</string>
+    <string name="variant_split_confirm">Separar</string>
+    <string name="variant_fallback_label">Variante %1$s</string>
 
     <!-- Catálogo e cadastro mínimo de miniatura. -->
     <string name="catalog_title">Coleção</string>
@@ -92,6 +116,10 @@
     <string name="photo_gallery">Galeria</string>
     <string name="photo_camera">Câmera</string>
     <string name="photo_pending">Ainda não salva</string>
+    <string name="photo_remove_title">Remover esta foto?</string>
+    <string name="photo_remove_message">A foto sai deste formulário e o exemplar continua como está. Nenhum dado do carro é apagado.</string>
+    <string name="photo_remove_confirm">Remover</string>
+    <string name="photo_duplicate_warning">Esta foto é igual a outra já anexada. Ela foi adicionada mesmo assim.</string>
 
     <!-- Cadastros incompletos (T048 - US2, FR-029). -->
     <string name="incomplete_entries_title">Cadastros incompletos</string>
@@ -169,6 +197,7 @@
     <string name="settings_offline_note">Este app funciona sem conta e sem internet. Nada do acervo sai do aparelho.</string>
     <string name="about_title">Sobre</string>
     <string name="about_version">Versão %1$s (build %2$s)</string>
+    <string name="about_build_date">Compilado em %1$s</string>
     <string name="about_package">Pacote: %1$s</string>
     <string name="privacy_title">Privacidade</string>
     <string name="privacy_body">Seus dados ficam apenas neste aparelho. O app não tem cadastro, login, anúncio, telemetria nem chamada de rede para servidores próprios.\n\nO catálogo, as fotos, a lista de desejos e os valores financeiros são gravados no banco local e nas imagens do próprio app. Desinstalar o app remove esses dados, a menos que o backup do sistema Android esteja ativo.\n\nA câmera só é usada quando você escolhe tirar ou anexar uma foto, e o link de referência de um desejo só abre em outro app quando você toca em «Abrir link». Nenhuma localização, contato ou identificador de publicidade é lido.</string>
@@ -209,6 +238,7 @@
     <string name="exemplars_empty_title">Nenhum exemplar ativo</string>
     <string name="exemplars_empty_hint">Toque em + Exemplar para registrar a primeira unidade desta variante.</string>
     <string name="exemplar_not_found">Exemplar não encontrado. Ele pode ter sido arquivado.</string>
+    <string name="exemplar_dates">Cadastrado em %1$s · alterado em %2$s</string>
     <string name="exemplar_archived_badge">Arquivado — fora do acervo</string>
     <string name="exemplar_condition">Condição</string>
     <string name="exemplar_packaging">Embalagem</string>

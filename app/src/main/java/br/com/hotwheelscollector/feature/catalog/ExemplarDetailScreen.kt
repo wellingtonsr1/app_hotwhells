@@ -194,6 +194,17 @@ internal fun ExemplarDetailContent(
                     text = state.internalCode,
                     style = MaterialTheme.typography.headlineSmall,
                 )
+                if (state.createdAt != null && state.updatedAt != null) {
+                    Text(
+                        text = stringResource(
+                            R.string.exemplar_dates,
+                            MOVEMENT_FORMAT.format(state.createdAt),
+                            MOVEMENT_FORMAT.format(state.updatedAt),
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 if (state.isArchived) {
                     Text(
                         text = stringResource(R.string.exemplar_archived_badge),

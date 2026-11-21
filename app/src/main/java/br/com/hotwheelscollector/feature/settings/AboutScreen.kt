@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import android.os.Build
+import br.com.hotwheelscollector.BuildConfig
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -16,8 +17,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import br.com.hotwheelscollector.R
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
-/** Sobre o app (T133): versão instalada, código de build e pacote, tudo local. */
+private val BUILD_DATE: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone(ZoneId.systemDefault())
+
+/** Sobre o app (T133): versão instalada, data de compilação e pacote, tudo local. */
 @Composable
 public fun AboutScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -32,6 +39,7 @@ public fun AboutScreen(modifier: Modifier = Modifier) {
         @Suppress("DEPRECATION")
         packageInfo.versionCode.toString()
     }
+    val buildInstant = remember { Instant.parse(BuildConfig.BUILD_TIME) }
 
     Column(
         modifier = modifier
@@ -55,6 +63,11 @@ public fun AboutScreen(modifier: Modifier = Modifier) {
                 versionCode,
             ),
             style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+            text = stringResource(R.string.about_build_date, BUILD_DATE.format(buildInstant)),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             text = stringResource(R.string.about_package, context.packageName),

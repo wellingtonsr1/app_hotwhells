@@ -41,6 +41,12 @@ public interface ExemplarRepository {
         expectedRowVersion: Long,
     ): DomainResult<Exemplar>
     public suspend fun move(id: String, toLocationId: String?, note: String? = null): DomainResult<Unit>
+
+    /**
+     * Corrige a variante de um exemplar sem tocar em aquisição, avaliações, fotos ou
+     * movimentações (FR-042). A versão lida é checada na escrita (Art. I.12).
+     */
+    public suspend fun reassignVariant(id: String, toVariantId: String): DomainResult<Unit>
     public suspend fun countByVariant(variantId: String): Int
 
     /** Arquiva o exemplar: sai do acervo e das contagens, mas nada é apagado (Art. I.7). */

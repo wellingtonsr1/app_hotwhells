@@ -8,6 +8,7 @@ import br.com.hotwheelscollector.domain.model.Condition
 import br.com.hotwheelscollector.domain.model.PhotoAngle
 import br.com.hotwheelscollector.domain.repository.CarModelRepository
 import br.com.hotwheelscollector.domain.repository.ColorRepository
+import br.com.hotwheelscollector.domain.repository.ExemplarRepository
 import br.com.hotwheelscollector.domain.repository.NewExemplar
 import br.com.hotwheelscollector.domain.repository.PhotoRepository
 import br.com.hotwheelscollector.domain.repository.SeriesRepository
@@ -15,11 +16,14 @@ import br.com.hotwheelscollector.domain.repository.VariantRepository
 import br.com.hotwheelscollector.domain.usecase.AddExemplarUseCase
 import br.com.hotwheelscollector.domain.usecase.CreateVariantInput
 import br.com.hotwheelscollector.domain.usecase.CreateVariantUseCase
+import br.com.hotwheelscollector.domain.usecase.MergeVariantsUseCase
+import br.com.hotwheelscollector.domain.usecase.SplitVariantUseCase
 import br.com.hotwheelscollector.domain.usecase.UpdateVariantInput
 import br.com.hotwheelscollector.domain.usecase.UpdateVariantUseCase
 import br.com.hotwheelscollector.ui.UiMessage
 import br.com.hotwheelscollector.ui.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,6 +39,21 @@ public data class PendingPhoto(
     val angle: PhotoAngle,
     val bytes: ByteArray,
     val isPrimary: Boolean = false,
+)
+
+/** Outra variante ativa do mesmo modelo, para unir ou receber exemplares separados. */
+public data class VariantOption(
+    val id: String,
+    val colorName: String? = null,
+    val year: Int? = null,
+    val manufacturerCode: String? = null,
+)
+
+/** Exemplar da variante em edição, com o código que o usuário vê na etiqueta. */
+public data class VariantExemplarOption(
+    val id: String,
+    val internalCode: String,
+    val condition: Condition,
 )
 
 public data class VariantFormUiState(
@@ -61,6 +80,18 @@ public data class VariantFormUiState(
     val editing: Boolean = false,
     /** Edição: enquanto carrega, os campos vazios não podem ser salvos por engano. */
     val loading: Boolean = false,
+    /** Data de criação/alteração da variante, exibida em edição (FR-032). */
+    val createdAt: Instant? = null,
+    val updatedAt: Instant? = null,
+    /** Outras variantes ativas do mesmo modelo (FR-041/FR-042). */
+    val siblingVariants: List<VariantOption> = emptyList(),
+    /** Exemplares ativos da variante em edição. */
+    val exemplars: List<VariantExemplarOption> = emptyList(),
+    /** Seleção para separar exemplares. */
+    val splitSelection: Set<String> = emptySet(),
+    /** União ou arquivamento concluídos: a tela volta para a lista. */
+    val variantClosed: Boolean = false,
+    val runningAction: Boolean = false,
 )
 
 /**
@@ -82,6 +113,9 @@ public class VariantFormViewModel @Inject constructor(
     private val seriesRepository: SeriesRepository,
     private val variants: VariantRepository,
     private val updateVariant: UpdateVariantUseCase,
+    private val exemplarRepository: ExemplarRepository,
+    private val mergeVariants: MergeVariantsUseCase,
+    private val splitVariant: SplitVariantUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(VariantFormUiState())
@@ -128,6 +162,7 @@ public class VariantFormViewModel @Inject constructor(
     public fun onAddPhoto(bytes: ByteArray, angle: PhotoAngle) {
         if (bytes.isEmpty()) return
         _state.update { current ->
+            val duplicate = current.photos.any { it.bytes.contentEquals(bytes) }
             current.copy(
                 photos = current.photos + PendingPhoto(
                     id = UUID.randomUUID().toString(),
@@ -135,6 +170,12 @@ public class VariantFormViewModel @Inject constructor(
                     bytes = bytes,
                     isPrimary = current.photos.isEmpty(),
                 ),
+                // FR-100: avisa sem bloquear; a foto entra do mesmo jeito.
+                message = if (duplicate) {
+                    UiMessage(R.string.photo_duplicate_warning)
+                } else {
+                    current.message
+                },
             )
         }
     }
@@ -158,6 +199,98 @@ public class VariantFormViewModel @Inject constructor(
     }
 
     public fun onMessageShown() = _state.update { it.copy(message = null) }
+
+    /** FR-028: arquiva a variante sem apagar exemplares, fotos nem histórico. */
+    public fun onArchive() {
+        val variantId = editingVariantId ?: return
+        if (_state.value.runningAction) return
+        _state.update { it.copy(runningAction = true) }
+        viewModelScope.launch {
+            variants.archive(variantId).fold(
+                onSuccess = {
+                    _state.update {
+                        it.copy(
+                            runningAction = false,
+                            variantClosed = true,
+                            message = UiMessage(R.string.variant_archive_done),
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    _state.update { it.copy(runningAction = false, message = error.toMessage()) }
+                },
+            )
+        }
+    }
+
+    /** FR-041: move os exemplares para [targetId] e arquiva esta variante. */
+    public fun onMergeInto(targetId: String) {
+        val variantId = editingVariantId ?: return
+        if (_state.value.runningAction) return
+        _state.update { it.copy(runningAction = true) }
+        viewModelScope.launch {
+            mergeVariants.merge(targetId = targetId, absorbedId = variantId).fold(
+                onSuccess = {
+                    _state.update {
+                        it.copy(
+                            runningAction = false,
+                            variantClosed = true,
+                            message = UiMessage(R.string.variant_merge_done),
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    _state.update { it.copy(runningAction = false, message = error.toMessage()) }
+                },
+            )
+        }
+    }
+
+    public fun onToggleSplitExemplar(exemplarId: String) = _state.update { current ->
+        current.copy(
+            splitSelection = if (exemplarId in current.splitSelection) {
+                current.splitSelection - exemplarId
+            } else {
+                current.splitSelection + exemplarId
+            },
+        )
+    }
+
+    /** FR-042: leva os exemplares marcados para [targetId] sem tocar no histórico deles. */
+    public fun onSplitInto(targetId: String) {
+        val variantId = editingVariantId ?: return
+        val current = _state.value
+        if (current.runningAction) return
+        _state.update { it.copy(runningAction = true) }
+        viewModelScope.launch {
+            splitVariant.split(
+                sourceVariantId = variantId,
+                targetVariantId = targetId,
+                exemplarIds = current.splitSelection.toList(),
+            ).fold(
+                onSuccess = {
+                    val remaining = exemplarRepository.observeByVariant(variantId).first()
+                    _state.update {
+                        it.copy(
+                            runningAction = false,
+                            splitSelection = emptySet(),
+                            exemplars = remaining.map { exemplar ->
+                                VariantExemplarOption(
+                                    id = exemplar.id,
+                                    internalCode = exemplar.internalCode,
+                                    condition = exemplar.condition,
+                                )
+                            },
+                            message = UiMessage(R.string.variant_split_done),
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    _state.update { it.copy(runningAction = false, message = error.toMessage()) }
+                },
+            )
+        }
+    }
 
     public fun onSave(modelId: String) {
         val current = _state.value
@@ -301,11 +434,32 @@ public class VariantFormViewModel @Inject constructor(
                         .firstOrNull { it.id == variant.seriesId }
                         ?.name
                 }.orEmpty()
+                val siblings = variants.observeByModel(variant.modelId).first()
+                    .filter { it.id != variantId && it.archivedAt == null }
+                    .map { sibling ->
+                        VariantOption(
+                            id = sibling.id,
+                            colorName = sibling.primaryColorId?.let { id -> colorNames[id]?.name },
+                            year = sibling.releaseYear,
+                            manufacturerCode = sibling.manufacturerCode,
+                        )
+                    }
+                val activeExemplars = exemplarRepository.observeByVariant(variantId).first()
                 editingVariantId = variantId
                 _state.update {
                     it.copy(
                         editing = true,
                         loading = false,
+                        createdAt = variant.createdAt,
+                        updatedAt = variant.updatedAt,
+                        siblingVariants = siblings,
+                        exemplars = activeExemplars.map { exemplar ->
+                            VariantExemplarOption(
+                                id = exemplar.id,
+                                internalCode = exemplar.internalCode,
+                                condition = exemplar.condition,
+                            )
+                        },
                         primaryColor = variant.primaryColorId
                             ?.let { id -> colorNames[id]?.name }
                             .orEmpty(),

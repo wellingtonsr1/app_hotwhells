@@ -1,3 +1,4 @@
+import java.time.Instant
 import java.util.Properties
 
 plugins {
@@ -32,6 +33,8 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // FR-171: a data de compilação é gravada no build, não inventada na tela.
+        buildConfigField("String", "BUILD_TIME", "\"${Instant.now()}\"")
     }
 
     signingConfigs {
@@ -79,6 +82,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {

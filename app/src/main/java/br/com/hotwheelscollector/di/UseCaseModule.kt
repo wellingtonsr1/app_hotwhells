@@ -17,6 +17,8 @@ import br.com.hotwheelscollector.domain.usecase.CollectionProgressUseCase
 import br.com.hotwheelscollector.domain.usecase.CreateCatalogEntryUseCase
 import br.com.hotwheelscollector.domain.usecase.CreateModelUseCase
 import br.com.hotwheelscollector.domain.usecase.CreateVariantUseCase
+import br.com.hotwheelscollector.domain.usecase.MergeVariantsUseCase
+import br.com.hotwheelscollector.domain.usecase.SplitVariantUseCase
 import br.com.hotwheelscollector.domain.usecase.UpdateVariantUseCase
 import br.com.hotwheelscollector.domain.usecase.FinancialHistoryUseCase
 import br.com.hotwheelscollector.domain.usecase.FindCatalogMatchesUseCase
@@ -73,6 +75,19 @@ public object UseCaseModule {
         variants: VariantRepository,
         clock: Clock,
     ): UpdateVariantUseCase = UpdateVariantUseCase(variants, clock)
+
+    @Provides
+    @Singleton
+    public fun provideMergeVariantsUseCase(
+        variants: VariantRepository,
+    ): MergeVariantsUseCase = MergeVariantsUseCase(variants)
+
+    @Provides
+    @Singleton
+    public fun provideSplitVariantUseCase(
+        variants: VariantRepository,
+        exemplars: ExemplarRepository,
+    ): SplitVariantUseCase = SplitVariantUseCase(variants, exemplars)
 
     @Provides
     @Singleton

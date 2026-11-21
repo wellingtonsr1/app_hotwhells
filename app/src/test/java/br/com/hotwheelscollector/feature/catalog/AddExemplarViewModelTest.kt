@@ -273,6 +273,9 @@ private class FakeAddExemplarRepository : ExemplarRepository {
     override suspend fun move(id: String, toLocationId: String?, note: String?): DomainResult<Unit> =
         Result.success(Unit)
 
+    override suspend fun reassignVariant(id: String, toVariantId: String): DomainResult<Unit> =
+        Result.success(Unit)
+
     override suspend fun countByVariant(variantId: String): Int = existingCount
 
     override suspend fun archive(id: String): DomainResult<Unit> = Result.success(Unit)
