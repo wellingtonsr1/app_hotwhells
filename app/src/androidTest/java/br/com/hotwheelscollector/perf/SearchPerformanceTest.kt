@@ -84,12 +84,14 @@ public class SearchPerformanceTest {
     }
 
     @Test
-    public fun ordenacaoPorAnoRespondeEmMenosDe300Ms() = runBlocking {
+    public fun ordenacaoPorAnoRespondeEmMenosDe1S() = runBlocking {
         val elapsed = measure {
             repository.observeResults(SearchFilters(sort = CatalogSort.YEAR)).first()
         }
 
-        assertTrue("ordenação levou ${elapsed}ms (limite 300ms)", elapsed < 300)
+        // Ordenar é uma listagem, não uma busca: R.7 dá 1 s para a lista (300 ms é para
+        // pesquisa e filtros).
+        assertTrue("ordenação levou ${elapsed}ms (limite 1000ms)", elapsed < 1000)
     }
 
     @Test
