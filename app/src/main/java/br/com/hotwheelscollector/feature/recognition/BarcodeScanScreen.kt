@@ -58,7 +58,7 @@ import kotlin.math.roundToInt
 public fun BarcodeScanScreen(
     onBack: () -> Unit,
     onUseVariant: (variantId: String) -> Unit,
-    onCreateManual: () -> Unit,
+    onCreateManual: (code: String?) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: RecognitionViewModel = hiltViewModel(),
 ) {
@@ -144,7 +144,7 @@ internal fun BarcodeScanContent(
     onSaveReading: () -> Unit,
     onSelectMatch: (String) -> Unit,
     onUseVariant: (String) -> Unit,
-    onCreateManual: () -> Unit,
+    onCreateManual: (code: String?) -> Unit,
     onDismissFailure: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -319,7 +319,7 @@ internal fun BarcodeScanContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 OutlinedButton(
-                    onClick = onCreateManual,
+                    onClick = { onCreateManual(state.rawCode) },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(stringResource(R.string.recognition_barcode_create_manual))

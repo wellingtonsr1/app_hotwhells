@@ -14,7 +14,6 @@ import br.com.hotwheelscollector.domain.recognition.RecognitionSuggestion
 import br.com.hotwheelscollector.domain.usecase.CatalogMatch
 import br.com.hotwheelscollector.ui.theme.HotWheelsTheme
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -97,8 +96,8 @@ class BarcodeScanScreenTest {
     }
 
     @Test
-    fun codigoSemCorrespondenciaOfereceCadastroManual() {
-        var createManual = false
+    fun codigoSemCorrespondenciaOfereceCadastroManualComOCodigoLido() {
+        var createdWith: String? = null
         composeRule.setContent {
             HotWheelsTheme {
                 BarcodeScanContent(
@@ -112,7 +111,7 @@ class BarcodeScanScreenTest {
                     onSaveReading = {},
                     onSelectMatch = {},
                     onUseVariant = {},
-                    onCreateManual = { createManual = true },
+                    onCreateManual = { createdWith = it },
                     onDismissFailure = {},
                 )
             }
@@ -122,7 +121,7 @@ class BarcodeScanScreenTest {
         composeRule.onNodeWithText("Nenhuma correspondência no catálogo.").assertIsDisplayed()
         composeRule.onNodeWithText("Cadastrar manualmente").performClick()
 
-        assertTrue(createManual)
+        assertEquals("HKC25", createdWith)
     }
 
     @Test

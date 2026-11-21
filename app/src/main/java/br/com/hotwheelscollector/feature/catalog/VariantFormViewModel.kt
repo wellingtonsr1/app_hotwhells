@@ -102,6 +102,23 @@ public class VariantFormViewModel @Inject constructor(
 
     public fun onManufacturerCodeChange(value: String) = _state.update { it.copy(manufacturerCode = value) }
 
+    /**
+     * Código de barras lido no reconhecimento (FR-112).
+     *
+     * Preenche uma única vez e só quando o campo está vazio: a leitura nunca sobrescreve o
+     * que o usuário já digitou nem entra no modo de edição de uma variante existente.
+     */
+    public fun prefillManufacturerCode(code: String?) {
+        if (code.isNullOrBlank()) return
+        _state.update { current ->
+            if (current.editing || current.manufacturerCode.isNotBlank()) {
+                current
+            } else {
+                current.copy(manufacturerCode = code)
+            }
+        }
+    }
+
     public fun onConditionChange(condition: Condition) = _state.update { it.copy(condition = condition) }
 
     /** Captura nova entra na lista; a primeira é principal, como no repositório. */

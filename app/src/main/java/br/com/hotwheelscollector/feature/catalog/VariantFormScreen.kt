@@ -45,9 +45,15 @@ public fun VariantFormScreen(
     modelId: String,
     onVariantSaved: (variantId: String) -> Unit,
     modifier: Modifier = Modifier,
+    initialManufacturerCode: String? = null,
     viewModel: VariantFormViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+
+    // Código lido no reconhecimento: entra uma vez, sem sobrescrever digitação (FR-112).
+    LaunchedEffect(initialManufacturerCode) {
+        viewModel.prefillManufacturerCode(initialManufacturerCode)
+    }
 
     LaunchedEffect(state.savedVariantId) {
         state.savedVariantId?.let(onVariantSaved)

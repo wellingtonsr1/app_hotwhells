@@ -1,5 +1,6 @@
 package br.com.hotwheelscollector.navigation
 
+import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
@@ -82,15 +83,34 @@ public sealed class Destination(public val route: String) {
     /** Busca e filtros do acervo (US4): tela própria, aberta do cabeçalho do catálogo. */
     public data object Search : Destination("catalog/search")
 
-    /** Primeiro passo da miniatura: fabricante, modelo e escala. */
-    public data object CreateEntry : Destination("catalog/create")
+    /**
+     * Primeiro passo da miniatura: fabricante, modelo e escala.
+     *
+     * O `code` opcional é o código de barras lido no reconhecimento: ele atravessa o
+     * cadastro até o formulário da variante, onde vira o código do fabricante (FR-112).
+     */
+    public data object CreateEntry :
+        Destination("catalog/create?${RouteArgs.CODE}={${RouteArgs.CODE}}") {
+        public fun routeFor(code: String? = null): String =
+            if (code.isNullOrBlank()) {
+                "catalog/create"
+            } else {
+                "catalog/create?${RouteArgs.CODE}=${Uri.encode(code)}"
+            }
+    }
 
     /**
      * Cadastro completo a partir de um modelo já resolvido: variante, primeiro exemplar
      * e fotos. As fotos pertencem ao exemplar, por isso ele nasce nesta mesma tela.
      */
-    public data object VariantForm : Destination("catalog/variant/{${RouteArgs.MODEL_ID}}") {
-        public fun routeFor(modelId: String): String = "catalog/variant/$modelId"
+    public data object VariantForm :
+        Destination("catalog/variant/{${RouteArgs.MODEL_ID}}?${RouteArgs.CODE}={${RouteArgs.CODE}}") {
+        public fun routeFor(modelId: String, code: String? = null): String =
+            if (code.isNullOrBlank()) {
+                "catalog/variant/$modelId"
+            } else {
+                "catalog/variant/$modelId?${RouteArgs.CODE}=${Uri.encode(code)}"
+            }
     }
 
     /** Modelos que pararam no primeiro passo e ainda não têm variante (FR-029). */
@@ -213,6 +233,9 @@ public object RouteArgs {
     public const val COLLECTION_ID: String = "collectionId"
     public const val LOCATION_ID: String = "locationId"
 
+    /** Código de barras lido que acompanha o cadastro (FR-112). */
+    public const val CODE: String = "code"
+
     /** Confirmação que a tela de edição devolve para a lista de incompletos. */
     public const val INCOMPLETE_MESSAGE: String = "incompleteMessage"
 }
@@ -296,7 +319,7 @@ public fun AppNavHost(
                     onOpenExemplars = { variantId ->
                         navController.navigate(Destination.ExemplarList.routeFor(variantId))
                     },
-                    onCreateEntry = { navController.navigate(Destination.CreateEntry.route) },
+                    onCreateEntry = { navController.navigate(Destination.CreateEntry.routeFor()) },
                     onOpenIncomplete = { navController.navigate(Destination.Incomplete.route) },
                     onOpenSearch = { navController.navigate(Destination.Search.route) },
                     onOpenCollections = { navController.navigate(Destination.Collections.route) },
@@ -310,7 +333,9 @@ public fun AppNavHost(
                     onUseVariant = { variantId ->
                         navController.navigate(Destination.AddExemplar.routeFor(variantId))
                     },
-                    onCreateManual = { navController.navigate(Destination.CreateEntry.route) },
+                    onCreateManual = { code ->
+                        navController.navigate(Destination.CreateEntry.routeFor(code))
+                    },
                 )
             }
             composable(Destination.Duplicates.route) {
@@ -434,22 +459,41 @@ public fun AppNavHost(
                     },
                 )
             }
-            composable(Destination.CreateEntry.route) {
+            composable(
+                route = Destination.CreateEntry.route,
+                arguments = listOf(
+                    navArgument(RouteArgs.CODE) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+            ) { entry ->
+                val code = entry.arguments?.getString(RouteArgs.CODE)
                 CreateCatalogEntryScreen(
                     onModelCreated = { modelId ->
                         // Cadastrar a miniatura é uma intenção só: o modelo resolvido segue
-                        // direto para a variante, que cria o exemplar e recebe as fotos.
+                        // direto para a variante, que cria o exemplar e recebe as fotos — e
+                        // leva adiante o código lido, se houver (FR-112).
                         navController.popBackStack()
-                        navController.navigate(Destination.VariantForm.routeFor(modelId))
+                        navController.navigate(Destination.VariantForm.routeFor(modelId, code))
                     },
                 )
             }
             composable(
                 route = Destination.VariantForm.route,
-                arguments = listOf(navArgument(RouteArgs.MODEL_ID) { type = NavType.StringType }),
+                arguments = listOf(
+                    navArgument(RouteArgs.MODEL_ID) { type = NavType.StringType },
+                    navArgument(RouteArgs.CODE) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
             ) { entry ->
                 VariantFormScreen(
                     modelId = entry.arguments?.getString(RouteArgs.MODEL_ID).orEmpty(),
+                    initialManufacturerCode = entry.arguments?.getString(RouteArgs.CODE),
                     // Volta para quem abriu: catálogo no cadastro novo, lista de incompletos
                     // quando a variante está sendo criada para completar um modelo órfão.
                     onVariantSaved = { navController.popBackStack() },

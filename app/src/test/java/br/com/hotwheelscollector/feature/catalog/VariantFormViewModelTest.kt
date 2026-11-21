@@ -245,6 +245,34 @@ class VariantFormViewModelTest {
         assertThat(model.state.value.editing).isTrue()
     }
 
+    @Test
+    fun `codigo lido preenche o codigo do fabricante quando o campo esta vazio`() = runTest {
+        val model = viewModel()
+
+        model.prefillManufacturerCode("HKC25")
+
+        assertThat(model.state.value.manufacturerCode).isEqualTo("HKC25")
+    }
+
+    @Test
+    fun `codigo lido nao sobrescreve o que o usuario ja digitou`() = runTest {
+        val model = viewModel()
+        model.onManufacturerCodeChange("HXY12")
+
+        model.prefillManufacturerCode("HKC25")
+
+        assertThat(model.state.value.manufacturerCode).isEqualTo("HXY12")
+    }
+
+    @Test
+    fun `codigo em branco nao preenche o campo`() = runTest {
+        val model = viewModel()
+
+        model.prefillManufacturerCode("  ")
+
+        assertThat(model.state.value.manufacturerCode).isEmpty()
+    }
+
     private companion object {
         const val MODEL_ID = "model-1"
     }

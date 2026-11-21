@@ -1310,10 +1310,15 @@ correspondência esperando que o botão usasse `var-2`, mas o conteúdo é state
 pertence ao estado do pai. O teste passou a dirigir a seleção pelo estado, como o ViewModel
 faz; o comportamento de produção estava correto (`var-1` era a correspondência selecionada).
 
-**Limite conhecido:** o código lido de um item **novo** fica guardado na
-`recognition_result`, mas não é copiado automaticamente para `variant.manufacturer_code`
-em `CreateCatalogEntryScreen` — o cadastro manual segue sem pré-preenchimento do código
-(FR-112 parcial). Para item existente, a correspondência leva ao cadastro de exemplar.
+**FR-112 fechado em 2026-11-21:** o código lido em «Cadastrar manualmente» agora atravessa
+o cadastro. `CreateEntry` (`catalog/create?code=`) e `VariantForm`
+(`catalog/variant/{modelId}?code=`) recebem o valor codificado na rota, e
+`VariantFormViewModel.prefillManufacturerCode` preenche o código do fabricante uma única
+vez, sem sobrescrever digitação nem entrar no modo de edição. O teste instrumentado
+`BarcodeManualFlowTest` percorre catálogo → código de barras → cadastro de miniatura →
+variante e confere o código no campo; `VariantFormViewModelTest` cobre campo vazio, valor
+já digitado e código em branco. Verificação: 4 testes instrumentados verdes no emulador
+(3 de tela + o fluxo), `:app:lintDebug` com `0 errors, 22 warnings`.
 
 ---
 
