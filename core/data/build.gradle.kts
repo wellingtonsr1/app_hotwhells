@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.work.runtime.ktx)
     implementation(libs.documentfile)
     implementation(libs.coroutines.android)
+    implementation("org.slf4j:slf4j-api:2.0.7")
     implementation(libs.mlkit.barcode)
     implementation(libs.mlkit.text)
 
