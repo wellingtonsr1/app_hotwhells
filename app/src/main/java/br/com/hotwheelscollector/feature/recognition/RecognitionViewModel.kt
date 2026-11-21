@@ -2,6 +2,7 @@ package br.com.hotwheelscollector.feature.recognition
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.data.di.BarcodeRecognition
 import br.com.hotwheelscollector.domain.recognition.RecognitionApplication
 import br.com.hotwheelscollector.domain.recognition.RecognitionField
@@ -11,6 +12,8 @@ import br.com.hotwheelscollector.domain.recognition.RecognitionProvider
 import br.com.hotwheelscollector.domain.usecase.CatalogMatch
 import br.com.hotwheelscollector.domain.usecase.FindCatalogMatchesUseCase
 import br.com.hotwheelscollector.domain.usecase.RecordRecognitionResultUseCase
+import br.com.hotwheelscollector.ui.UiMessage
+import br.com.hotwheelscollector.ui.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,7 +45,7 @@ public class RecognitionViewModel @Inject constructor(
         val selectedExemplarId: String? = null,
         val recordedId: String? = null,
         val recordedFields: Set<RecognitionField> = emptySet(),
-        val failure: String? = null,
+        val failure: UiMessage? = null,
     ) {
         public val rawCode: String? get() = proposal?.rawValue
         public val identified: Boolean get() = proposal?.identified == true
@@ -103,7 +106,7 @@ public class RecognitionViewModel @Inject constructor(
                             failure = null,
                         )
                     },
-                    onFailure = { state.copy(failure = it.message) },
+                    onFailure = { state.copy(failure = it.toUiMessage()) },
                 )
             }
         }
@@ -144,7 +147,7 @@ public class RecognitionViewModel @Inject constructor(
                     onFailure = {
                         state.copy(
                             busy = false,
-                            failure = it.message ?: "Não foi possível ler o código.",
+                            failure = it.toUiMessage(R.string.recognition_read_failed),
                         )
                     },
                 )

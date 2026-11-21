@@ -3,11 +3,14 @@ package br.com.hotwheelscollector.feature.wishlist
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.model.MoneyCents
 import br.com.hotwheelscollector.domain.model.VariantSummary
 import br.com.hotwheelscollector.domain.model.WishlistItem
 import br.com.hotwheelscollector.domain.repository.VariantRepository
 import br.com.hotwheelscollector.domain.repository.WishlistRepository
+import br.com.hotwheelscollector.ui.UiMessage
+import br.com.hotwheelscollector.ui.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.Instant
@@ -32,7 +35,7 @@ public data class WishlistFormUiState(
     val referenceUrl: String = "",
     val notes: String = "",
     val saving: Boolean = false,
-    val message: String? = null,
+    val message: UiMessage? = null,
     val saved: Boolean = false,
 )
 
@@ -85,7 +88,9 @@ public class WishlistFormViewModel @Inject constructor(
                             notes = item.notes.orEmpty(),
                         )
                     }
-                } ?: _state.update { it.copy(message = NOT_FOUND) }
+                } ?: _state.update {
+                    it.copy(message = UiMessage(R.string.error_wishlist_not_found))
+                }
             }
         }
     }
@@ -124,23 +129,27 @@ public class WishlistFormViewModel @Inject constructor(
 
         val freeText = current.title.trim().takeIf { it.isNotEmpty() }
         if (current.variantId == null && freeText == null) {
-            return _state.update { it.copy(message = TITLE_REQUIRED) }
+            return _state.update { it.copy(message = UiMessage(R.string.error_title_required)) }
         }
         val maxPrice = if (current.maxPriceText.isBlank()) {
             null
         } else {
             MoneyCents.parsePtBrOrNull(current.maxPriceText)
-                ?: return _state.update { it.copy(message = INVALID_PRICE) }
+                ?: return _state.update {
+                    it.copy(message = UiMessage(R.string.error_invalid_money))
+                }
         }
         val foundPrice = if (current.foundPriceText.isBlank()) {
             null
         } else {
             MoneyCents.parsePtBrOrNull(current.foundPriceText)
-                ?: return _state.update { it.copy(message = INVALID_PRICE) }
+                ?: return _state.update {
+                    it.copy(message = UiMessage(R.string.error_invalid_money))
+                }
         }
         val url = current.referenceUrl.trim().takeIf { it.isNotEmpty() }
         if (url != null && !url.startsWith("http://") && !url.startsWith("https://")) {
-            return _state.update { it.copy(message = INVALID_URL) }
+            return _state.update { it.copy(message = UiMessage(R.string.error_invalid_url)) }
         }
 
         val now = Instant.now(clock)
@@ -171,7 +180,7 @@ public class WishlistFormViewModel @Inject constructor(
                     _state.update {
                         it.copy(
                             saving = false,
-                            message = error.message ?: GENERIC_ERROR,
+                            message = error.toUiMessage(R.string.wishlist_error_save),
                         )
                     }
                 },
@@ -191,11 +200,5 @@ public class WishlistFormViewModel @Inject constructor(
 
     public companion object {
         public const val ARG_ITEM_ID: String = "itemId"
-        private const val TITLE_REQUIRED =
-            "Escolha uma variante do catálogo ou descreva o que você procura."
-        private const val INVALID_PRICE = "Valor inválido. Use, por exemplo, 49,90."
-        private const val INVALID_URL = "O link deve começar com http:// ou https://."
-        private const val NOT_FOUND = "Desejo não encontrado."
-        private const val GENERIC_ERROR = "Não foi possível salvar o desejo."
     }
 }

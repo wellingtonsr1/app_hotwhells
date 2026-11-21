@@ -3,8 +3,11 @@ package br.com.hotwheelscollector.feature.organization
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.repository.CollectionRepository
 import br.com.hotwheelscollector.navigation.RouteArgs
+import br.com.hotwheelscollector.ui.UiMessage
+import br.com.hotwheelscollector.ui.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +27,7 @@ public data class CollectionFormUiState(
     val parents: List<ParentOption> = emptyList(),
     val editing: Boolean = false,
     val saving: Boolean = false,
-    val message: String? = null,
+    val message: UiMessage? = null,
     val saved: Boolean = false,
 )
 
@@ -118,7 +121,7 @@ public class CollectionFormViewModel @Inject constructor(
             status.value = result.fold(
                 onSuccess = { Status(saved = true) },
                 onFailure = {
-                    Status(message = it.message ?: GENERIC_ERROR)
+                    Status(message = it.toUiMessage(R.string.error_generic_save))
                 },
             )
         }
@@ -136,12 +139,11 @@ public class CollectionFormViewModel @Inject constructor(
 
     private data class Status(
         val saving: Boolean = false,
-        val message: String? = null,
+        val message: UiMessage? = null,
         val saved: Boolean = false,
     )
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
-        const val GENERIC_ERROR = "Não foi possível salvar a coleção."
     }
 }

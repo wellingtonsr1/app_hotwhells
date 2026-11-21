@@ -2,10 +2,13 @@ package br.com.hotwheelscollector.feature.organization
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.model.Manufacturer
 import br.com.hotwheelscollector.domain.model.Series
 import br.com.hotwheelscollector.domain.repository.ManufacturerRepository
 import br.com.hotwheelscollector.domain.repository.SeriesRepository
+import br.com.hotwheelscollector.ui.UiMessage
+import br.com.hotwheelscollector.ui.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,7 +28,7 @@ public data class SeriesUiState(
     val selectedManufacturerId: String? = null,
     val items: List<Series> = emptyList(),
     val loading: Boolean = true,
-    val message: String? = null,
+    val message: UiMessage? = null,
 )
 
 /**
@@ -42,7 +45,7 @@ public class SeriesViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val selected = MutableStateFlow<String?>(null)
-    private val feedback = MutableStateFlow<String?>(null)
+    private val feedback = MutableStateFlow<UiMessage?>(null)
 
     public val state: StateFlow<SeriesUiState> = combine(
         manufacturers.observeActive(),
@@ -84,7 +87,7 @@ public class SeriesViewModel @Inject constructor(
             feedback.value = series.add(manufacturerId, name, parentId)
                 .fold(
                     onSuccess = { ADDED },
-                    onFailure = { it.message ?: GENERIC_ERROR },
+                    onFailure = { it.toUiMessage() },
                 )
         }
     }
@@ -93,7 +96,7 @@ public class SeriesViewModel @Inject constructor(
         viewModelScope.launch {
             feedback.value = series.rename(id, name).fold(
                 onSuccess = { RENAMED },
-                onFailure = { it.message ?: GENERIC_ERROR },
+                onFailure = { it.toUiMessage() },
             )
         }
     }
@@ -102,7 +105,7 @@ public class SeriesViewModel @Inject constructor(
         viewModelScope.launch {
             feedback.value = series.archive(id).fold(
                 onSuccess = { ARCHIVED },
-                onFailure = { it.message ?: GENERIC_ERROR },
+                onFailure = { it.toUiMessage() },
             )
         }
     }
@@ -113,10 +116,9 @@ public class SeriesViewModel @Inject constructor(
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
-        const val NO_MANUFACTURER = "Cadastre um fabricante antes de criar uma série."
-        const val ADDED = "Série criada."
-        const val RENAMED = "Série renomeada."
-        const val ARCHIVED = "Série arquivada."
-        const val GENERIC_ERROR = "Não foi possível concluir a operação."
+        val NO_MANUFACTURER: UiMessage = UiMessage(R.string.series_no_manufacturer)
+        val ADDED: UiMessage = UiMessage(R.string.series_added)
+        val RENAMED: UiMessage = UiMessage(R.string.series_renamed)
+        val ARCHIVED: UiMessage = UiMessage(R.string.series_archived)
     }
 }

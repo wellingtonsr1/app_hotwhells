@@ -2,6 +2,7 @@ package br.com.hotwheelscollector.feature.catalog
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.error.DomainError
 import br.com.hotwheelscollector.domain.model.Condition
 import br.com.hotwheelscollector.domain.model.PhotoAngle
@@ -16,6 +17,8 @@ import br.com.hotwheelscollector.domain.usecase.CreateVariantInput
 import br.com.hotwheelscollector.domain.usecase.CreateVariantUseCase
 import br.com.hotwheelscollector.domain.usecase.UpdateVariantInput
 import br.com.hotwheelscollector.domain.usecase.UpdateVariantUseCase
+import br.com.hotwheelscollector.ui.UiMessage
+import br.com.hotwheelscollector.ui.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
@@ -46,7 +49,7 @@ public data class VariantFormUiState(
     val condition: Condition = Condition.SEALED,
     val photos: List<PendingPhoto> = emptyList(),
     val saving: Boolean = false,
-    val message: String? = null,
+    val message: UiMessage? = null,
     /** Variante já gravada numa tentativa anterior: não criar outra ao tentar de novo. */
     val createdVariantId: String? = null,
     /** Exemplar já gravado numa tentativa anterior: não duplicar ao tentar de novo. */
@@ -162,7 +165,7 @@ public class VariantFormViewModel @Inject constructor(
 
         val year = current.releaseYearText.trim().takeIf { it.isNotEmpty() }?.toIntOrNull()
         if (current.releaseYearText.isNotBlank() && year == null) {
-            _state.update { it.copy(message = "Ano inválido. Use quatro dígitos, ex.: 2024.") }
+            _state.update { it.copy(message = UiMessage(R.string.variant_invalid_year)) }
             return
         }
 
@@ -184,11 +187,16 @@ public class VariantFormViewModel @Inject constructor(
                         it.copy(
                             createdExemplarId = outcome.exemplar.id,
                             exemplarCode = outcome.exemplar.internalCode,
-                            message = buildString {
-                                append("Exemplar ${outcome.exemplar.internalCode} cadastrado.")
-                                if (outcome.sameVariantCount > 1) {
-                                    append(" ${outcome.sameVariantCount}º exemplar desta variante.")
-                                }
+                            message = if (outcome.sameVariantCount > 1) {
+                                UiMessage(
+                                    R.string.add_exemplar_success_multiple,
+                                    outcome.sameVariantCount,
+                                )
+                            } else {
+                                UiMessage(
+                                    R.string.add_exemplar_success_single,
+                                    outcome.exemplar.internalCode,
+                                )
                             },
                         )
                     }
@@ -203,8 +211,7 @@ public class VariantFormViewModel @Inject constructor(
                     _state.update {
                         it.copy(
                             saving = false,
-                            message = "$failedPhotos foto(s) não puderam ser gravadas. " +
-                                "Toque em salvar para tentar de novo.",
+                            message = UiMessage(R.string.variant_failed_photos, failedPhotos),
                         )
                     }
                 }
@@ -235,7 +242,7 @@ public class VariantFormViewModel @Inject constructor(
 
         if (outcome.alreadyExisted) {
             _state.update {
-                it.copy(message = "Variante idêntica já existia e foi reaproveitada.")
+                it.copy(message = UiMessage(R.string.variant_already_existed))
             }
         }
         return outcome.variant.id
@@ -342,7 +349,7 @@ public class VariantFormViewModel @Inject constructor(
             it.copy(
                 saving = false,
                 savedVariantId = variantId,
-                message = "Variante atualizada.",
+                message = UiMessage(R.string.variant_success_update),
             )
         }
     }
@@ -354,11 +361,8 @@ public class VariantFormViewModel @Inject constructor(
         return resolveSeries(modelId, name)
     }
 
-    private fun Throwable.toMessage(): String = when (this) {
-        is DomainError.Validation -> reason
-        DomainError.Duplicate -> "Já existe uma variante com estes atributos."
-        is DomainError.Blocked -> reason
-        is DomainError.Storage -> "Falha ao gravar: ${reason}"
-        else -> message ?: "Não foi possível salvar."
+    private fun Throwable.toMessage(): UiMessage = when (this) {
+        DomainError.Duplicate -> UiMessage(R.string.error_duplicate_variant)
+        else -> toUiMessage(R.string.error_generic_save)
     }
 }

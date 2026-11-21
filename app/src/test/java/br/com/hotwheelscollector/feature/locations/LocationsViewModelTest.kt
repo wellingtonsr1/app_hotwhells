@@ -1,5 +1,6 @@
 package br.com.hotwheelscollector.feature.locations
 
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.error.DomainResult
 import br.com.hotwheelscollector.domain.model.InventoryItem
 import br.com.hotwheelscollector.domain.model.Location
@@ -8,6 +9,7 @@ import br.com.hotwheelscollector.domain.model.LocationNode
 import br.com.hotwheelscollector.domain.model.LocationType
 import br.com.hotwheelscollector.domain.model.Movement
 import br.com.hotwheelscollector.domain.repository.LocationRepository
+import br.com.hotwheelscollector.ui.UiMessage
 import com.google.common.truth.Truth.assertThat
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
@@ -92,7 +94,10 @@ public class LocationsViewModelTest {
         advanceUntilIdle()
 
         assertThat(viewModel.state.value.message)
-            .isEqualTo(LocationsMessage.Failure("Localização bloqueada."))
+            .isEqualTo(
+                // Falha fora do domínio não expõe texto cru: cai no genérico (T131).
+                LocationsMessage.Failure(UiMessage(R.string.error_generic)),
+            )
         collector.cancel()
     }
 

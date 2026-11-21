@@ -3,6 +3,7 @@ package br.com.hotwheelscollector.feature.duplicates
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.model.Exemplar
 import br.com.hotwheelscollector.domain.model.IsoDate
 import br.com.hotwheelscollector.domain.model.MoneyCents
@@ -16,6 +17,8 @@ import br.com.hotwheelscollector.domain.repository.NewNegotiation
 import br.com.hotwheelscollector.domain.repository.VariantRepository
 import br.com.hotwheelscollector.domain.usecase.CloseSaleUseCase
 import br.com.hotwheelscollector.domain.usecase.CloseTradeUseCase
+import br.com.hotwheelscollector.ui.UiMessage
+import br.com.hotwheelscollector.ui.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import javax.inject.Inject
@@ -40,7 +43,7 @@ public data class NegotiationUiState(
     val amountText: String = "",
     val notes: String = "",
     val reserve: Boolean = true,
-    val message: String? = null,
+    val message: UiMessage? = null,
 ) {
     public val active: Negotiation? = negotiations.firstOrNull {
         it.status == NegotiationStatus.OPEN || it.status == NegotiationStatus.RESERVED
@@ -134,7 +137,9 @@ public class NegotiationViewModel @Inject constructor(
             null
         } else {
             MoneyCents.parsePtBrOrNull(current.amountText)
-                ?: return _state.update { it.copy(message = INVALID_VALUE) }
+                ?: return _state.update {
+                    it.copy(message = UiMessage(R.string.error_invalid_money))
+                }
         }
 
         runOperation(
@@ -145,7 +150,7 @@ public class NegotiationViewModel @Inject constructor(
                         channel = "",
                         amountText = "",
                         notes = "",
-                        message = "Negociação aberta.",
+                        message = UiMessage(R.string.negotiation_opened),
                     )
                 }
             },
@@ -167,29 +172,43 @@ public class NegotiationViewModel @Inject constructor(
     public fun onCloseSale(amountText: String, dateText: String) {
         val active = _state.value.active ?: return
         val amount = MoneyCents.parsePtBrOrNull(amountText)
-            ?: return _state.update { it.copy(message = VALUE_REQUIRED) }
+            ?: return _state.update {
+                it.copy(message = UiMessage(R.string.negotiation_value_required))
+            }
         val date = if (dateText.isBlank()) {
             null
         } else {
             IsoDate.parsePtBrOrNull(dateText)
-                ?: return _state.update { it.copy(message = INVALID_DATE) }
+                ?: return _state.update {
+                    it.copy(message = UiMessage(R.string.error_invalid_date))
+                }
         }
 
-        runOperation(onSuccess = { _state.update { it.copy(message = "Venda concluída.") } }) {
+        runOperation(
+            onSuccess = {
+                _state.update { it.copy(message = UiMessage(R.string.negotiation_sale_closed)) }
+            },
+        ) {
             closeSale.close(active.id, amount, date).map { Unit }
         }
     }
 
     public fun onCloseTrade(receivedExemplarId: String?, note: String) {
         val active = _state.value.active ?: return
-        runOperation(onSuccess = { _state.update { it.copy(message = "Troca concluída.") } }) {
+        runOperation(
+            onSuccess = {
+                _state.update { it.copy(message = UiMessage(R.string.negotiation_trade_closed)) }
+            },
+        ) {
             closeTrade.close(active.id, receivedExemplarId, note).map { Unit }
         }
     }
 
     public fun onCancel(negotiationId: String) {
         runOperation(
-            onSuccess = { _state.update { it.copy(message = "Negociação cancelada.") } },
+            onSuccess = {
+                _state.update { it.copy(message = UiMessage(R.string.negotiation_cancelled)) }
+            },
         ) {
             negotiations.cancel(negotiationId).map { Unit }
         }
@@ -212,7 +231,7 @@ public class NegotiationViewModel @Inject constructor(
                     _state.update {
                         it.copy(
                             working = false,
-                            message = error.message ?: GENERIC_ERROR,
+                            message = error.toUiMessage(),
                         )
                     }
                 },
@@ -222,9 +241,5 @@ public class NegotiationViewModel @Inject constructor(
 
     public companion object {
         public const val ARG_EXEMPLAR_ID: String = "exemplarId"
-        private const val INVALID_VALUE = "Valor inválido. Use, por exemplo, 49,90."
-        private const val VALUE_REQUIRED = "Informe o valor recebido para concluir a venda."
-        private const val INVALID_DATE = "Data inválida. Use, por exemplo, 02/05/2026."
-        private const val GENERIC_ERROR = "Não foi possível concluir a operação."
     }
 }

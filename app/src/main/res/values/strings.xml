@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Coleção de Miniaturas</string>
-    <string name="setup_status_message">Estrutura inicial criada. Banco local e cadastro de exemplares entram na próxima etapa.</string>
 
     <!-- Erros de domínio traduzidos para o usuário (T027). -->
     <string name="error_validation">Não foi possível salvar: %1$s</string>
@@ -13,21 +12,21 @@
     <string name="error_recognition_unavailable">Reconhecimento indisponível. Preencha os campos manualmente.</string>
 
     <!-- Snackbars de AddExemplarViewModel (T131) -->
-    <string name="add_exemplar_duplicate_variant">Esta variante já tem {0} exemplar(es).</string>
+    <string name="add_exemplar_duplicate_variant">Esta variante já tem %1$d exemplar(es).</string>
     <string name="add_exemplar_invalid_value">Valor inválido. Use, por exemplo, 59,90.</string>
     <string name="add_exemplar_invalid_date">Data inválida. Use dd/mm/aaaa.</string>
-    <string name="add_exemplar_success_single">Exemplar {0} cadastrado.</string>
-    <string name="add_exemplar_success_multiple">{0}º exemplar desta variante.</string>
+    <string name="add_exemplar_success_single">Exemplar %1$s cadastrado.</string>
+    <string name="add_exemplar_success_multiple">%1$dº exemplar desta variante.</string>
 
     <!-- Snackbars de CreateCatalogEntryViewModel (T131) -->
-    <string name="create_catalog_error_save">Falha ao salvar: {0}</string>
+    <string name="create_catalog_error_save">Falha ao salvar: %1$s</string>
     <string name="create_catalog_error_model">Erro ao salvar modelo.</string>
 
     <!-- Snackbars de VariantFormViewModel (T131) -->
     <string name="variant_invalid_year">Ano inválido. Use quatro dígitos, ex.: 2024.</string>
     <string name="variant_already_existed">Variante idêntica já existia e foi reaproveitada.</string>
     <string name="variant_success_update">Variante atualizada.</string>
-    <string name="variant_failed_photos">{0} foto(s) não puderam ser gravadas. Toque em salvar para tentar de novo.</string>
+    <string name="variant_failed_photos">%1$d foto(s) não puderam ser gravadas. Toque em salvar para tentar de novo.</string>
 
     <!-- Catálogo e cadastro mínimo de miniatura. -->
     <string name="catalog_title">Coleção</string>
@@ -79,8 +78,6 @@
 
     <!-- Fotografias e grade de fotos (T045, T046 - US2). -->
     <string name="photo_grid_title">Fotografias</string>
-    <string name="photo_add">Adicionar foto</string>
-    <string name="photo_primary_badge">Principal</string>
     <string name="photo_set_primary">Definir como principal</string>
     <string name="photo_remove">Remover foto</string>
     <string name="photo_angle_front">Frente</string>
@@ -744,4 +741,43 @@
     <string name="recognition_barcode_recorded_code">Leitura registrada com o código lido.</string>
     <string name="recognition_barcode_recorded_fields">Leitura registrada com os campos que você aceitou.</string>
     <string name="recognition_barcode_no_exemplar">Nenhum exemplar foi criado. Abra o cadastro para incluir a miniatura.</string>
+
+    <string name="error_generic">Não foi possível concluir a operação.</string>
+    <string name="error_generic_save">Não foi possível salvar.</string>
+    <string name="error_invalid_money">Valor inválido. Use, por exemplo, 59,90.</string>
+    <string name="error_invalid_date">Data inválida. Use dd/mm/aaaa.</string>
+    <string name="error_invalid_url">O link deve começar com http:// ou https://.</string>
+    <string name="error_title_required">Escolha uma variante do catálogo ou descreva o que você procura.</string>
+    <string name="error_wishlist_not_found">Desejo não encontrado.</string>
+    <string name="error_exemplar_not_found">Exemplar não encontrado.</string>
+    <string name="error_duplicate_variant">Já existe uma variante com estes atributos.</string>
+    <string name="error_duplicate_exemplar">Já existe um exemplar com esse código. Tente de novo.</string>
+    <string name="error_duplicate_record">Já existe um registro igual.</string>
+    <string name="collection_item_added">Item adicionado à coleção.</string>
+    <string name="series_no_manufacturer">Cadastre um fabricante antes de criar uma série.</string>
+    <string name="series_added">Série criada.</string>
+    <string name="series_renamed">Série renomeada.</string>
+    <string name="series_archived">Série arquivada.</string>
+    <string name="availability_updated">Disponibilidade atualizada.</string>
+    <string name="duplicates_error_save">Não foi possível salvar a disponibilidade.</string>
+    <string name="negotiation_opened">Negociação aberta.</string>
+    <string name="negotiation_sale_closed">Venda concluída.</string>
+    <string name="negotiation_trade_closed">Troca concluída.</string>
+    <string name="negotiation_cancelled">Negociação cancelada.</string>
+    <string name="negotiation_value_required">Informe o valor recebido para concluir a venda.</string>
+    <string name="wishlist_acquired">Desejo convertido em exemplar e aquisição.</string>
+    <string name="wishlist_acquired_without_exemplar">Desejo marcado como adquirido. Ele não aponta para uma variante, então nenhum exemplar foi criado.</string>
+    <string name="wishlist_dismissed">Desejo removido da lista em aberto.</string>
+    <string name="wishlist_error_save">Não foi possível salvar o desejo.</string>
+    <string name="exemplar_acquisition_saved">Aquisição salva.</string>
+    <string name="exemplar_valuation_registered">Avaliação registrada.</string>
+    <string name="exemplar_changes_saved">Alterações salvas.</string>
+    <string name="exemplar_location_updated">Localização atualizada.</string>
+    <string name="exemplar_archived">Exemplar arquivado.</string>
+    <string name="exemplar_deleted">Exemplar excluído.</string>
+    <string name="exemplar_move_note_required">Escolha outro local ou escreva uma observação.</string>
+    <string name="exemplar_valuation_value_required">Informe o valor da avaliação.</string>
+    <string name="finance_inverted_period">A data inicial não pode ser depois da final.</string>
+    <string name="search_invalid_price">Preço inválido. Use o formato 1.234,56.</string>
+    <string name="recognition_read_failed">Não foi possível ler o código.</string>
 </resources>

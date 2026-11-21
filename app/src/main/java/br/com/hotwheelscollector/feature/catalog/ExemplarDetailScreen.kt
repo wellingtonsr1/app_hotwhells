@@ -79,8 +79,10 @@ public fun ExemplarDetailScreen(
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val messageText = state.message?.text()
+
     LaunchedEffect(state.message) {
-        state.message?.let { message ->
+        messageText?.let { message ->
             snackbarHostState.showSnackbar(message)
             viewModel.onMessageShown()
         }

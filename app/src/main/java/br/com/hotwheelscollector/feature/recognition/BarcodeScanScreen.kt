@@ -232,7 +232,7 @@ internal fun BarcodeScanContent(
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.error,
                     )
-                    Text(text = message, style = MaterialTheme.typography.bodySmall)
+                    Text(text = message.text(), style = MaterialTheme.typography.bodySmall)
                     TextButton(onClick = onDismissFailure) {
                         Text(stringResource(R.string.recognition_review_dismiss))
                     }

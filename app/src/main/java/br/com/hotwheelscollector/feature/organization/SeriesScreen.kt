@@ -78,8 +78,10 @@ internal fun SeriesContent(
     var renameTarget by remember { mutableStateOf<Series?>(null) }
     var archiveTarget by remember { mutableStateOf<Series?>(null) }
 
+    val messageText = state.message?.text()
+
     LaunchedEffect(state.message) {
-        state.message?.let {
+        messageText?.let {
             snackbarHostState.showSnackbar(it)
             onMessageShown()
         }

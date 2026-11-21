@@ -496,7 +496,7 @@ private fun LocationsMessage.asText(): String = when (this) {
     is LocationsMessage.ArchivedExemplars ->
         pluralStringResource(R.plurals.locations_archived_archived, count, count)
     LocationsMessage.ArchivedLocation -> stringResource(R.string.locations_archived_empty)
-    is LocationsMessage.Failure -> text
+    is LocationsMessage.Failure -> message.text()
 }
 
 private fun LocationType.labelRes(): Int = when (this) {

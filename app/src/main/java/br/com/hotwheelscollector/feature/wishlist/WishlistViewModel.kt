@@ -2,12 +2,15 @@ package br.com.hotwheelscollector.feature.wishlist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.model.Condition
 import br.com.hotwheelscollector.domain.model.IsoDate
 import br.com.hotwheelscollector.domain.repository.NewAcquisition
 import br.com.hotwheelscollector.domain.repository.NewExemplar
 import br.com.hotwheelscollector.domain.repository.WishlistEntry
 import br.com.hotwheelscollector.domain.repository.WishlistRepository
+import br.com.hotwheelscollector.ui.UiMessage
+import br.com.hotwheelscollector.ui.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import javax.inject.Inject
@@ -22,7 +25,7 @@ public data class WishlistUiState(
     val items: List<WishlistEntry> = emptyList(),
     val loading: Boolean = true,
     val workingId: String? = null,
-    val message: String? = null,
+    val message: UiMessage? = null,
 )
 
 /**
@@ -40,7 +43,7 @@ public class WishlistViewModel @Inject constructor(
     private val clock: Clock,
 ) : ViewModel() {
 
-    private val feedback = MutableStateFlow<Pair<String?, String?>>(null to null)
+    private val feedback = MutableStateFlow<Pair<String?, UiMessage?>>(null to null)
 
     public val state: StateFlow<WishlistUiState> = wishlistRepository.observeAll()
         .stateIn(
@@ -85,7 +88,7 @@ public class WishlistViewModel @Inject constructor(
                 onSuccess = { outcome ->
                     if (outcome == null) ACQUIRED_WITHOUT_EXEMPLAR else ACQUIRED
                 },
-                onFailure = { it.message ?: GENERIC_ERROR },
+                onFailure = { it.toUiMessage() },
             )
             feedback.value = null to message
         }
@@ -94,7 +97,7 @@ public class WishlistViewModel @Inject constructor(
     public fun onDismiss(id: String) {
         viewModelScope.launch {
             val message = wishlistRepository.dismiss(id).exceptionOrNull()
-                ?.message ?: DISMISSED
+                ?.toUiMessage(R.string.wishlist_error_save) ?: DISMISSED
             feedback.value = null to message
         }
     }
@@ -105,10 +108,9 @@ public class WishlistViewModel @Inject constructor(
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
-        const val ACQUIRED = "Desejo convertido em exemplar e aquisição."
-        const val ACQUIRED_WITHOUT_EXEMPLAR =
-            "Desejo marcado como adquirido. Ele não aponta para uma variante, então nenhum exemplar foi criado."
-        const val DISMISSED = "Desejo removido da lista em aberto."
-        const val GENERIC_ERROR = "Não foi possível concluir a operação."
+        val ACQUIRED: UiMessage = UiMessage(R.string.wishlist_acquired)
+        val ACQUIRED_WITHOUT_EXEMPLAR: UiMessage =
+            UiMessage(R.string.wishlist_acquired_without_exemplar)
+        val DISMISSED: UiMessage = UiMessage(R.string.wishlist_dismissed)
     }
 }

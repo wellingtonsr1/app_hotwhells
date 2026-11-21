@@ -3,6 +3,7 @@ package br.com.hotwheelscollector.feature.organization
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.error.DomainResult
 import br.com.hotwheelscollector.domain.model.CollectionItemStatus
 import br.com.hotwheelscollector.domain.model.CollectionProgress
@@ -11,6 +12,8 @@ import br.com.hotwheelscollector.domain.repository.CollectionRepository
 import br.com.hotwheelscollector.domain.repository.ManufacturerRepository
 import br.com.hotwheelscollector.domain.repository.VariantRepository
 import br.com.hotwheelscollector.navigation.RouteArgs
+import br.com.hotwheelscollector.ui.UiMessage
+import br.com.hotwheelscollector.ui.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +42,7 @@ public data class CollectionDetailUiState(
     val missing: List<CollectionItemStatus> = emptyList(),
     val options: List<CollectionOption> = emptyList(),
     val busy: Boolean = false,
-    val message: String? = null,
+    val message: UiMessage? = null,
     val archived: Boolean = false,
 ) {
     public val notFound: Boolean get() = !loading && progress == null
@@ -153,7 +156,7 @@ public class CollectionDetailViewModel @Inject constructor(
                     feedback.value = Feedback(archived = true)
                 },
                 onFailure = { error ->
-                    feedback.value = Feedback(message = error.message ?: GENERIC_ERROR)
+                    feedback.value = Feedback(message = error.toUiMessage())
                 },
             )
         }
@@ -163,7 +166,7 @@ public class CollectionDetailViewModel @Inject constructor(
         feedback.update { it.copy(message = null) }
     }
 
-    private fun run(success: String?, block: suspend () -> DomainResult<*>) {
+    private fun run(success: UiMessage?, block: suspend () -> DomainResult<*>) {
         if (feedback.value.busy) return
         feedback.value = feedback.value.copy(busy = true, message = null)
         viewModelScope.launch {
@@ -172,7 +175,7 @@ public class CollectionDetailViewModel @Inject constructor(
                     Feedback(message = success)
                 },
                 onFailure = { error ->
-                    Feedback(message = error.message ?: GENERIC_ERROR)
+                    Feedback(message = error.toUiMessage())
                 },
             )
         }
@@ -180,13 +183,12 @@ public class CollectionDetailViewModel @Inject constructor(
 
     private data class Feedback(
         val busy: Boolean = false,
-        val message: String? = null,
+        val message: UiMessage? = null,
         val archived: Boolean = false,
     )
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
-        const val ADDED = "Item adicionado à coleção."
-        const val GENERIC_ERROR = "Não foi possível concluir a operação."
+        val ADDED: UiMessage = UiMessage(R.string.collection_item_added)
     }
 }

@@ -11,7 +11,9 @@ import br.com.hotwheelscollector.domain.model.ExemplarStatus
 import br.com.hotwheelscollector.domain.model.FilterOption
 import br.com.hotwheelscollector.domain.model.IsoDate
 import br.com.hotwheelscollector.domain.model.SearchFilterOptions
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.model.SearchFilters
+import br.com.hotwheelscollector.ui.UiMessage
 import br.com.hotwheelscollector.domain.model.SearchResultItem
 import br.com.hotwheelscollector.ui.theme.HotWheelsTheme
 import java.time.LocalDate
@@ -109,7 +111,7 @@ class SearchScreenTest {
                     state = state(
                         filtersOpen = true,
                         priceMinText = "abc",
-                        priceError = "Preço inválido. Use o formato 1.234,56.",
+                        priceError = UiMessage(R.string.search_invalid_price),
                     ),
                     actions = SearchActions(onApplyPriceRange = { applied = true }),
                     onBack = {},
@@ -167,7 +169,7 @@ class SearchScreenTest {
         viewMode: CatalogViewMode = CatalogViewMode.GRID,
         filtersOpen: Boolean = false,
         priceMinText: String = "",
-        priceError: String? = null,
+        priceError: UiMessage? = null,
     ) = SearchUiState(
         filters = filters,
         options = SearchFilterOptions(

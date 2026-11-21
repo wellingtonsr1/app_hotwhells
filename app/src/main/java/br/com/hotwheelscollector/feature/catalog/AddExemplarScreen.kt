@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.model.Condition
+import br.com.hotwheelscollector.ui.UiMessage
 import br.com.hotwheelscollector.ui.theme.HotWheelsTheme
 
 /**
@@ -57,8 +58,10 @@ public fun AddExemplarScreen(
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val messageText = state.message?.text()
+
     LaunchedEffect(state.message) {
-        state.message?.let { message ->
+        messageText?.let { message ->
             snackbarHostState.showSnackbar(message)
             viewModel.onMessageShown()
         }
@@ -119,7 +122,7 @@ internal fun AddExemplarContent(
             // Aviso de repetição: informa, não bloqueia (FR-039).
             state.duplicateNotice?.let { notice ->
                 Text(
-                    text = notice,
+                    text = notice.text(),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -286,7 +289,10 @@ internal fun Condition.labelRes(): Int = when (this) {
 private fun AddExemplarPreview() {
     HotWheelsTheme {
         AddExemplarContent(
-            state = AddExemplarUiState(variantId = "v1", duplicateNotice = "Esta variante já tem 2 exemplar(es)."),
+            state = AddExemplarUiState(
+                variantId = "v1",
+                duplicateNotice = UiMessage(R.string.add_exemplar_duplicate_variant, 2),
+            ),
             contentPadding = PaddingValues(0.dp),
             onConditionChange = {},
             onLocationChange = {},

@@ -44,8 +44,10 @@ public fun CreateCatalogEntryScreen(
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val messageText = state.message?.text()
+
     LaunchedEffect(state.message) {
-        state.message?.let {
+        messageText?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.onMessageShown()
         }

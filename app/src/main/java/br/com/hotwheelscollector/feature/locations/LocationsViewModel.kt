@@ -6,6 +6,8 @@ import br.com.hotwheelscollector.domain.model.LocationArchivePolicy
 import br.com.hotwheelscollector.domain.model.LocationNode
 import br.com.hotwheelscollector.domain.model.LocationType
 import br.com.hotwheelscollector.domain.repository.LocationRepository
+import br.com.hotwheelscollector.ui.UiMessage
+import br.com.hotwheelscollector.ui.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +38,7 @@ public sealed interface LocationsMessage {
     public data class MovedExemplars(val count: Int) : LocationsMessage
     public data class ArchivedExemplars(val count: Int) : LocationsMessage
     public data object ArchivedLocation : LocationsMessage
-    public data class Failure(val text: String) : LocationsMessage
+    public data class Failure(val message: UiMessage) : LocationsMessage
 }
 
 public data class LocationsUiState(
@@ -131,7 +133,7 @@ public class LocationsViewModel @Inject constructor(
             feedback.value = block().fold(
                 onSuccess = { Feedback(message = success(it)) },
                 onFailure = {
-                    Feedback(message = LocationsMessage.Failure(it.message ?: GENERIC_ERROR))
+                    Feedback(message = LocationsMessage.Failure(it.toUiMessage()))
                 },
             )
         }
@@ -152,7 +154,6 @@ public class LocationsViewModel @Inject constructor(
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
-        const val GENERIC_ERROR = "Não foi possível concluir a operação."
     }
 }
 

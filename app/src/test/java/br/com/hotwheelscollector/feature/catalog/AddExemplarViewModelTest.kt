@@ -1,6 +1,7 @@
 package br.com.hotwheelscollector.feature.catalog
 
 import androidx.lifecycle.SavedStateHandle
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.error.DomainError
 import br.com.hotwheelscollector.domain.error.DomainResult
 import br.com.hotwheelscollector.domain.model.Condition
@@ -79,7 +80,9 @@ class AddExemplarViewModelTest {
 
         val model = viewModel()
 
-        assertThat(model.state.value.duplicateNotice).contains("2 exemplar(es)")
+        assertThat(model.state.value.duplicateNotice?.resId)
+            .isEqualTo(R.string.add_exemplar_duplicate_variant)
+        assertThat(model.state.value.duplicateNotice?.args).contains(2)
     }
 
     @Test
@@ -101,7 +104,8 @@ class AddExemplarViewModelTest {
 
         val state = model.state.value
         assertThat(state.savedExemplarId).isNotNull()
-        assertThat(state.message).contains("HW-000001")
+        assertThat(state.message?.resId).isEqualTo(R.string.add_exemplar_success_single)
+        assertThat(state.message?.args).contains("HW-000001")
         assertThat(repository.lastDraft?.acquisition?.price?.cents).isEqualTo(5990L)
         assertThat(repository.lastDraft?.notes).isEqualTo("Comprado na feira")
     }
@@ -113,7 +117,8 @@ class AddExemplarViewModelTest {
 
         model.onSave()
 
-        assertThat(model.state.value.message).isEqualTo("2º exemplar desta variante.")
+        assertThat(model.state.value.message?.resId)
+            .isEqualTo(R.string.add_exemplar_success_multiple)
         assertThat(model.state.value.savedExemplarId).isNotNull()
     }
 
@@ -124,7 +129,8 @@ class AddExemplarViewModelTest {
 
         model.onSave()
 
-        assertThat(model.state.value.message).contains("Valor inválido")
+        assertThat(model.state.value.message?.resId)
+            .isEqualTo(R.string.add_exemplar_invalid_value)
         assertThat(repository.addCalls).isEqualTo(0)
     }
 
@@ -135,7 +141,8 @@ class AddExemplarViewModelTest {
 
         model.onSave()
 
-        assertThat(model.state.value.message).contains("Data inválida")
+        assertThat(model.state.value.message?.resId)
+            .isEqualTo(R.string.add_exemplar_invalid_date)
         assertThat(repository.addCalls).isEqualTo(0)
     }
 
@@ -148,7 +155,8 @@ class AddExemplarViewModelTest {
 
         model.onSave()
 
-        assertThat(model.state.value.message).contains("futuro")
+        assertThat(model.state.value.message?.resId).isEqualTo(R.string.error_validation)
+        assertThat(model.state.value.message?.args?.joinToString()).contains("futuro")
         assertThat(repository.addCalls).isEqualTo(0)
     }
 
@@ -161,7 +169,8 @@ class AddExemplarViewModelTest {
 
         model.onSave()
 
-        assertThat(model.state.value.message).contains("desconto")
+        assertThat(model.state.value.message?.resId).isEqualTo(R.string.error_validation)
+        assertThat(model.state.value.message?.args?.joinToString()).contains("desconto")
         assertThat(repository.addCalls).isEqualTo(0)
     }
 
@@ -172,7 +181,8 @@ class AddExemplarViewModelTest {
 
         model.onSave()
 
-        assertThat(model.state.value.message).contains("sem espaço")
+        assertThat(model.state.value.message?.resId).isEqualTo(R.string.error_storage)
+        assertThat(model.state.value.message?.args?.joinToString()).contains("sem espaço")
         assertThat(model.state.value.savedExemplarId).isNull()
     }
 

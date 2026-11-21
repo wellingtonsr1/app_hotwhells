@@ -3,6 +3,7 @@ package br.com.hotwheelscollector.feature.catalog
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.error.DomainError
 import br.com.hotwheelscollector.domain.model.Condition
 import br.com.hotwheelscollector.domain.model.IsoDate
@@ -15,6 +16,8 @@ import br.com.hotwheelscollector.domain.repository.NewAcquisition
 import br.com.hotwheelscollector.domain.repository.NewExemplar
 import br.com.hotwheelscollector.domain.usecase.AddExemplarUseCase
 import br.com.hotwheelscollector.navigation.RouteArgs
+import br.com.hotwheelscollector.ui.UiMessage
+import br.com.hotwheelscollector.ui.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import javax.inject.Inject
@@ -44,8 +47,8 @@ public data class AddExemplarUiState(
     val dateText: String = IsoDate.today().formatPtBr(),
     val store: String = "",
     val saving: Boolean = false,
-    val message: String? = null,
-    val duplicateNotice: String? = null,
+    val message: UiMessage? = null,
+    val duplicateNotice: UiMessage? = null,
     val savedExemplarId: String? = null,
 )
 
@@ -84,7 +87,10 @@ public class AddExemplarViewModel @Inject constructor(
                 if (existing > 0) {
                     _state.update {
                         it.copy(
-                            duplicateNotice = "Esta variante já tem $existing exemplar(es).",
+                            duplicateNotice = UiMessage(
+                                R.string.add_exemplar_duplicate_variant,
+                                existing,
+                            ),
                         )
                     }
                 }
@@ -128,12 +134,12 @@ public class AddExemplarViewModel @Inject constructor(
         val shipping = parseMoney(current.shippingText)
         val discount = parseMoney(current.discountText)
         if (price.isInvalid || shipping.isInvalid || discount.isInvalid) {
-            _state.update { it.copy(message = "Valor inválido. Use, por exemplo, 59,90.") }
+            _state.update { it.copy(message = UiMessage(R.string.add_exemplar_invalid_value)) }
             return
         }
         val date = IsoDate.parsePtBrOrNull(current.dateText)
         if (date == null) {
-            _state.update { it.copy(message = "Data inválida. Use dd/mm/aaaa.") }
+            _state.update { it.copy(message = UiMessage(R.string.add_exemplar_invalid_date)) }
             return
         }
 
@@ -163,9 +169,15 @@ public class AddExemplarViewModel @Inject constructor(
             result.fold(
                 onSuccess = { outcome ->
                     val notice = if (outcome.sameVariantCount > 1) {
-                        "${outcome.sameVariantCount}º exemplar desta variante."
+                        UiMessage(
+                            R.string.add_exemplar_success_multiple,
+                            outcome.sameVariantCount,
+                        )
                     } else {
-                        "Exemplar ${outcome.exemplar.internalCode} cadastrado."
+                        UiMessage(
+                            R.string.add_exemplar_success_single,
+                            outcome.exemplar.internalCode,
+                        )
                     }
                     _state.update {
                         it.copy(saving = false, message = notice, savedExemplarId = outcome.exemplar.id)
@@ -186,13 +198,9 @@ public class AddExemplarViewModel @Inject constructor(
         return ParsedMoney(value, isInvalid = value == null)
     }
 
-    private fun Throwable.toMessage(): String = when (this) {
-        is DomainError.Validation -> reason
-        DomainError.Duplicate -> "Já existe um exemplar com esse código. Tente de novo."
-        DomainError.StaleWrite -> "Registro alterado em outra tela. Recarregue."
-        is DomainError.Blocked -> reason
-        is DomainError.Storage -> "Falha ao gravar: ${reason}"
-        else -> message ?: "Não foi possível salvar."
+    private fun Throwable.toMessage(): UiMessage = when (this) {
+        DomainError.Duplicate -> UiMessage(R.string.error_duplicate_exemplar)
+        else -> toUiMessage(R.string.error_generic_save)
     }
 
     private data class ParsedMoney(val value: MoneyCents?, val isInvalid: Boolean)

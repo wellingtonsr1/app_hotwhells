@@ -3,6 +3,7 @@ package br.com.hotwheelscollector.feature.catalog
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.error.DomainError
 import br.com.hotwheelscollector.domain.model.Acquisition
 import br.com.hotwheelscollector.domain.model.Condition
@@ -19,6 +20,8 @@ import br.com.hotwheelscollector.domain.repository.ExemplarRepository
 import br.com.hotwheelscollector.domain.repository.LocationRepository
 import br.com.hotwheelscollector.domain.repository.ValuationRepository
 import br.com.hotwheelscollector.navigation.RouteArgs
+import br.com.hotwheelscollector.ui.UiMessage
+import br.com.hotwheelscollector.ui.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.Instant
@@ -54,7 +57,7 @@ public data class ExemplarDetailUiState(
     val loading: Boolean = true,
     val saving: Boolean = false,
     val notFound: Boolean = false,
-    val message: String? = null,
+    val message: UiMessage? = null,
     val finished: Boolean = false,
 
     // Aquisição (FR-074–FR-076): editável aqui, uma linha por exemplar.
@@ -176,12 +179,12 @@ public class ExemplarDetailViewModel @Inject constructor(
         val shipping = parseMoney(current.acquisitionShipping)
         val discount = parseMoney(current.acquisitionDiscount)
         if (price.isInvalid || shipping.isInvalid || discount.isInvalid) {
-            _state.update { it.copy(message = "Valor inválido. Use, por exemplo, 59,90.") }
+            _state.update { it.copy(message = UiMessage(R.string.error_invalid_money)) }
             return
         }
         val date = IsoDate.parsePtBrOrNull(current.acquisitionDate)
         if (date == null) {
-            _state.update { it.copy(message = "Data inválida. Use dd/mm/aaaa.") }
+            _state.update { it.copy(message = UiMessage(R.string.error_invalid_date)) }
             return
         }
 
@@ -206,7 +209,12 @@ public class ExemplarDetailViewModel @Inject constructor(
         viewModelScope.launch {
             acquisitionRepository.save(acquisition).fold(
                 onSuccess = { saved ->
-                    _state.update { it.copy(savingAcquisition = false, message = "Aquisição salva.") }
+                    _state.update {
+                        it.copy(
+                            savingAcquisition = false,
+                            message = UiMessage(R.string.exemplar_acquisition_saved),
+                        )
+                    }
                     applyAcquisition(saved)
                 },
                 onFailure = { error ->
@@ -238,12 +246,14 @@ public class ExemplarDetailViewModel @Inject constructor(
 
         val value = parseMoney(current.valuationValue)
         if (value.isInvalid || value.value == null || value.value.cents <= 0L) {
-            _state.update { it.copy(message = "Informe o valor da avaliação.") }
+            _state.update {
+                it.copy(message = UiMessage(R.string.exemplar_valuation_value_required))
+            }
             return
         }
         val date = IsoDate.parsePtBrOrNull(current.valuationDate)
         if (date == null) {
-            _state.update { it.copy(message = "Data inválida. Use dd/mm/aaaa.") }
+            _state.update { it.copy(message = UiMessage(R.string.error_invalid_date)) }
             return
         }
 
@@ -268,7 +278,7 @@ public class ExemplarDetailViewModel @Inject constructor(
                             valuationSource = "",
                             valuationNotes = "",
                             valuationDate = today,
-                            message = "Avaliação registrada.",
+                            message = UiMessage(R.string.exemplar_valuation_registered),
                         )
                     }
                 },
@@ -304,7 +314,7 @@ public class ExemplarDetailViewModel @Inject constructor(
                             packagingCondition = exemplar.packagingCondition,
                             notes = exemplar.notes.orEmpty(),
                             rowVersion = exemplar.rowVersion,
-                            message = "Alterações salvas.",
+                            message = UiMessage(R.string.exemplar_changes_saved),
                         )
                     }
                 },
@@ -320,7 +330,9 @@ public class ExemplarDetailViewModel @Inject constructor(
         val current = _state.value
         if (current.saving || current.loading || current.notFound) return
         if (current.targetLocationId == current.currentLocationId && current.moveNote.isBlank()) {
-            _state.update { it.copy(message = "Escolha outro local ou escreva uma observação.") }
+            _state.update {
+                it.copy(message = UiMessage(R.string.exemplar_move_note_required))
+            }
             return
         }
 
@@ -333,7 +345,13 @@ public class ExemplarDetailViewModel @Inject constructor(
             )
             result.fold(
                 onSuccess = {
-                    _state.update { it.copy(saving = false, moveNote = "", message = "Localização atualizada.") }
+                    _state.update {
+                        it.copy(
+                            saving = false,
+                            moveNote = "",
+                            message = UiMessage(R.string.exemplar_location_updated),
+                        )
+                    }
                     refresh(showLoading = false)
                 },
                 onFailure = { error ->
@@ -350,7 +368,11 @@ public class ExemplarDetailViewModel @Inject constructor(
             exemplarRepository.archive(exemplarId).fold(
                 onSuccess = {
                     _state.update {
-                        it.copy(saving = false, finished = true, message = "Exemplar arquivado.")
+                        it.copy(
+                            saving = false,
+                            finished = true,
+                            message = UiMessage(R.string.exemplar_archived),
+                        )
                     }
                 },
                 onFailure = { error ->
@@ -367,7 +389,11 @@ public class ExemplarDetailViewModel @Inject constructor(
             exemplarRepository.delete(exemplarId).fold(
                 onSuccess = {
                     _state.update {
-                        it.copy(saving = false, finished = true, message = "Exemplar excluído.")
+                        it.copy(
+                            saving = false,
+                            finished = true,
+                            message = UiMessage(R.string.exemplar_deleted),
+                        )
                     }
                 },
                 onFailure = { error ->
@@ -434,14 +460,10 @@ public class ExemplarDetailViewModel @Inject constructor(
         return ParsedMoney(value, isInvalid = value == null)
     }
 
-    private fun Throwable.toMessage(): String = when (this) {
-        is DomainError.Validation -> reason
-        DomainError.Duplicate -> "Já existe um registro igual."
-        DomainError.StaleWrite -> "Registro alterado em outra tela. Recarregue."
-        is DomainError.Blocked -> reason
-        is DomainError.Storage -> "Falha ao gravar: $reason"
-        DomainError.NotFound -> "Exemplar não encontrado."
-        else -> message ?: "Não foi possível concluir."
+    private fun Throwable.toMessage(): UiMessage = when (this) {
+        DomainError.Duplicate -> UiMessage(R.string.error_duplicate_record)
+        DomainError.NotFound -> UiMessage(R.string.error_exemplar_not_found)
+        else -> toUiMessage()
     }
 
     private data class ParsedMoney(val value: MoneyCents?, val isInvalid: Boolean)

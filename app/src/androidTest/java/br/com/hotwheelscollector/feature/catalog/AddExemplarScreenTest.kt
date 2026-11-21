@@ -7,7 +7,9 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.model.Condition
+import br.com.hotwheelscollector.ui.UiMessage
 import br.com.hotwheelscollector.ui.theme.HotWheelsTheme
 import org.junit.Rule
 import org.junit.Test
@@ -26,7 +28,7 @@ class AddExemplarScreenTest {
     private val state = AddExemplarUiState(
         variantId = "v1",
         condition = Condition.SEALED,
-        duplicateNotice = "Esta variante já tem 2 exemplar(es).",
+        duplicateNotice = UiMessage(R.string.add_exemplar_duplicate_variant, 2),
     )
 
     private fun setContent(onConditionChange: (Condition) -> Unit = {}) {

@@ -2,6 +2,7 @@ package br.com.hotwheelscollector.feature.catalog
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.error.DomainError
 import br.com.hotwheelscollector.domain.model.CarModel
 import br.com.hotwheelscollector.domain.model.Manufacturer
@@ -10,6 +11,7 @@ import br.com.hotwheelscollector.domain.repository.DraftRepository
 import br.com.hotwheelscollector.domain.repository.ManufacturerRepository
 import br.com.hotwheelscollector.domain.usecase.CreateCatalogEntryUseCase
 import br.com.hotwheelscollector.domain.usecase.NewCatalogEntry
+import br.com.hotwheelscollector.ui.UiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +37,7 @@ public data class CreateCatalogEntryUiState(
     val availableManufacturers: List<Manufacturer> = emptyList(),
     val availableModels: List<CarModel> = emptyList(),
     val saving: Boolean = false,
-    val message: String? = null,
+    val message: UiMessage? = null,
     val createdModelId: String? = null,
 )
 
@@ -151,10 +153,10 @@ public class CreateCatalogEntryViewModel @Inject constructor(
         }
     }
 
-    private fun Throwable.toMessage(): String = when (this) {
-        is DomainError.Validation -> reason
-        is DomainError.Storage -> "Falha ao salvar: ${reason}"
-        else -> message ?: "Erro ao salvar modelo."
+    private fun Throwable.toMessage(): UiMessage = when (this) {
+        is DomainError.Validation -> UiMessage(R.string.error_validation, reason)
+        is DomainError.Storage -> UiMessage(R.string.create_catalog_error_save, reason)
+        else -> UiMessage(R.string.create_catalog_error_model)
     }
 
     private companion object {

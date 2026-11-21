@@ -1,5 +1,6 @@
 package br.com.hotwheelscollector.feature.catalog
 
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.error.DomainError
 import br.com.hotwheelscollector.domain.error.DomainResult
 import br.com.hotwheelscollector.domain.model.CarModel
@@ -135,7 +136,7 @@ class VariantFormViewModelTest {
 
         model.onSave(MODEL_ID)
 
-        assertThat(model.state.value.message).contains("Ano inválido")
+        assertThat(model.state.value.message?.resId).isEqualTo(R.string.variant_invalid_year)
         assertThat(variants.createCalls).isEqualTo(0)
         assertThat(exemplars.addCalls).isEqualTo(0)
     }
@@ -176,7 +177,8 @@ class VariantFormViewModelTest {
 
         assertThat(model.state.value.savedVariantId).isNull()
         assertThat(model.state.value.photos).hasSize(1)
-        assertThat(model.state.value.message).contains("foto")
+        assertThat(model.state.value.message?.resId).isEqualTo(R.string.variant_failed_photos)
+        assertThat(model.state.value.message?.args).contains(1)
         assertThat(exemplars.addCalls).isEqualTo(1)
 
         photos.failure = null
@@ -232,7 +234,8 @@ class VariantFormViewModelTest {
         assertThat(updated.primaryColorId).isEqualTo("color-vermelho")
         assertThat(updated.releaseYear).isEqualTo(2024)
         assertThat(model.state.value.savedVariantId).isEqualTo("variante-1")
-        assertThat(model.state.value.message).isEqualTo("Variante atualizada.")
+        assertThat(model.state.value.message?.resId)
+            .isEqualTo(R.string.variant_success_update)
     }
 
     @Test

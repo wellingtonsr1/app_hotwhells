@@ -2,6 +2,7 @@ package br.com.hotwheelscollector.feature.finance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.model.FinancePeriod
 import br.com.hotwheelscollector.domain.model.FinanceSummary
 import br.com.hotwheelscollector.domain.model.FinancialHistory
@@ -10,6 +11,7 @@ import br.com.hotwheelscollector.domain.model.PeriodSpending
 import br.com.hotwheelscollector.domain.model.SpendingSlice
 import br.com.hotwheelscollector.domain.repository.FinanceRepository
 import br.com.hotwheelscollector.domain.usecase.FinancialHistoryUseCase
+import br.com.hotwheelscollector.ui.UiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,7 +32,7 @@ public data class FinanceUiState(
     val history: FinancialHistory = FinancialHistory(),
     val fromText: String = "",
     val toText: String = "",
-    val periodMessage: String? = null,
+    val periodMessage: UiMessage? = null,
     val loading: Boolean = true,
 )
 
@@ -43,7 +45,7 @@ public class FinanceViewModel @Inject constructor(
     private data class FormState(
         val fromText: String = "",
         val toText: String = "",
-        val periodMessage: String? = null,
+        val periodMessage: UiMessage? = null,
     )
 
     private data class DataState(
@@ -110,16 +112,22 @@ public class FinanceViewModel @Inject constructor(
             null
         } else {
             IsoDate.parsePtBrOrNull(current.fromText)
-                ?: return form.update { it.copy(periodMessage = INVALID_DATE) }
+                ?: return form.update {
+                    it.copy(periodMessage = UiMessage(R.string.error_invalid_date))
+                }
         }
         val to = if (current.toText.isBlank()) {
             null
         } else {
             IsoDate.parsePtBrOrNull(current.toText)
-                ?: return form.update { it.copy(periodMessage = INVALID_DATE) }
+                ?: return form.update {
+                    it.copy(periodMessage = UiMessage(R.string.error_invalid_date))
+                }
         }
         if (from != null && to != null && from > to) {
-            return form.update { it.copy(periodMessage = INVERTED_PERIOD) }
+            return form.update {
+                it.copy(periodMessage = UiMessage(R.string.finance_inverted_period))
+            }
         }
         period.value = FinancePeriod(from = from, to = to)
         form.update { it.copy(periodMessage = null) }
@@ -132,7 +140,5 @@ public class FinanceViewModel @Inject constructor(
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
-        const val INVALID_DATE = "Data inválida. Use dd/mm/aaaa."
-        const val INVERTED_PERIOD = "A data inicial não pode ser depois da final."
     }
 }

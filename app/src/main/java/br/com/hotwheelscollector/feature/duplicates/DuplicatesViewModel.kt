@@ -2,6 +2,7 @@ package br.com.hotwheelscollector.feature.duplicates
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.model.Condition
 import br.com.hotwheelscollector.domain.model.DuplicateAvailability
 import br.com.hotwheelscollector.domain.model.DuplicateExemplar
@@ -9,6 +10,8 @@ import br.com.hotwheelscollector.domain.model.DuplicateGroup
 import br.com.hotwheelscollector.domain.model.MoneyCents
 import br.com.hotwheelscollector.domain.repository.DuplicateRepository
 import br.com.hotwheelscollector.domain.usecase.GetDuplicatesUseCase
+import br.com.hotwheelscollector.ui.UiMessage
+import br.com.hotwheelscollector.ui.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +25,7 @@ public data class DuplicatesUiState(
     val loading: Boolean = true,
     val selected: DuplicateExemplar? = null,
     val saving: Boolean = false,
-    val message: String? = null,
+    val message: UiMessage? = null,
 )
 
 /**
@@ -79,7 +82,9 @@ public class DuplicatesViewModel @Inject constructor(
             null
         } else {
             MoneyCents.parsePtBrOrNull(priceText)
-                ?: return _state.update { it.copy(message = INVALID_PRICE) }
+                ?: return _state.update {
+                    it.copy(message = UiMessage(R.string.error_invalid_money))
+                }
         }
 
         _state.update { it.copy(saving = true) }
@@ -96,7 +101,7 @@ public class DuplicatesViewModel @Inject constructor(
                         it.copy(
                             saving = false,
                             selected = null,
-                            message = "Disponibilidade atualizada.",
+                            message = UiMessage(R.string.availability_updated),
                         )
                     }
                 },
@@ -104,7 +109,7 @@ public class DuplicatesViewModel @Inject constructor(
                     _state.update {
                         it.copy(
                             saving = false,
-                            message = error.message ?: GENERIC_ERROR,
+                            message = error.toUiMessage(R.string.duplicates_error_save),
                         )
                     }
                 },
@@ -112,8 +117,5 @@ public class DuplicatesViewModel @Inject constructor(
         }
     }
 
-    private companion object {
-        const val INVALID_PRICE = "Valor inválido. Use, por exemplo, 49,90."
-        const val GENERIC_ERROR = "Não foi possível salvar a disponibilidade."
-    }
 }
+

@@ -82,8 +82,10 @@ internal fun CollectionDetailContent(
     var showPicker by remember { mutableStateOf(false) }
     var confirmArchive by remember { mutableStateOf(false) }
 
+    val messageText = state.message?.text()
+
     LaunchedEffect(state.message) {
-        state.message?.let {
+        messageText?.let {
             snackbarHostState.showSnackbar(it)
             onMessageShown()
         }

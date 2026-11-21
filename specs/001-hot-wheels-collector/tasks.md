@@ -1327,7 +1327,7 @@ já digitado e código em branco. Verificação: 4 testes instrumentados verdes 
 **Purpose**: requisitos transversais que atravessam todas as histórias
 
 - [X] T130 [P] Auditar acessibilidade (TalkBack, alvos 48 dp, fonte do sistema até 200%, contraste 4.5:1) e corrigir desvios em `app/src/main/res/values/dimens.xml` — **concluída (2026-11-20)**: corrigidos os 5 defeitos de layout em fonte 200% (`SettingsScreen`, `DashboardScreen`, `AppNavHost` e `CatalogScreen`)
-- [ ] T131 [P] Externalizar 100% das strings em pt-BR e remover texto fixo de Composable, com lint limpo em `app/src/main/res/values/strings.xml`
+- [X] T131 [P] Externalizar 100% das strings em pt-BR e remover texto fixo de Composable, com lint limpo em `app/src/main/res/values/strings.xml` — **concluída (2026-11-21)**: mensagens de ViewModel viraram `UiMessage` resolvido por recurso; ver «Evidências — T131»
 - [X] T132 [P] Implementar política de privacidade offline dentro do app (FR-172) em `app/.../feature/settings/PrivacyPolicyScreen.kt`
 - [X] T133 [P] Implementar tela "Sobre" com versão e identificador do pacote (FR-171) em `app/.../feature/settings/AboutScreen.kt` — a versão vem do pacote instalado; não há data de build em `BuildConfig`
 - [ ] T134 Implementar `WorkManager` para importação, backup e restauração com progresso e retomada após segundo plano (FR-150) em `app/.../work/TransferWorkers.kt`
@@ -1337,9 +1337,41 @@ já digitado e código em branco. Verificação: 4 testes instrumentados verdes 
 - [ ] T138 Executar os 14 cenários do `quickstart.md` no aparelho e registrar evidências em `docs/validacao.md`, com verificação explícita e assinada de SC-003, SC-005, SC-009, SC-011, SC-012 e SC-014 — **parcial (2026-11-20)**: 4 dos 6 SCs verificados; SC-011 sem medição e SC-012 corrigido em código
 - [X] T139 Revisar segurança e privacidade: zero chamadas de rede, nenhum segredo, permissões mínimas, nenhuma telemetria (Art. III) em `docs/revisao-seguranca.md` — **concluída (2026-11-20)**: manifesto limpo com `tools:node="remove"` para `INTERNET` e `ACCESS_NETWORK_STATE`, zero APIs de rede e relatório emitido
 
-### T131 — parcial (2026-11-17)
+### Evidências — T131 (2026-11-21)
 
-Saiu do Kotlin, nesta rodada:
+**Fechamento:** toda mensagem de interface que ainda nascia como texto em Kotlin passou a ser
+`UiMessage(resId, args)`, resolvida na tela por `stringResource`. O ViewModel não redige mais
+português: validação, sucesso, erro de domínio e confirmação carregam id de recurso e
+argumentos.
+
+- **Um tipo só**: `app/.../ui/UiMessage.kt` com `text()` `@Composable` e
+  `Throwable.toUiMessage(fallback)` — erros de domínio preservam a mensagem específica e o
+  motivo livre; exceção fora do domínio cai no genérico, sem vazar texto cru de exceção.
+- **ViewModels migrados**: coleção, série, duplicados, negociação, variante, exemplar,
+  cadastro de exemplar e de miniatura, desejos, financeiro, busca, localizações e
+  reconhecimento. `LocationsMessage.Failure` também passou a carregar `UiMessage`.
+- **Recursos**: 30 strings novas em pt-BR; as antigas com `{0}` foram corrigidas para o
+  formato Android (`%1$s`/`%1$d`) e agora são usadas (`add_exemplar_*`, `variant_*`,
+  `create_catalog_*`). Três recursos órfãos foram removidos (`setup_status_message`,
+  `photo_add`, `photo_primary_badge`), eliminando os avisos `UnusedResources`.
+- **Testes**: as asserções passaram a comparar `resId` e argumentos em vez de texto — é a
+  consequência esperada de tirar o português do ViewModel. O caso de falha fora do domínio
+  em Localizações foi ajustado para o genérico (o texto cru deixou de ser interface).
+
+| Verificação | Comando | Resultado |
+| --- | --- | --- |
+| Unitários | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest` | 277 testes, 0 falhas (62 + 159 + 56) |
+| Lint | `./gradlew :app:lintDebug` | `0 errors, 10 warnings` — só `PluralsCandidate` (7), `UseKtx` e `ChromeOsAbiSupport`, todos de estilo/infra e anteriores à entrega |
+| Regressão instrumentada | `./gradlew :app:connectedDebugAndroidTest` | 64 testes, 0 falhas (6m 54s, emulador `hw_test` API 36) |
+
+**Limite conhecido:** os 7 avisos `PluralsCandidate` continuam porque as frases com `%d`
+(ex.: «%1$d exemplares · %2$d páginas») precisariam virar `<plurals>` e `pluralStringResource`;
+não são texto fixo em Kotlin e não bloqueiam a entrega. `UseKtx` e `ChromeOsAbiSupport`
+são avisos de infraestrutura do build.
+
+### Histórico — T131 (2026-11-17)
+
+Saiu do Kotlin naquela rodada:
 
 - rótulos de `Condition` (`labelPtBr()` → `labelRes()` com `@StringRes`) usados por
   `AddExemplarScreen` e `VariantFormScreen`;
@@ -1349,12 +1381,10 @@ Saiu do Kotlin, nesta rodada:
   `catalog_exemplar_none`;
 - rótulos de ângulo de foto, «Galeria»/«Câmera» e «Ainda não salva» (rodada anterior).
 
-**Continua fora de `strings.xml`**, e por isso o checkbox segue aberto: **apenas** as
-mensagens de snackbar dos ViewModels (`AddExemplarViewModel`, `CreateCatalogEntryViewModel`,
-`VariantFormViewModel`). O texto do `PlaceholderScreen` não conta mais: a tela foi removida
-na Fase 8, quando Desejos e Ajustes ganharam tela própria. Padronizar o restante exige
-decidir se as mensagens de estado viram `@StringRes` no ViewModel ou códigos de erro
-resolvidos na tela.
+Naquele momento restavam as mensagens de snackbar dos ViewModels — e, nas fases
+seguintes, as dos demais ViewModels (coleção, série, duplicados, negociação, exemplar,
+desejos, financeiro, busca, localizações e reconhecimento). A decisão tomada no fechamento
+foi `@StringRes` no ViewModel via `UiMessage`, resolvido na tela.
 
 ### Evidências — T138 (2026-11-20, parcial)
 
@@ -1699,7 +1729,7 @@ backup. A lista abaixo é o recorte por decisão, não por ordem do arquivo.
 | T147 / T148 | R.5 e Art. III.10: inventário de dependências e verificação de vulnerabilidade no release | **feito em 2026-11-20** — `docs/dependencias.md` e `docs/revisao-dependencias.md` |
 | T139 | Art. III: provar zero rede, zero segredo, permissões mínimas | **feito em 2026-11-20** — `docs/revisao-seguranca.md`, permissões de rede removidas do manifesto |
 | T140 | Art. V.7: log estruturado com correlação, sem dado sensível | `AppLogger` não existe |
-| T131 | Quase pronto: **nenhum** `Text("…")` fixo encontrado; o que resta de lint é plural candidato e string não usada | 7 avisos |
+| T131 | Art. IV: nenhuma mensagem de ViewModel redigida em Kotlin; tudo em `strings.xml` | **feito em 2026-11-21** — `UiMessage` + 30 recursos; lint `0 errors, 10 warnings` |
 | T058 | R.7: busca < 300 ms e lista < 1 s com 10.000 exemplares — hoje é meta, não medição | **medido em 2026-11-21** — teste instrumentado verde no emulador android-36; falta aparelho físico |
 
 ### B. Decisão pendente do produto (não é bloqueio técnico)

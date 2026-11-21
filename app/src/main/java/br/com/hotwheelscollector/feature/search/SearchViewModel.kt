@@ -2,6 +2,7 @@ package br.com.hotwheelscollector.feature.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.hotwheelscollector.R
 import br.com.hotwheelscollector.domain.model.CatalogSort
 import br.com.hotwheelscollector.domain.model.Condition
 import br.com.hotwheelscollector.domain.model.ExemplarStatus
@@ -10,6 +11,7 @@ import br.com.hotwheelscollector.domain.model.SearchFilterOptions
 import br.com.hotwheelscollector.domain.model.SearchFilters
 import br.com.hotwheelscollector.domain.model.SearchResultItem
 import br.com.hotwheelscollector.domain.repository.SearchRepository
+import br.com.hotwheelscollector.ui.UiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,7 +35,7 @@ public data class SearchUiState(
     val filtersOpen: Boolean = false,
     val priceMinText: String = "",
     val priceMaxText: String = "",
-    val priceError: String? = null,
+    val priceError: UiMessage? = null,
     val loading: Boolean = true,
 ) {
     public val count: Int get() = results.size
@@ -51,7 +53,7 @@ public class SearchViewModel @Inject constructor(
         val filtersOpen: Boolean = false,
         val priceMinText: String = "",
         val priceMaxText: String = "",
-        val priceError: String? = null,
+        val priceError: UiMessage? = null,
     )
 
     private val query = MutableStateFlow("")
@@ -147,7 +149,9 @@ public class SearchViewModel @Inject constructor(
         if (current.priceMinText.isNotBlank() && min == null ||
             current.priceMaxText.isNotBlank() && max == null
         ) {
-            form.update { it.copy(priceError = INVALID_PRICE) }
+            form.update {
+                it.copy(priceError = UiMessage(R.string.search_invalid_price))
+            }
             return
         }
         filters.update { it.copy(priceMinCents = min, priceMaxCents = max) }
@@ -169,6 +173,5 @@ public class SearchViewModel @Inject constructor(
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
         const val DEBOUNCE_MS = 250L
-        const val INVALID_PRICE = "Preço inválido. Use o formato 1.234,56."
     }
 }

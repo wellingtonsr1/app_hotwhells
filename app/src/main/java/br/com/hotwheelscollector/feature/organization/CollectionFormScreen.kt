@@ -69,8 +69,10 @@ internal fun CollectionFormContent(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val messageText = state.message?.text()
+
     LaunchedEffect(state.message) {
-        state.message?.let {
+        messageText?.let {
             snackbarHostState.showSnackbar(it)
             onMessageShown()
         }

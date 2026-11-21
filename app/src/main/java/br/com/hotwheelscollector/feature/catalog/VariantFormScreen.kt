@@ -147,8 +147,10 @@ internal fun VariantFormContent(
     val scope = rememberCoroutineScope()
     val permissionDeniedMessage = stringResource(R.string.photo_permission_denied)
 
+    val messageText = state.message?.text()
+
     LaunchedEffect(state.message) {
-        state.message?.let { message ->
+        messageText?.let { message ->
             snackbarHostState.showSnackbar(message)
             onMessageShown()
         }

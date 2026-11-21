@@ -487,7 +487,7 @@ private fun FiltersSheet(state: SearchUiState, actions: SearchActions) {
             }
             state.priceError?.let { error ->
                 Text(
-                    text = error,
+                    text = error.text(),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                 )

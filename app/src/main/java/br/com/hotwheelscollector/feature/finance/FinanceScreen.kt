@@ -56,8 +56,10 @@ public fun FinanceScreen(
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val periodMessageText = state.periodMessage?.text()
+
     LaunchedEffect(state.periodMessage) {
-        state.periodMessage?.let { message ->
+        periodMessageText?.let { message ->
             snackbarHostState.showSnackbar(message)
             viewModel.onMessageShown()
         }
