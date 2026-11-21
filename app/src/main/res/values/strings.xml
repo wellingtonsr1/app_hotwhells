@@ -702,4 +702,25 @@
     <string name="import_result_body">%1$d exemplares importados · %2$d pulados por duplicata</string>
     <string name="import_error_title">Não foi possível importar</string>
     <string name="import_dismiss">Fechar</string>
+
+    <string name="recognition_review_title">Revisar sugestões</string>
+    <string name="recognition_review_origin">Origem: %1$s</string>
+    <string name="recognition_review_intro">Confira cada campo e aceite só o que deve ser aplicado. Nada é gravado sem o seu aceite.</string>
+    <string name="recognition_review_unidentified_title">Não identificado</string>
+    <string name="recognition_review_unidentified_body">A leitura não foi conclusiva. Nenhum campo foi preenchido — preencha manualmente.</string>
+    <string name="recognition_review_confidence">Confiança: %1$d%%</string>
+    <string name="recognition_review_apply">Aplicar selecionados</string>
+    <string name="recognition_review_dismiss">Descartar</string>
+    <string name="recognition_review_accept_all">Aceitar todos</string>
+    <string name="recognition_review_clear">Desmarcar todos</string>
+    <string name="recognition_field_manufacturer">Fabricante</string>
+    <string name="recognition_field_model">Modelo</string>
+    <string name="recognition_field_series">Série</string>
+    <string name="recognition_field_year">Ano</string>
+    <string name="recognition_field_variant">Variante</string>
+    <string name="recognition_field_code">Código</string>
+    <string name="recognition_source_photo">foto</string>
+    <string name="recognition_source_ocr">texto da embalagem (OCR)</string>
+    <string name="recognition_source_barcode">código de barras</string>
+    <string name="recognition_source_catalog">catálogo local</string>
 </resources>
