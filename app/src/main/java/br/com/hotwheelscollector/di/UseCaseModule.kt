@@ -7,6 +7,7 @@ import br.com.hotwheelscollector.domain.repository.ExemplarRepository
 import br.com.hotwheelscollector.domain.repository.FinanceRepository
 import br.com.hotwheelscollector.domain.repository.ManufacturerRepository
 import br.com.hotwheelscollector.domain.repository.NegotiationRepository
+import br.com.hotwheelscollector.domain.repository.RecognitionRepository
 import br.com.hotwheelscollector.domain.repository.SearchRepository
 import br.com.hotwheelscollector.domain.repository.VariantRepository
 import br.com.hotwheelscollector.domain.usecase.AddExemplarUseCase
@@ -21,6 +22,7 @@ import br.com.hotwheelscollector.domain.usecase.FinancialHistoryUseCase
 import br.com.hotwheelscollector.domain.usecase.FindCatalogMatchesUseCase
 import br.com.hotwheelscollector.domain.usecase.GetDuplicatesUseCase
 import br.com.hotwheelscollector.domain.usecase.MissingItemsUseCase
+import br.com.hotwheelscollector.domain.usecase.RecordRecognitionResultUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -113,4 +115,10 @@ public object UseCaseModule {
     public fun provideFindCatalogMatchesUseCase(
         searchRepository: SearchRepository,
     ): FindCatalogMatchesUseCase = FindCatalogMatchesUseCase(searchRepository)
+
+    @Provides
+    @Singleton
+    public fun provideRecordRecognitionResultUseCase(
+        recognitionRepository: RecognitionRepository,
+    ): RecordRecognitionResultUseCase = RecordRecognitionResultUseCase(recognitionRepository)
 }

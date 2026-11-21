@@ -51,6 +51,7 @@ import br.com.hotwheelscollector.feature.organization.CollectionDetailScreen
 import br.com.hotwheelscollector.feature.organization.CollectionFormScreen
 import br.com.hotwheelscollector.feature.organization.CollectionsScreen
 import br.com.hotwheelscollector.feature.organization.SeriesScreen
+import br.com.hotwheelscollector.feature.recognition.BarcodeScanScreen
 import br.com.hotwheelscollector.feature.search.SearchScreen
 import br.com.hotwheelscollector.feature.settings.AboutScreen
 import br.com.hotwheelscollector.feature.settings.DataControlRoute
@@ -140,6 +141,9 @@ public sealed class Destination(public val route: String) {
 
     /** Séries do fabricante, com criação, renomeação e arquivamento (FR-048–FR-049). */
     public data object Series : Destination("catalog/series")
+
+    /** Leitura de código de barras com correspondência e aceite (US11). */
+    public data object BarcodeScan : Destination("catalog/barcode")
 
     /** Duplicados por variante, com disponibilidade e negociação (US7). */
     public data object Duplicates : Destination("duplicates")
@@ -297,6 +301,16 @@ public fun AppNavHost(
                     onOpenSearch = { navController.navigate(Destination.Search.route) },
                     onOpenCollections = { navController.navigate(Destination.Collections.route) },
                     onOpenDuplicates = { navController.navigate(Destination.Duplicates.route) },
+                    onOpenBarcode = { navController.navigate(Destination.BarcodeScan.route) },
+                )
+            }
+            composable(Destination.BarcodeScan.route) {
+                BarcodeScanScreen(
+                    onBack = { navController.popBackStack() },
+                    onUseVariant = { variantId ->
+                        navController.navigate(Destination.AddExemplar.routeFor(variantId))
+                    },
+                    onCreateManual = { navController.navigate(Destination.CreateEntry.route) },
                 )
             }
             composable(Destination.Duplicates.route) {

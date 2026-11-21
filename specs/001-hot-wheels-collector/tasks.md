@@ -1256,7 +1256,7 @@ com dupla confirmação segue na T146.
 
 ### Tests for User Story 11
 
-- [ ] T121 [P] [US11] Teste de que nenhuma sugestão grava dado sem aceite explícito (SC-010) em `core/domain/src/test/kotlin/br/com/hotwheelscollector/domain/usecase/RecognitionProposalTest.kt`
+- [X] T121 [P] [US11] Teste de que nenhuma sugestão grava dado sem aceite explícito (SC-010) em `core/domain/src/test/kotlin/br/com/hotwheelscollector/domain/usecase/RecognitionProposalTest.kt` — **concluída (2026-11-21)**: `RecognitionApplication.accept` filtra pela marcação; proposta sozinha, aceite vazio, campo fora da proposta e sugestão abaixo do limiar não aplicam nada
 - [X] T122 [P] [US11] Teste de "não identificado" quando a confiança fica abaixo do limiar, sem preenchimento por inferência (FR-105) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/recognition/RecognitionProviderTest.kt` — **concluída (2026-11-21)**: parser conservador, proposta vazia para texto sem informação, sugestão abaixo de 0,6 descartada e código lido direto; 7 testes
 
 ### Implementation for User Story 11
@@ -1266,10 +1266,54 @@ com dupla confirmação segue na T146.
 - [X] T125 [US11] Implementar provedor ML Kit `text-recognition` (OCR de embalagem) on-device em `core/data/.../recognition/MlKitTextProvider.kt` — **concluída (2026-11-21)**: modelo latino embutido; `PackagingTextParser` conservador extrai fabricante, modelo, série, ano e código (rótulos explícitos, marca conhecida, ano isolado e código alfanumérico), sem inferência
 - [X] T126 [US11] Implementar busca de correspondências no catálogo local (até 5, ordenadas por confiança) em `core/domain/.../usecase/FindCatalogMatchesUseCase.kt` — **concluída (2026-11-21)**: consulta o índice textual por cada sugestão, pontua por semelhança normalizada (sem acento), deduplica por variante, inclui itens fora do acervo ativo e devolve até 5 `CatalogMatch` com confiança, campos casados e origem; 8 testes em `FindCatalogMatchesUseCaseTest`
 - [X] T127 [US11] Implementar tela de revisão com aceite/rejeição campo a campo (FR-104) em `app/.../feature/recognition/RecognitionReviewSheet.kt` — **concluída (2026-11-21)**: `ModalBottomSheet` com origem, valor e confiança por campo; cada sugestão nasce desmarcada, "Aplicar selecionados" só devolve os aceitos, "Aceitar todos/Desmarcar" é explícito e leitura inconclusiva vira "Não identificado" sem opção de aplicar; 3 testes instrumentados verdes no emulador
-- [ ] T128 [US11] Implementar fluxo de código de barras: correspondência, conferência, aproveitar dados e guardar código sem criar exemplar (FR-110–FR-113) em `app/.../feature/recognition/BarcodeScanScreen.kt`
-- [ ] T129 [US11] Persistir `recognition_result` com `applied_fields` e garantir degradação sem permissão de câmera (FR-108) em `app/.../feature/recognition/RecognitionViewModel.kt`
+- [X] T128 [US11] Implementar fluxo de código de barras: correspondência, conferência, aproveitar dados e guardar código sem criar exemplar (FR-110–FR-113) em `app/.../feature/recognition/BarcodeScanScreen.kt` — **concluída (2026-11-21)**: até cinco correspondências com dados e origem, conferência pela folha de revisão, «Adicionar exemplar desta variante» só após escolher a correspondência e nenhum exemplar criado pela leitura
+- [X] T129 [US11] Persistir `recognition_result` com `applied_fields` e garantir degradação sem permissão de câmera (FR-108) em `app/.../feature/recognition/RecognitionViewModel.kt` — **concluída (2026-11-21)**: `RecognitionRepositoryImpl` grava proposta, código e campos aceitos; o campo digitado mantém o fluxo utilizável quando a câmera é negada
 
 **Checkpoint**: US11 reduz atrito de cadastro sem violar Art. VI.4
+
+### Evidências — Fase 13 / US11 (2026-11-21)
+
+Entrega: o fluxo de código de barras fecha a fase. Ler com a câmera ou digitar o código
+produz sugestões com confiança, até cinco correspondências do catálogo local com dados e
+origem, conferência campo a campo e registro em `recognition_result`. **Nenhuma migração**:
+a tabela já existia no schema v1 (e no `2.json`).
+
+| Verificação | Comando | Resultado |
+| --- | --- | --- |
+| Aceite explícito (T121) | `./gradlew :core:domain:test --tests '*RecognitionProposalTest'` | 6 testes, 0 falhas |
+| Persistência (T129) | `./gradlew :core:data:testDebugUnitTest --tests '*RecognitionRepositoryTest'` | 3 testes, 0 falhas — `applied_fields`, payload e zero exemplares |
+| ViewModel do fluxo (T128/T129) | `./gradlew :app:testDebugUnitTest --tests '*RecognitionViewModelTest'` | 6 testes, 0 falhas |
+| Tela do fluxo (T128) | `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=...BarcodeScanScreenTest` | 3 testes, 0 falhas (emulador `hw_test`, API 36) |
+| Regressão unitária | `./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest` | 274 testes, 0 falhas (62 + 159 + 53) |
+| Lint e testes instrumentados compilados | `./gradlew :app:lintDebug :app:assembleDebugAndroidTest` | `BUILD SUCCESSFUL`; `0 errors, 22 warnings` |
+
+Decisões registradas nesta entrega:
+
+- **Ler não grava no catálogo**: `RecordRecognitionResultUseCase` só registra quando existe
+  leitura ou aceite; o `recognition_result` aponta para o exemplar da correspondência
+  escolhida, ou fica sem vínculo quando o código é desconhecido (FR-112/FR-113).
+- **Valores vêm da proposta**: `RecognitionApplication.accept` ignora campo aceito que não
+  foi sugerido; a tela não consegue inventar valor (FR-105, SC-010).
+- **Dois provedores com qualificadores**: `MlKitBarcodeProvider` e `MlKitTextProvider`
+  implementam a mesma interface e são ligados por `@BarcodeRecognition`/
+  `@TextRecognition`; o ViewModel do código de barras usa só o primeiro.
+- **Sem permissão de câmera o fluxo inteiro funciona pelo campo digitado** (FR-108); a
+  negação mostra a explicação e não bloqueia a leitura.
+- **«Aproveitar dados» não cria exemplar**: o botão só aparece depois da escolha explícita
+  da correspondência e leva ao cadastro de exemplar da variante — salvar continua sendo
+  ação do usuário (FR-111/FR-113).
+- **Câmera por intenção do sistema** (`TakePicture`), como no cadastro com fotos: não há
+  pré-visualização ao vivo nem CameraX; o ML Kit decodifica a imagem capturada.
+
+**Defeito encontrado na execução:** a primeira versão do teste de tela tocava na segunda
+correspondência esperando que o botão usasse `var-2`, mas o conteúdo é stateless — a seleção
+pertence ao estado do pai. O teste passou a dirigir a seleção pelo estado, como o ViewModel
+faz; o comportamento de produção estava correto (`var-1` era a correspondência selecionada).
+
+**Limite conhecido:** o código lido de um item **novo** fica guardado na
+`recognition_result`, mas não é copiado automaticamente para `variant.manufacturer_code`
+em `CreateCatalogEntryScreen` — o cadastro manual segue sem pré-preenchimento do código
+(FR-112 parcial). Para item existente, a correspondência leva ao cadastro de exemplar.
 
 ---
 
@@ -1674,8 +1718,9 @@ app passou a ser de uso pessoal, sem distribuição:
 
 - **T107, T109, T111–T118, T151, T152** — leitores CSV/XLSX, pipeline de importação,
   relatórios CSV/XLSX/PDF e telas de importação/relatórios.
-- **T121–T129** — `RecognitionProvider`, ML Kit (código de barras e OCR), revisão de
-  sugestões e persistência de `recognition_result`.
+- ~~**T121–T129**~~ — **concluído em 2026-11-21**, ver «Evidências — Fase 13 / US11»:
+  `RecognitionProvider`, ML Kit (código de barras e OCR), revisão de sugestões, fluxo de
+  código de barras e persistência de `recognition_result`.
 
 Nenhum desses itens é exigido para "a coleção não se perder": o backup com banco, fotos,
 manifesto e exportação aberta já cobre R.6/VI.7. Retomá-los exige uma decisão explícita —

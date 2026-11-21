@@ -54,6 +54,7 @@ public fun CatalogScreen(
     onOpenSearch: () -> Unit,
     onOpenCollections: () -> Unit,
     onOpenDuplicates: () -> Unit,
+    onOpenBarcode: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CatalogViewModel = hiltViewModel(),
 ) {
@@ -67,6 +68,7 @@ public fun CatalogScreen(
         onOpenSearch = onOpenSearch,
         onOpenCollections = onOpenCollections,
         onOpenDuplicates = onOpenDuplicates,
+        onOpenBarcode = onOpenBarcode,
         modifier = modifier,
     )
 }
@@ -82,6 +84,7 @@ internal fun CatalogContent(
     onOpenSearch: () -> Unit = {},
     onOpenCollections: () -> Unit = {},
     onOpenDuplicates: () -> Unit = {},
+    onOpenBarcode: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -141,6 +144,9 @@ internal fun CatalogContent(
                 }
                 TextButton(onClick = onOpenDuplicates) {
                     Text(stringResource(R.string.duplicates_open))
+                }
+                TextButton(onClick = onOpenBarcode) {
+                    Text(stringResource(R.string.recognition_barcode_title))
                 }
             }
 

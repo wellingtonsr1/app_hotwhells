@@ -17,7 +17,10 @@ import br.com.hotwheelscollector.data.repository.ManufacturerRepositoryImpl
 import br.com.hotwheelscollector.data.repository.LocationRepositoryImpl
 import br.com.hotwheelscollector.data.repository.NegotiationRepositoryImpl
 import br.com.hotwheelscollector.data.repository.PhotoRepositoryImpl
+import br.com.hotwheelscollector.data.recognition.MlKitBarcodeProvider
+import br.com.hotwheelscollector.data.recognition.MlKitTextProvider
 import br.com.hotwheelscollector.data.repository.RealVehicleRepositoryImpl
+import br.com.hotwheelscollector.data.repository.RecognitionRepositoryImpl
 import br.com.hotwheelscollector.data.repository.SearchRepositoryImpl
 import br.com.hotwheelscollector.data.repository.SeriesRepositoryImpl
 import br.com.hotwheelscollector.data.repository.ValuationRepositoryImpl
@@ -27,6 +30,7 @@ import br.com.hotwheelscollector.data.storage.FileBackupService
 import br.com.hotwheelscollector.data.storage.FileImageStore
 import br.com.hotwheelscollector.data.storage.ImageStore
 import br.com.hotwheelscollector.domain.backup.BackupService
+import br.com.hotwheelscollector.domain.recognition.RecognitionProvider
 import br.com.hotwheelscollector.domain.repository.AcquisitionRepository
 import br.com.hotwheelscollector.domain.repository.CarModelRepository
 import br.com.hotwheelscollector.domain.repository.CollectionRepository
@@ -42,6 +46,7 @@ import br.com.hotwheelscollector.domain.repository.LocationRepository
 import br.com.hotwheelscollector.domain.repository.NegotiationRepository
 import br.com.hotwheelscollector.domain.repository.PhotoRepository
 import br.com.hotwheelscollector.domain.repository.RealVehicleRepository
+import br.com.hotwheelscollector.domain.repository.RecognitionRepository
 import br.com.hotwheelscollector.domain.repository.SearchRepository
 import br.com.hotwheelscollector.domain.repository.SeriesRepository
 import br.com.hotwheelscollector.domain.repository.ValuationRepository
@@ -111,6 +116,9 @@ public object DatabaseModule {
 
     @Provides
     public fun provideDashboardDao(database: AppDatabase) = database.dashboardDao()
+
+    @Provides
+    public fun provideRecognitionResultDao(database: AppDatabase) = database.recognitionResultDao()
 }
 
 /** Ligação interface de domínio → implementação de dados. */
@@ -219,4 +227,20 @@ public abstract class RepositoryModule {
     public abstract fun bindDataControlRepository(
         impl: DataControlRepositoryImpl,
     ): DataControlRepository
+
+    @Binds
+    @Singleton
+    public abstract fun bindRecognitionRepository(
+        impl: RecognitionRepositoryImpl,
+    ): RecognitionRepository
+
+    @Binds
+    @Singleton
+    @BarcodeRecognition
+    public abstract fun bindBarcodeRecognition(impl: MlKitBarcodeProvider): RecognitionProvider
+
+    @Binds
+    @Singleton
+    @TextRecognition
+    public abstract fun bindTextRecognition(impl: MlKitTextProvider): RecognitionProvider
 }

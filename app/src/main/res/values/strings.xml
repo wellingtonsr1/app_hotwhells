@@ -723,4 +723,25 @@
     <string name="recognition_source_ocr">texto da embalagem (OCR)</string>
     <string name="recognition_source_barcode">código de barras</string>
     <string name="recognition_source_catalog">catálogo local</string>
+
+    <string name="recognition_back">Voltar</string>
+    <string name="recognition_barcode_title">Código de barras</string>
+    <string name="recognition_barcode_intro">Leia o código da embalagem com a câmera ou digite-o. A leitura só sugere dados: nada entra no catálogo sem o seu aceite.</string>
+    <string name="recognition_barcode_code_label">Código</string>
+    <string name="recognition_barcode_read">Ler código digitado</string>
+    <string name="recognition_barcode_camera">Usar câmera</string>
+    <string name="recognition_camera_denied">Sem permissão de câmera. O código digitado continua funcionando.</string>
+    <string name="recognition_barcode_busy">Lendo…</string>
+    <string name="recognition_barcode_failure">Não foi possível ler o código</string>
+    <string name="recognition_barcode_suggestions">Sugestões da leitura</string>
+    <string name="recognition_barcode_review">Revisar e aplicar</string>
+    <string name="recognition_barcode_save">Salvar leitura</string>
+    <string name="recognition_barcode_matches">Correspondências no catálogo</string>
+    <string name="recognition_barcode_use_variant">Adicionar exemplar desta variante</string>
+    <string name="recognition_barcode_no_match">Nenhuma correspondência no catálogo.</string>
+    <string name="recognition_barcode_manual_hint">Você pode cadastrar manualmente; o código lido fica guardado na leitura.</string>
+    <string name="recognition_barcode_create_manual">Cadastrar manualmente</string>
+    <string name="recognition_barcode_recorded_code">Leitura registrada com o código lido.</string>
+    <string name="recognition_barcode_recorded_fields">Leitura registrada com os campos que você aceitou.</string>
+    <string name="recognition_barcode_no_exemplar">Nenhum exemplar foi criado. Abra o cadastro para incluir a miniatura.</string>
 </resources>

@@ -200,7 +200,7 @@ private fun ReviewRow(
 }
 
 @Composable
-private fun fieldLabel(field: RecognitionField): String = stringResource(
+internal fun fieldLabel(field: RecognitionField): String = stringResource(
     when (field) {
         RecognitionField.MANUFACTURER -> R.string.recognition_field_manufacturer
         RecognitionField.MODEL -> R.string.recognition_field_model

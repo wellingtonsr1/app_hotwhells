@@ -77,6 +77,35 @@ public data class RecognitionProposal(
     }
 }
 
+/**
+ * O que o usuário aceitou de uma proposta (FR-104, SC-010).
+ *
+ * Existe como tipo próprio para que "aplicar" seja um ato explícito e verificável: a
+ * proposta sozinha não aplica nada, e só os campos marcados chegam aqui. Campos aceitos que
+ * não estão na proposta são ignorados — a tela não inventa valor (FR-105).
+ */
+public data class RecognitionApplication(
+    val fields: Map<RecognitionField, String>,
+) {
+    public val isEmpty: Boolean get() = fields.isEmpty()
+
+    public companion object {
+
+        public val NONE: RecognitionApplication = RecognitionApplication(emptyMap())
+
+        /** Filtra a proposta pelos campos marcados pelo usuário, sem inferir nada. */
+        public fun accept(
+            proposal: RecognitionProposal,
+            acceptedFields: Set<RecognitionField>,
+        ): RecognitionApplication = RecognitionApplication(
+            proposal.suggestions
+                .filter { it.field in acceptedFields }
+                .distinctBy { it.field }
+                .associate { it.field to it.value },
+        )
+    }
+}
+
 /** Entrada do reconhecimento: uma imagem da câmera ou um código já lido. */
 public sealed interface RecognitionInput {
 
