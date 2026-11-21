@@ -249,12 +249,7 @@ public class SearchRepositoryImpl @Inject constructor(
                    m.name AS model_name,
                    mf.name AS manufacturer_name,
                    s.name AS series_name,
-                   (SELECT c.name
-                    FROM collection_item ci
-                    JOIN collection c ON c.id = ci.collection_id
-                    WHERE ci.variant_id = v.id
-                    ORDER BY c.name
-                    LIMIT 1) AS collection_name,
+                   first_collection.name AS collection_name,
                    col.name AS primary_color_name,
                    v.decoration AS decoration,
                    COALESCE(rv.make || ' ' || rv.model, '') AS real_vehicle_name,
@@ -266,11 +261,7 @@ public class SearchRepositoryImpl @Inject constructor(
                    loc.name AS location_name,
                    a.price_cents AS price_cents,
                    a.date AS acquisition_date,
-                   (SELECT p.path
-                    FROM photo p
-                    WHERE p.exemplar_id = e.id
-                    ORDER BY p.is_primary DESC, p.sort_order
-                    LIMIT 1) AS primary_photo_path
+                   first_photo.path AS primary_photo_path
             FROM exemplar e
             JOIN variant v ON v.id = e.variant_id
             JOIN car_model m ON m.id = v.model_id
@@ -280,6 +271,21 @@ public class SearchRepositoryImpl @Inject constructor(
             LEFT JOIN real_vehicle rv ON rv.id = m.real_vehicle_id
             LEFT JOIN location loc ON loc.id = e.location_id
             LEFT JOIN acquisition a ON a.exemplar_id = e.id
+            LEFT JOIN (
+                SELECT ci.variant_id AS variant_id, MIN(c.name) AS name
+                FROM collection_item ci
+                JOIN collection c ON c.id = ci.collection_id
+                GROUP BY ci.variant_id
+            ) first_collection ON first_collection.variant_id = v.id
+            LEFT JOIN (
+                -- O MIN escolhe a foto primária e, nela, o menor sort_order; no SQLite
+                -- as colunas sem agregado vêm da linha que produziu o mínimo.
+                SELECT p.exemplar_id AS exemplar_id,
+                       p.path AS path,
+                       MIN((1 - p.is_primary) * 1000000 + p.sort_order) AS photo_rank
+                FROM photo p
+                GROUP BY p.exemplar_id
+            ) first_photo ON first_photo.exemplar_id = e.id
         """.trimIndent()
     }
 }

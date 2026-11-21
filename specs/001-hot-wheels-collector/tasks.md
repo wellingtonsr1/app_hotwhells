@@ -656,7 +656,7 @@ Decisões registradas nesta entrega:
 
 - [X] T056 [P] [US4] Teste de FTS com acentos, caixa e ordem parcial (`skyline r34` → uma variante da mesma frase) em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/db/SearchIndexTest.kt`
 - [X] T057 [P] [US4] Teste de filtros combináveis (E entre categorias, múltipla escolha dentro da categoria) e contagem de resultados em `core/data/src/test/kotlin/br/com/hotwheelscollector/data/repository/SearchRepositoryTest.kt` e `app/src/androidTest/java/br/com/hotwheelscollector/feature/search/SearchScreenTest.kt`
-- [ ] T058 [P] [US4] Teste de desempenho com 10.000 exemplares (busca < 300 ms, lista < 1 s) em `app/src/androidTest/java/br/com/hotwheelscollector/perf/SearchPerformanceTest.kt` — **parcial (2026-11-21)**: teste instrumentado implementado (10.000 exemplares, banco real, FTS pelos gatilhos) e compilando; falta rodar em aparelho — sem medição não há resultado a registrar
+- [X] T058 [P] [US4] Teste de desempenho com 10.000 exemplares (busca < 300 ms, lista < 1 s) em `app/src/androidTest/java/br/com/hotwheelscollector/perf/SearchPerformanceTest.kt` — **concluída (2026-11-21)**: teste instrumentado com 10.000 exemplares, FTS pelos gatilhos e os 4 limites de R.7; executado no emulador `android-36 google_apis x86_64` com os 5 testes verdes. A medição vale para o emulador; falta repetir em aparelho físico
 
 ### Implementation for User Story 4
 
@@ -1651,7 +1651,7 @@ backup. A lista abaixo é o recorte por decisão, não por ordem do arquivo.
 | T139 | Art. III: provar zero rede, zero segredo, permissões mínimas | **feito em 2026-11-20** — `docs/revisao-seguranca.md`, permissões de rede removidas do manifesto |
 | T140 | Art. V.7: log estruturado com correlação, sem dado sensível | `AppLogger` não existe |
 | T131 | Quase pronto: **nenhum** `Text("…")` fixo encontrado; o que resta de lint é plural candidato e string não usada | 7 avisos |
-| T058 | R.7: busca < 300 ms e lista < 1 s com 10.000 exemplares — hoje é meta, não medição | teste não existe |
+| T058 | R.7: busca < 300 ms e lista < 1 s com 10.000 exemplares — hoje é meta, não medição | **medido em 2026-11-21** — teste instrumentado verde no emulador android-36; falta aparelho físico |
 
 ### B. Decisão pendente do produto (não é bloqueio técnico)
 

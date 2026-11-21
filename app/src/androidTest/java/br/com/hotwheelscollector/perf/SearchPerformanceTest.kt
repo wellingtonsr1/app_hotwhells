@@ -53,7 +53,8 @@ public class SearchPerformanceTest {
         val elapsed = measure { repository.observeResults(SearchFilters(query = "twin")).first() }
 
         assertTrue("busca levou ${elapsed}ms (limite 300ms)", elapsed < 300)
-        assertEquals(EXEMPLARS_PER_VARIANT, repository.observeResults(SearchFilters(query = "twin")).first().size)
+        // A busca padrão mostra só exemplares possuídos (OWNED): 4 de cada 5 semeados.
+        assertEquals(OWNED_PER_VARIANT, repository.observeResults(SearchFilters(query = "twin")).first().size)
     }
 
     @Test
@@ -64,7 +65,7 @@ public class SearchPerformanceTest {
         }
 
         assertTrue("listagem levou ${elapsed}ms (limite 1000ms)", elapsed < 1000)
-        assertEquals(TOTAL_EXEMPLARS, results.single())
+        assertEquals(OWNED_TOTAL, results.single())
     }
 
     @Test
@@ -131,7 +132,7 @@ public class SearchPerformanceTest {
                 db.execSQL(
                     "INSERT INTO variant (id, model_id, fingerprint, primary_color_id, release_year, " +
                         "created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, 0)",
-                    arrayOf("variant$index", "model$index", "fp-$index", color, 2000 + index),
+                    arrayOf<Any?>("variant$index", "model$index", "fp-$index", color, 2000 + index),
                 )
             }
 
@@ -163,6 +164,7 @@ public class SearchPerformanceTest {
     private companion object {
         const val VARIANT_COUNT = 100
         const val EXEMPLARS_PER_VARIANT = 100
-        const val TOTAL_EXEMPLARS = VARIANT_COUNT * EXEMPLARS_PER_VARIANT
+        const val OWNED_PER_VARIANT = EXEMPLARS_PER_VARIANT * 4 / 5
+        const val OWNED_TOTAL = VARIANT_COUNT * OWNED_PER_VARIANT
     }
 }
