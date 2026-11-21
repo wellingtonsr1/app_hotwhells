@@ -1168,7 +1168,7 @@ Decisões registradas nesta entrega:
 - [X] T115 [US10] Implementar tela de importação com pré-visualização, contagens e escolha por duplicata (pular/criar/mesclar) em `app/.../feature/transfer/ImportScreen.kt` — **concluída (2026-11-21)**: escolhe CSV/XLSX, mostra contagens e relatório, salva relatório de erros e importa válidas (duplicata = pular); "criar/mesclar" seguem como evolução
 - [X] T116 [US10] Implementar escritores CSV e XLSX (OOXML por `ZipOutputStream`) com nome de arquivo datado em `core/data/.../importexport/ReportWriters.kt` — **concluída (2026-11-21)**: CSV UTF-8 com BOM e aspas condicionais; XLSX OOXML (workbook, relações e `inlineStr`) com várias abas; nome `tipo-AAAAMMDD-HHmmss.ext`; ligados à tela de relatórios (PDF/CSV/XLSX)
 - [X] T117 [US10] Implementar gerador de PDF com `PdfDocument`, cabeçalho, filtros, totais e paginação (FR-126–FR-128) em `core/data/.../importexport/PdfReportWriter.kt` — **concluída (2026-11-21)**: gerador PDF 1.4 em Kotlin puro (sem dependência nativa) com título, data/hora, filtros, colunas, paginação e totais; usar Kotlin puro em vez de `PdfDocument` porque o nativo não roda no Robolectric e o teste de desempenho precisa ser JVM
-- [X] T118 [US10] Implementar tela de relatórios com os 11 tipos, progresso e cancelamento seguro (FR-123–FR-132) em `app/.../feature/reports/ReportsScreen.kt` — **concluída (2026-11-21)**: tela gera o inventário em PDF via SAF com progresso; os demais tipos de relatório reusam o mesmo gerador
+- [X] T118 [US10] Implementar tela de relatórios com os 11 tipos, progresso e cancelamento seguro (FR-123–FR-132) em `app/.../feature/reports/ReportsScreen.kt` — **parcial, escopo reduzido (2026-11-21)**: a tela gera **somente o inventário**, em PDF, CSV ou XLSX, via SAF e com progresso; os outros dez tipos de relatório **não foram implementados** e ficam no bloco C. A evidência anterior dizia que «os demais tipos reusam o mesmo gerador», o que não é verdade: `ReportWriters` só conhece o inventário e não há seletor de tipo na tela
 - [X] T119 [US10] Implementar `BackupService` (manifesto, hashes, streaming) e restauração com validação prévia e modos substituir/mesclar em `core/data/.../storage/BackupService.kt` — **concluída (2026-11-21)**: pacote, validação, modo substituir e exportação aberta (JSON/CSV); modo mesclar em transação única, remapeando FKs, reaproveitando catálogo por chave natural, mantendo o atual em conflito (nunca sobrescreve) e registrando as decisões em `history_entry`. A escolha campo a campo por item (FR-144 literal) ainda não tem tela própria
 - [X] T120 [US10] Implementar tela de backup/restauração com lembrete por intervalo e aviso de cota do Auto Backup em `app/.../feature/transfer/BackupScreen.kt` — lembrete em Ajustes (7/30/90 dias ou desligado), contado a partir do último pacote gravado com sucesso; sem notificação de sistema
 
@@ -1330,7 +1330,7 @@ já digitado e código em branco. Verificação: 4 testes instrumentados verdes 
 - [X] T131 [P] Externalizar 100% das strings em pt-BR e remover texto fixo de Composable, com lint limpo em `app/src/main/res/values/strings.xml` — **concluída (2026-11-21)**: mensagens de ViewModel viraram `UiMessage` resolvido por recurso; ver «Evidências — T131»
 - [X] T132 [P] Implementar política de privacidade offline dentro do app (FR-172) em `app/.../feature/settings/PrivacyPolicyScreen.kt`
 - [X] T133 [P] Implementar tela "Sobre" com versão e identificador do pacote (FR-171) em `app/.../feature/settings/AboutScreen.kt` — a versão vem do pacote instalado; não há data de build em `BuildConfig`
-- [ ] T134 Implementar `WorkManager` para importação, backup e restauração com progresso e retomada após segundo plano (FR-150) em `app/.../work/TransferWorkers.kt`
+- [X] T134 Implementar `WorkManager` para importação, backup e restauração com progresso e retomada após segundo plano (FR-150) em `app/.../feature/transfer/TransferWorker.kt` — **concluída (2026-11-21)**: `TransferWorker` com `HiltWorkerFactory`, notificação `dataSync`, nomes únicos e resultado recuperável; ver «Evidências — T134»
 - [X] T135 Otimizar desempenho: índices faltantes, consultas N+1, Baseline Profile e startup < 2 s em `app/src/main/baseline-prof.txt` — **concluída (2026-11-21)**: perfil gerado por macrobenchmark e empacotado; release frio em 1,46 s (mediana, 10 aberturas), abaixo de 2 s; ver «Evidências — T135»
 - [X] T136 [P] Configurar assinatura de release, AAB e `keystore.properties` fora do versionamento (R.15) em `app/build.gradle.kts` — chave gerada localmente (`keystore/release.jks`), `keystore.properties` e `.jks` no `.gitignore`; APK e AAB assinados verificados
 - [X] T137 [P] Escrever documentação operacional (instalação, backup, restauração, solução de problemas) em `docs/operacao.md` — **concluída (2026-11-20)**: ver «Evidências — T137»
@@ -1452,6 +1452,43 @@ T149 (armazenamento cheio, cenário 14), a T058 (volume, cenário 6) e a execuç
 assinado em aparelho ARM — o emulador x86_64 não instala o APK filtrado para
 `arm64-v8a`/`armeabi-v7a`. Os cenários 7, 8 e 13 dependem de importação, relatórios e
 reconhecimento, fora do escopo declarado da v1.
+
+### Evidências — T134 (2026-11-21)
+
+**Fechamento:** backup, inspeção de pacote, restauração e importação saíram do escopo do
+ViewModel e passaram a rodar no `TransferWorker`; fechar a tela ou recriar o processo não
+interrompe a operação.
+
+- **Worker**: `app/.../feature/transfer/TransferWorker.kt` (`@HiltWorker`) recebe
+  `BackupService`, `CsvImportService` e `BackupReminderStore`; `HotWheelsApp` implementa
+  `Configuration.Provider` com `HiltWorkerFactory` e o inicializador padrão do WorkManager
+  foi removido do manifesto. `WorkModule` fornece a instância única aos ViewModels.
+- **Progresso**: o worker sobe em primeiro plano com `ForegroundInfo` do tipo
+  `dataSync` e notificação indeterminada («Continuando em segundo plano…»). O estado e o
+  resultado também ficam no WorkManager (`TransferOutput`), então a tela recupera o resumo
+  ao voltar; não há percentual confiável porque `BackupService` não reporta bytes/etapas.
+- **Retomada**: os trabalhos usam nomes únicos (`transfer-backup`, `transfer-inspect`,
+  `transfer-restore`, `transfer-import`) com `ExistingWorkPolicy.KEEP`, o que impede
+  duplicação ao tocar duas vezes. Onde o SAF concede, a permissão de URI é persistida; sem
+  ela, o acesso ao arquivo pode falhar após morte de processo e a falha aparece na tela.
+- **Defeito encontrado**: o Android 16 recusou o primeiro plano com
+  `InvalidForegroundServiceTypeException` (tipo `none`); a correção foi o `ForegroundInfo`
+  de três argumentos com `FOREGROUND_SERVICE_TYPE_DATA_SYNC` e a permissão
+  `FOREGROUND_SERVICE_DATA_SYNC` no manifesto.
+- **Testes**: 6 testes JVM para `TransferOutput` (ida e volta do resumo, importação,
+  falha, dados vazios) e 1 instrumentado `TransferWorkerTest` que enfileira um backup real,
+  espera o estado final e confere assinatura `PK` e resumo no `outputData`. Suíte do app:
+  **66 testes unitários, 0 falhas**; suíte instrumentada completa: **68 testes, 0 falhas**
+  (5m 19s, emulador API 36), cobrindo também a abertura do app com a nova configuração do
+  WorkManager. Lint: `0 errors, 10 warnings`.
+
+**Limites conhecidos:** a importação ainda calcula a pré-visualização na tela; só a gravação
+foi para o worker. O ciclo manual pelo seletor SAF (escolher destino, fechar o app no meio,
+reabrir) continua na T138, assim como a restauração — que fecha o banco e por isso não é
+exercitada em teste instrumentado no mesmo processo. `POST_NOTIFICATIONS` está declarada,
+mas não é pedida em tempo de execução: no Android 13+ a notificação de andamento pode ficar
+oculta, embora o trabalho continue e o resultado apareça na tela ao voltar. Não há
+percentual de progresso confiável porque `BackupService` não reporta etapas.
 
 ### Evidências — T137 (2026-11-20)
 
@@ -1773,9 +1810,8 @@ backup. A lista abaixo é o recorte por decisão, não por ordem do arquivo.
   estão prontos; falta o modo **mesclar**. Restaurar substituindo já cobre o caso de uso
   pessoal ("trocar de aparelho" / "voltar um backup"); mesclar serve para juntar dois
   acervos e pode ficar para depois.
-- **T134**: `WorkManager` para importação/backup em segundo plano com retomada. O backup
-  atual roda com a tela aberta; para pacotes grandes isso pode incomodar, mas não perde
-  dado. Só faz sentido junto com importação.
+- ~~**T134**~~: concluída em 2026-11-21 — backup, inspeção, restauração e importação rodam
+  no `TransferWorker`, com notificação e resultado observável; ver «Evidências — T134».
 - **T143 / T144 / T145**: união e separação de variantes. `VariantRepository.mergeVariants`
   existe e é testado no repositório, mas não há caso de uso nem tela; separar variante
   (`SplitVariantUseCase`) não existe. Afeta organização do catálogo, não integridade.
@@ -1809,7 +1845,7 @@ e, no caso de ML Kit, nada muda no esquema atual até a fase começar.
 ## Phase 15: Convergence
 
 Achados da convergência de 2026-11-21 (spec ↔ plano ↔ tarefas ↔ código). A T134 (FR-150)
-continua aberta e não foi duplicada aqui.
+foi concluída em 2026-11-21, depois da convergência, e não foi duplicada aqui.
 
 - [X] T154 [US2] Implementar exclusão e arquivamento **de variante** na interface, com confirmação que descreve o efeito e oferta de arquivamento quando houver dependentes, reutilizando o padrão de `DeleteOrArchiveSheet` (FR-028, T141; `partial`) — **concluída (2026-11-21)**: ação «Arquivar variante» em `VariantEditScreen`, com diálogo que descreve a preservação de exemplares/fotos/histórico; ver «Evidências — Fase 15»
 - [X] T155 [US2] Ligar `MergeVariantsUseCase` a um fluxo de tela para unir variantes duplicadas, preservando exemplares, fotos e históricos (FR-041; `partial`) — **concluída (2026-11-21)**: diálogo escolhe outra variante ativa do mesmo modelo e delega à transação do repositório; o caso de uso foi corrigido (antes chamava `move` de localização)

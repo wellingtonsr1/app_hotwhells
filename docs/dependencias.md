@@ -22,6 +22,7 @@ Todas as dependências externas utilizadas no projeto estão listadas com sua fi
 | `androidx.datastore:datastore-preferences` | 1.1.1 | Apache 2.0 | Armazenamento de preferências simples (lembrete de backup) | Gratuito | Substituível por tabela de configuração no Room ou SharedPreferences nativo. |
 | `io.coil-kt:coil-compose` | 2.7.0 | Apache 2.0 | Carregamento assíncrono e exibição de imagens locais | Gratuito | Substituível por Glide ou carregamento manual via `BitmapFactory` + `remember`. |
 | `androidx.work:work-runtime-ktx` | 2.10.0 | Apache 2.0 | Agendamento e execução de tarefas em background resilientes | Gratuito | Substituível por `JobScheduler` nativo da plataforma Android. |
+| `androidx.hilt:hilt-work` | 1.2.0 | Apache 2.0 | Injeta dependências nos `Worker`s do WorkManager | Gratuito | Substituível por `WorkerFactory` manual, sem Hilt. |
 | `androidx.documentfile:documentfile` | 1.0.1 | Apache 2.0 | Operações seguras com Storage Access Framework (SAF) para backup | Gratuito | Substituível por ContentResolver / DocumentContract nativo. |
 | `org.jetbrains.kotlinx:kotlinx-coroutines-*` | 1.9.0 | Apache 2.0 | Concorrência estruturada, Flow e assincronismo em Kotlin | Gratuito | Core da linguagem Kotlin. |
 

@@ -93,14 +93,19 @@ cartão ou uma nuvem de sua escolha. Guarde mais de uma cópia em locais diferen
 Se alguma foto estiver ausente do disco, o pacote é criado mesmo assim, e a tela avisa
 quantas ficaram de fora (`missing_images`). O resto do acervo continua íntegro.
 
+O backup roda em segundo plano pelo WorkManager: você pode sair da tela ou trocar de app e
+voltar depois para ver o resultado. No Android 13 ou mais novo, se a permissão de
+notificações não tiver sido concedida, a notificação de andamento pode não aparecer — o
+backup continua mesmo assim.
+
 ### 3.2 Lembrete
 
 Em **Ajustes**, a linha «Lembrete de backup» mostra o intervalo e a situação («em dia»,
 «atrasado» ou «nenhum backup»). Ao tocar, ela abre o último backup, o aviso de atraso, a
 escolha do intervalo (7, 30, 90 dias ou desligado) e o atalho «Fazer backup agora».
 
-O lembrete é **dentro do app**: não há notificação de sistema nem execução em segundo plano
-nesta versão. A data considerada é a do último pacote gravado com sucesso — restaurar um
+O lembrete em si é **dentro do app**: ele não agenda notificação de sistema. A execução em
+segundo plano existe apenas enquanto um backup, restauração ou importação está em andamento. A data considerada é a do último pacote gravado com sucesso — restaurar um
 pacote não reescreve essa data de propósito.
 
 ### 3.3 Backup automático do Android (não substitui o pacote)

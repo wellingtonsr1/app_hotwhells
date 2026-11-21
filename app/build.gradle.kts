@@ -132,8 +132,10 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.datastore.preferences)
     implementation(libs.work.runtime.ktx)
+    implementation(libs.hilt.work)
     implementation(libs.androidx.profileinstaller)
     ksp(libs.hilt.compiler)
+    ksp(libs.hilt.work.compiler)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

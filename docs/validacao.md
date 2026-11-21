@@ -9,6 +9,12 @@ SC-012 e SC-014).
 > SC-014. **SC-011 não foi medida** e **SC-012 reprova em fonte 200%**, com defeitos
 > reproduzíveis listados na seção 5. A T138 **não fecha** enquanto esses pontos e os
 > cenários fora do escopo não forem tratados.
+>
+> **Atualização de 2026-11-21:** esta é a execução histórica de 2026-11-20. Desde então os
+> defeitos da T130 foram corrigidos em código, o backup/restauração/importação passaram a
+> rodar no WorkManager (T134) e o release ganhou Baseline Profile (T135). **Nada disso foi
+> revalidado nos 14 cenários** — a seção 8 registra o que mudou e o que continua pendente;
+> os vereditos das seções 4 e 6 valem para o commit `e925c98`.
 
 ## 1. Ambiente e build
 
@@ -152,3 +158,70 @@ Pendente de assinatura humana: SC-011 (medição com usuários) e TalkBack em SC
 6. T149 (armazenamento cheio) e T058 (volume) para os cenários 14 e 6.
 7. Cenários 7, 8 e 13 só fazem sentido se importação, relatórios e reconhecimento forem
    trazidos de volta ao escopo.
+
+## 8. Atualização de 2026-11-21 (sem nova execução dos 14 cenários)
+
+Esta seção não substitui a execução acima: registra o estado do código depois da
+convergência e das tarefas T130, T134, T135, T154–T160. O aceite da T138 continua aberto.
+
+### 8.1 O que mudou desde `e925c98`
+
+- **T130 (acessibilidade)**: os cinco defeitos de fonte 200% da seção 5 foram corrigidos em
+  `SettingsScreen`, `DashboardScreen`, `AppNavHost` e `CatalogScreen`. Há testes de tela,
+  mas **não houve nova inspeção visual em 200% nem execução com TalkBack**.
+- **T134 (segundo plano)**: backup, inspeção de pacote, restauração e aplicação da
+  importação rodam em `TransferWorker` com notificação `dataSync`; fechar a tela não perde a
+  operação. Um teste instrumentado enfileira um backup real e confere pacote `PK` e resumo.
+- **T135 (desempenho)**: Baseline Profile empacotado; abertura fria do release x86_64 no
+  emulador ficou em **1.456 ms** de mediana (10 execuções). O ganho do perfil ficou dentro
+  do ruído; a meta de 2 s é cumprida mesmo sem ele.
+- **T154–T160**: ações de variante (arquivar, unir, separar), confirmação de remoção de
+  foto, aviso de foto repetida, data de compilação e datas de criação/alteração. Nenhuma
+  delas foi incluída numa nova passagem pelos 14 cenários.
+
+### 8.2 Verificação executada em 2026-11-21
+
+```text
+$ ./gradlew :core:domain:test :core:data:test :app:testDebugUnitTest
+64 + 160 + 66 = 290 testes, 0 falhas
+
+$ ./gradlew :app:connectedDebugAndroidTest
+Starting 68 tests on hw_test(AVD) - 16
+Finished 68 tests on hw_test(AVD) - 16
+BUILD SUCCESSFUL in 5m 19s
+
+$ ./gradlew :app:lintDebug
+0 errors, 10 warnings
+```
+
+O emulador é o mesmo `hw_test` (API 36, x86_64). A suíte completa passou em 2026-11-21 com
+a nova inicialização do WorkManager/Hilt e o teste instrumentado de backup; em modo avião
+não houve nova verificação, então SC-003 continua apoiado na execução de 2026-11-20.
+
+### 8.3 Estado dos critérios
+
+| SC | Estado em 2026-11-21 | O que falta |
+|---|---|---|
+| SC-003 | Mantido | 68 testes verdes em 2026-11-21; a execução em modo avião segue a de 2026-11-20 |
+| SC-005 | Mantido | Nada novo |
+| SC-009 | Mantido com ressalva | T139 segue aberta para provar ausência de tráfego |
+| SC-011 | **Não verificado** | Medição com uso real; nenhum teste automatizado substitui a taxa de 95% |
+| SC-012 | **Corrigido em código, não revalidado** | Repetir a inspeção em fonte 200% e exercitar TalkBack; o veredito anterior continua sendo o registrado |
+| SC-014 | Mantido | Abertura fria agora em 1,456 s no emulador; falta aparelho físico |
+
+### 8.4 O que continua pendente para fechar a T138
+
+1. Executar o release assinado em aparelho ARM.
+2. Fazer o ciclo manual de backup → limpar dados → restaurar pelo seletor SAF, incluindo
+   fechar o app durante o backup e conferir a notificação e o resultado ao voltar.
+3. Simular morte de processo com formulário aberto (cenário 10).
+4. Repetir a inspeção de acessibilidade em 200% e com TalkBack (SC-012).
+5. Medir SC-011 com uso real.
+6. T149 (armazenamento cheio) e T058 (volume) para os cenários 14 e 6.
+
+### 8.5 Correção de evidência — T118
+
+A evidência antiga da T118 dizia que «os demais tipos de relatório reusam o mesmo gerador».
+Isso não corresponde ao código: a tela de relatórios gera **apenas o inventário**, em PDF,
+CSV ou XLSX; os outros dez tipos não existem. A tarefa foi marcada como parcial no
+`tasks.md`; o escopo não muda, mas a evidência não deve induzir a erro.

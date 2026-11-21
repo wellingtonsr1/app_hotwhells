@@ -595,6 +595,13 @@
     <string name="incomplete_variant_updated">Variante completada.</string>
     <string name="incomplete_model_updated">Modelo atualizado.</string>
     <!-- Backup manual (T119/T120, FR-140–FR-145). -->
+    <string name="transfer_notification_channel">Transferências</string>
+    <string name="transfer_notification_running">Continuando em segundo plano; você pode fechar a tela.</string>
+    <string name="transfer_notification_backup">Criando backup</string>
+    <string name="transfer_notification_inspect">Verificando pacote de backup</string>
+    <string name="transfer_notification_restore">Restaurando backup</string>
+    <string name="transfer_notification_import">Importando planilha</string>
+
     <string name="backup_title">Backup e restauração</string>
     <string name="backup_back">Voltar</string>
     <string name="backup_intro">O pacote guarda o banco, as fotos, um manifesto com o hash de cada arquivo e uma cópia em CSV/JSON legível sem o app. Guarde-o fora do aparelho: é o que permite reconstruir a coleção em outro celular.</string>

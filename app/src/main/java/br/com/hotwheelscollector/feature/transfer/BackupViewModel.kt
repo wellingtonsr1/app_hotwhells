@@ -1,39 +1,39 @@
 package br.com.hotwheelscollector.feature.transfer
 
-import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import br.com.hotwheelscollector.domain.backup.BackupException
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import br.com.hotwheelscollector.domain.backup.BackupFailure
-import br.com.hotwheelscollector.domain.backup.BackupService
 import br.com.hotwheelscollector.domain.backup.BackupSummary
 import br.com.hotwheelscollector.domain.backup.RestoreMode
 import br.com.hotwheelscollector.domain.backup.ValidatedBackup
-import br.com.hotwheelscollector.feature.settings.BackupReminderStore
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import java.util.UUID
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * Backup manual (T119/T120) — estado da tela.
  *
- * O texto fica na tela (`strings.xml`); aqui só trafegam dados e o motivo da falha.
+ * As operações rodam no `TransferWorker` (T134): continuam com a tela fechada e o resultado
+ * é recuperado do WorkManager quando a tela volta. O texto fica em `strings.xml`; aqui só
+ * trafegam dados e o motivo da falha.
+ *
  * A restauração fecha o banco: depois de concluída, o app precisa ser reaberto.
  */
 @HiltViewModel
 public class BackupViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val backupService: BackupService,
-    private val reminderStore: BackupReminderStore,
+    private val workManager: WorkManager,
 ) : ViewModel() {
 
     public data class State(
@@ -49,62 +49,57 @@ public class BackupViewModel @Inject constructor(
     private val _state: MutableStateFlow<State> = MutableStateFlow(State())
     public val state: StateFlow<State> = _state.asStateFlow()
 
+    private var restoreMode: RestoreMode = RestoreMode.REPLACE
+
+    init {
+        observeBackup()
+        observeInspection()
+        observeRestore()
+    }
+
     /** Escreve o pacote direto no destino escolhido no seletor de arquivos (SAF). */
     public fun create(target: Uri) {
         if (_state.value.busy) return
-        viewModelScope.launch {
-            _state.update {
-                it.copy(busy = true, created = null, failure = null, failureDetail = null)
-            }
-            val result = runCatching {
-                withContext(Dispatchers.IO) {
-                    val output = context.contentResolver.openOutputStream(target)
-                        ?: throw BackupException(
-                            BackupFailure.WRITE_FAILED,
-                            "Não foi possível abrir o destino escolhido.",
-                        )
-                    output.use { stream ->
-                        backupService.create(stream, appVersion(context), deviceName())
-                    }
-                }
-            }
-            val summary = result.getOrNull()
-            if (summary != null) {
-                // Só um pacote gravado com sucesso conta como backup feito (T120).
-                reminderStore.markBackup()
-                _state.update { it.copy(busy = false, created = summary) }
-            } else {
-                _state.update { it.fail(result.exceptionOrNull() ?: IllegalStateException()) }
-            }
+        _state.update {
+            it.copy(busy = true, created = null, failure = null, failureDetail = null)
         }
+        val request = OneTimeWorkRequestBuilder<TransferWorker>().apply {
+            setInputData(
+                workDataOf(
+                    TransferOutput.ACTION to TransferOutput.ACTION_BACKUP,
+                    TransferOutput.URI to target.toString(),
+                ),
+            )
+        }.build()
+        workManager.enqueueUniqueWork(
+            UNIQUE_BACKUP,
+            ExistingWorkPolicy.KEEP,
+            request,
+        )
     }
 
     /** Lê o pacote escolhido e mostra o resumo; nada é gravado ainda. */
     public fun inspect(source: Uri) {
         if (_state.value.busy) return
-        viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    busy = true,
-                    pending = null,
-                    restored = null,
-                    merged = null,
-                    failure = null,
-                    failureDetail = null,
-                )
-            }
-            val result = runCatching {
-                withContext(Dispatchers.IO) {
-                    backupService.inspect(copyToCache(source))
-                }
-            }
-            _state.update { current ->
-                result.fold(
-                    onSuccess = { current.copy(busy = false, pending = it) },
-                    onFailure = { current.fail(it) },
-                )
-            }
+        _state.update {
+            it.copy(
+                busy = true,
+                pending = null,
+                restored = null,
+                merged = null,
+                failure = null,
+                failureDetail = null,
+            )
         }
+        val request = OneTimeWorkRequestBuilder<TransferWorker>().apply {
+            setInputData(
+                workDataOf(
+                    TransferOutput.ACTION to TransferOutput.ACTION_INSPECT,
+                    TransferOutput.URI to source.toString(),
+                ),
+            )
+        }.build()
+        workManager.enqueueUniqueWork(UNIQUE_INSPECT, ExistingWorkPolicy.KEEP, request)
     }
 
     /** Só depois da confirmação explícita (FR-163): substitui tudo pelo backup. */
@@ -120,24 +115,18 @@ public class BackupViewModel @Inject constructor(
     private fun restore(mode: RestoreMode) {
         val pending = _state.value.pending ?: return
         if (_state.value.busy) return
-        viewModelScope.launch {
-            _state.update { it.copy(busy = true, pending = null) }
-            val result = runCatching {
-                withContext(Dispatchers.IO) { backupService.restore(pending.file, mode) }
-            }
-            _state.update { current ->
-                result.fold(
-                    onSuccess = { summary ->
-                        if (mode == RestoreMode.MERGE) {
-                            current.copy(busy = false, merged = summary)
-                        } else {
-                            current.copy(busy = false, restored = summary)
-                        }
-                    },
-                    onFailure = { current.fail(it) },
-                )
-            }
-        }
+        restoreMode = mode
+        _state.update { it.copy(busy = true, pending = null) }
+        val request = OneTimeWorkRequestBuilder<TransferWorker>().apply {
+            setInputData(
+                workDataOf(
+                    TransferOutput.ACTION to TransferOutput.ACTION_RESTORE,
+                    TransferOutput.FILE to pending.file.absolutePath,
+                    TransferOutput.MODE to mode.name,
+                ),
+            )
+        }.build()
+        workManager.enqueueUniqueWork(UNIQUE_RESTORE, ExistingWorkPolicy.KEEP, request)
     }
 
     public fun dismissPending() {
@@ -150,21 +139,118 @@ public class BackupViewModel @Inject constructor(
         }
     }
 
-    private fun copyToCache(source: Uri): File {
-        val copy = File.createTempFile("backup-restore-", ".zip", context.cacheDir)
-        context.contentResolver.openInputStream(source)?.use { input ->
-            copy.outputStream().use { output -> input.copyTo(output) }
-        } ?: throw BackupException(
-            BackupFailure.NOT_A_PACKAGE,
-            "Não foi possível ler o arquivo escolhido.",
-        )
-        return copy
+    private fun observeBackup() {
+        viewModelScope.launch {
+            var active: UUID? = null
+            workManager.getWorkInfosForUniqueWorkFlow(UNIQUE_BACKUP).collect { infos ->
+                val info = infos.lastOrNull() ?: return@collect
+                if (info.state.isActive) {
+                    active = info.id
+                    _state.update { it.copy(busy = true) }
+                    return@collect
+                }
+                if (info.id != active) return@collect
+                active = null
+                when (info.state) {
+                    WorkInfo.State.SUCCEEDED -> {
+                        val summary = TransferOutput.readSummary(info.outputData)
+                        _state.update {
+                            it.copy(
+                                busy = false,
+                                created = summary,
+                                failure = if (summary == null) BackupFailure.WRITE_FAILED else null,
+                            )
+                        }
+                    }
+                    WorkInfo.State.FAILED -> _state.update {
+                        it.copy(busy = false).fail(info.outputData)
+                    }
+                    else -> _state.update { it.copy(busy = false) }
+                }
+            }
+        }
     }
 
-    private fun State.fail(failure: Throwable): State = copy(
+    private fun observeInspection() {
+        viewModelScope.launch {
+            var active: UUID? = null
+            workManager.getWorkInfosForUniqueWorkFlow(UNIQUE_INSPECT).collect { infos ->
+                val info = infos.lastOrNull() ?: return@collect
+                if (info.state.isActive) {
+                    active = info.id
+                    _state.update { it.copy(busy = true) }
+                    return@collect
+                }
+                if (info.id != active) return@collect
+                active = null
+                _state.update { current ->
+                    if (info.state == WorkInfo.State.SUCCEEDED) {
+                        val summary = TransferOutput.readSummary(info.outputData)
+                        val path = info.outputData.getString(TransferOutput.FILE)
+                        if (summary != null && path != null) {
+                            current.copy(
+                                busy = false,
+                                pending = ValidatedBackup(File(path), summary, emptyList()),
+                            )
+                        } else {
+                            current.copy(busy = false, failure = BackupFailure.WRITE_FAILED)
+                        }
+                    } else if (info.state == WorkInfo.State.FAILED) {
+                        current.copy(busy = false).fail(info.outputData)
+                    } else {
+                        current.copy(busy = false)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun observeRestore() {
+        viewModelScope.launch {
+            var active: UUID? = null
+            var mode = RestoreMode.REPLACE
+            workManager.getWorkInfosForUniqueWorkFlow(UNIQUE_RESTORE).collect { infos ->
+                val info = infos.lastOrNull() ?: return@collect
+                if (info.state.isActive) {
+                    active = info.id
+                    mode = restoreMode
+                    _state.update { it.copy(busy = true) }
+                    return@collect
+                }
+                if (info.id != active) return@collect
+                active = null
+                _state.update { current ->
+                    if (info.state == WorkInfo.State.SUCCEEDED) {
+                        val summary = TransferOutput.readSummary(info.outputData)
+                        when {
+                            summary == null -> current.copy(busy = false, failure = BackupFailure.WRITE_FAILED)
+                            mode == RestoreMode.MERGE -> current.copy(busy = false, merged = summary)
+                            else -> current.copy(busy = false, restored = summary)
+                        }
+                    } else if (info.state == WorkInfo.State.FAILED) {
+                        current.copy(busy = false).fail(info.outputData)
+                    } else {
+                        current.copy(busy = false)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun State.fail(data: androidx.work.Data): State = copy(
         busy = false,
-        failure = (failure as? BackupException)?.failure ?: BackupFailure.WRITE_FAILED,
-        failureDetail = failure.message,
+        failure = TransferOutput.readFailure(data) ?: BackupFailure.WRITE_FAILED,
+        failureDetail = TransferOutput.readDetail(data),
     )
 
+    private companion object {
+        const val UNIQUE_BACKUP = "transfer-backup"
+        const val UNIQUE_INSPECT = "transfer-inspect"
+        const val UNIQUE_RESTORE = "transfer-restore"
+    }
 }
+
+private val WorkInfo.State.isActive: Boolean
+    get() = this == WorkInfo.State.ENQUEUED ||
+        this == WorkInfo.State.RUNNING ||
+        this == WorkInfo.State.BLOCKED

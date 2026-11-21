@@ -51,9 +51,11 @@ A inspeção do manifesto compilado final (`app/build/intermediates/merged_manif
 | Permissão | Finalidade | Como é solicitada |
 |---|---|---|
 | `android.permission.CAMERA` | Captura de fotos dos exemplares | Solicitada em tempo de execução (`runtime permission`) apenas no clique do botão de câmera |
+| `android.permission.FOREGROUND_SERVICE` e `FOREGROUND_SERVICE_DATA_SYNC` | Manter backup, restauração e importação rodando em primeiro plano enquanto a tela fecha (T134) | Declaradas no manifesto; o worker usa `ForegroundInfo` do tipo `dataSync` |
+| `android.permission.POST_NOTIFICATIONS` | Mostrar a notificação de andamento da transferência | Declarada, **não solicitada em tempo de execução**; se o usuário negar ou nunca for perguntado, a notificação pode ficar oculta, mas o trabalho continua e o resultado aparece na tela |
 | *Armazenamento/Galeria* | Seleção de fotos existentes | Usa o **Photo Picker** moderno do sistema Android (`ActivityResultContracts.PickVisualMedia`), que **dispensa permissões amplas de leitura de disco** (`READ_MEDIA_IMAGES` / `READ_EXTERNAL_STORAGE`) |
 
-Nenhuma permissão intrusiva (como localização precisa, contatos, microfone ou ID do telefone) é solicitada ou declarada.
+Nenhuma permissão intrusiva (como localização precisa, contatos, microfone ou ID do telefone) é solicitada ou declarada. As permissões de primeiro plano existem só durante uma transferência disparada pelo usuário.
 
 ---
 
