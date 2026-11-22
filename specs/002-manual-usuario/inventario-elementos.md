@@ -557,7 +557,7 @@ Primeira passada gerada do código (rótulos literais de `strings.xml`), refinad
 | Chave | Texto exibido |
 |---|---|
 | `about_title` | Sobre |
-| `settings_about_body` | Hot Wheels Collector organiza o acervo de miniaturas inteiramente no aparelho: catálogo, fotos, desejos e finanças. |
+| `settings_about_body` | Diecast Collector organiza o acervo de miniaturas inteiramente no aparelho: catálogo, fotos, desejos e finanças. |
 | `about_version` | Versão %1$s (build %2$s) |
 | `about_build_date` | Compilado em %1$s |
 | `about_package` | Pacote: %1$s |

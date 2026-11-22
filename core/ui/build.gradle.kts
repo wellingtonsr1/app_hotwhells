@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "br.com.hotwheelscollector.ui"
+    namespace = "br.com.diecastcollector.ui"
     compileSdk = 36
 
     defaultConfig {

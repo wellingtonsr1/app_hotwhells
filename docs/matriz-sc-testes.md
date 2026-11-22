@@ -4,7 +4,7 @@
 **Versão**: v1 (0.1.0)  
 **Conformidade**: Requisito FR-133, Artigos V.1 e V.2 da Constituição.
 
-Esta matriz mapeia cada um dos 14 Critérios de Sucesso (**SC-001** a **SC-014**) estabelecidos na especificação ([spec.md](file:///home/wellington/IA/app_hotwhells/specs/001-hot-wheels-collector/spec.md)) para a tarefa associada e o respectivo teste automatizado ou procedimento de verificação.
+Esta matriz mapeia cada um dos 14 Critérios de Sucesso (**SC-001** a **SC-014**) estabelecidos na especificação ([spec.md](file:///home/wellington/IA/app_hotwhells/specs/001-diecast-collector/spec.md)) para a tarefa associada e o respectivo teste automatizado ou procedimento de verificação.
 
 ---
 

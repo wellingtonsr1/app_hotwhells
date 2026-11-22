@@ -8,13 +8,13 @@
 |---|---|
 | Versão / versionCode | `0.1.0` / `1` (`app/build.gradle.kts`) |
 | Commit no início da produção | `424e4fb` (2026-11-21 19:52:50 −03:00) |
-| Pacote | `br.com.hotwheelscollector` (debug: `.debug`) |
-| Emulador disponível | `hotwheels_test`, `target=android-36`, imagem `android-36/google_apis/x86_64` |
+| Pacote | `br.com.diecastcollector` (debug: `.debug`) |
+| Emulador disponível | `diecast_test`, `target=android-36`, imagem `android-36/google_apis/x86_64` |
 | Ferramentas | `python3` + `markdown` 3.10.3 + `weasyprint` 70.0 |
 | SDK/ADB | `sdk.dir=.tools/android-sdk` (`platform-tools/adb`, `emulator/emulator`) |
 | Strings exibidas | 677 entradas em `app/src/main/res/values/strings.xml` |
 
-> Correção em relação ao texto inicial do plano: o AVD existente chama-se `hotwheels_test`
+> Correção em relação ao texto inicial do plano: o AVD existente chama-se `diecast_test`
 > (não `hw_test`). `adb` não está no `PATH`; os comandos usam o caminho do `sdk.dir`.
 
 ## Decisões
@@ -62,8 +62,8 @@ serve criação e edição).
 
 ### D3 — Capturas reais no emulador
 
-**Decisão**: instalar o APK de debug (`br.com.hotwheelscollector.debug`, com ABIs x86/x86_64),
-subir o AVD `hotwheels_test` sem snapshot, semear dados fictícios e capturar com
+**Decisão**: instalar o APK de debug (`br.com.diecastcollector.debug`, com ABIs x86/x86_64),
+subir o AVD `diecast_test` sem snapshot, semear dados fictícios e capturar com
 `adb exec-out screencap -p > docs/manual/capturas/<nome>.png`.
 
 **Racional**: o APK de debug é o único com ABI de emulador; capturas de tela real atendem
@@ -178,7 +178,7 @@ e deve mostrar apenas arquivos documentais e imagens (SC-008).
 
 | Questão em aberto | Resolução |
 |---|---|
-| Qual nome de emulador usar | `hotwheels_test` (API 36) |
+| Qual nome de emulador usar | `diecast_test` (API 36) |
 | Como chamar `adb` | `.tools/android-sdk/platform-tools/adb` |
 | Quantos destinos existem | 30 `Destination`; 5 abas; `Settings` abre 4 subáreas |
 | Relatórios existentes | Inventário em PDF, CSV e XLSX (`ReportFormat`); não há os “11 relatórios” de documentos antigos |

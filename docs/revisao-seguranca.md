@@ -8,7 +8,7 @@
 
 ## 1. Resumo Executivo
 
-O aplicativo **Hot Wheels Collector** foi concebido e auditado como um aplicativo **100% offline-first**, de armazenamento exclusivamente local no dispositivo móvel. Esta auditoria comprova formalmente que:
+O aplicativo **Diecast Collector** foi concebido e auditado como um aplicativo **100% offline-first**, de armazenamento exclusivamente local no dispositivo móvel. Esta auditoria comprova formalmente que:
 1. **Zero tráfego de rede**: nenhuma chamada HTTP/HTTPS ou socket de rede existe no código-fonte.
 2. **Ausência de permissões de rede**: o manifesto final do APK (`release` e `debug`) removeu explicitamente as permissões `INTERNET` e `ACCESS_NETWORK_STATE` via `tools:node="remove"`. O sistema operacional Android bloqueia fisicamente qualquer tentativa de comunicação externa.
 3. **Zero segredos**: nenhuma chave de API, senha, token de autenticação ou credencial está embutida no repositório ou artefatos gerados.
@@ -62,7 +62,7 @@ Nenhuma permissão intrusiva (como localização precisa, contatos, microfone ou
 ## 5. Armazenamento e Integridade Local (Art. III.7, FR-159)
 
 1. **Localização do Banco de Dados**:
-   - `databases/hotwheels.db` no armazenamento interno privado do aplicativo (`context.getDatabasePath`).
+   - `databases/diecast.db` no armazenamento interno privado do aplicativo (`context.getDatabasePath`).
    - Inacessível por outros aplicativos sem permissão root.
 2. **Localização das Fotos**:
    - `files/images/<exemplarId>/` no armazenamento interno privado do aplicativo (`context.filesDir`).
@@ -84,4 +84,4 @@ Nenhuma permissão intrusiva (como localização precisa, contatos, microfone ou
 
 ## 7. Conclusão da Revisão
 
-O Hot Wheels Collector cumpre rigorosamente todos os preceitos do **Artigo III da Constituição**, do requisito **SC-009** e dos requisitos **FR-156 a FR-163**, sendo classificado como uma aplicação **segura, estritamente local e com privacidade garantida por desenho**.
+O Diecast Collector cumpre rigorosamente todos os preceitos do **Artigo III da Constituição**, do requisito **SC-009** e dos requisitos **FR-156 a FR-163**, sendo classificado como uma aplicação **segura, estritamente local e com privacidade garantida por desenho**.

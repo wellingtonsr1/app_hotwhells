@@ -104,7 +104,7 @@ Texto exibido pelo app (erro, confirmação, aviso, vazio).
 |---|---|---|
 | `id` | sim | nome do arquivo em `docs/manual/capturas/` |
 | `tela` / `estado` | sim | vínculo com `Tela.id` e estado representado |
-| `origem` | sim | emulador `hotwheels_test` ou aparelho físico |
+| `origem` | sim | emulador `diecast_test` ou aparelho físico |
 | `data` | sim | data da captura |
 | `commit` | sim | commit instalado na captura |
 | `legenda` | sim | legenda publicada junto da imagem |

@@ -20,7 +20,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "hot-wheels-collector"
+rootProject.name = "diecast-collector"
 
 include(":app")
 include(":benchmark")

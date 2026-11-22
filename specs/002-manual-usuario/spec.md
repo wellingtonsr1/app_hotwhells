@@ -6,11 +6,11 @@
 
 **Status**: Draft
 
-**Input**: User description: "Produzir um manual profissional de usuário do Hot Wheels Collector, em pt-BR, cobrindo todas as telas, botões, campos, ícones, filtros, indicadores e procedimentos realmente implementados, com capturas reais, diagramas, PDF e matriz de cobertura. A atividade é exclusivamente documental; nenhum código, banco, configuração ou interface pode ser alterado."
+**Input**: User description: "Produzir um manual profissional de usuário do Diecast Collector, em pt-BR, cobrindo todas as telas, botões, campos, ícones, filtros, indicadores e procedimentos realmente implementados, com capturas reais, diagramas, PDF e matriz de cobertura. A atividade é exclusivamente documental; nenhum código, banco, configuração ou interface pode ser alterado."
 
 ## Contexto
 
-O aplicativo **Hot Wheels Collector** (versão instalada `0.1.0`, versionCode 1) organiza uma
+O aplicativo **Diecast Collector** (versão instalada `0.1.0`, versionCode 1) organiza uma
 coleção pessoal de miniaturas inteiramente no aparelho. A documentação existente
 (`docs/operacao.md`, `docs/validacao.md`) cobre instalação e backup no nível operacional,
 mas não explica tela por tela o que o usuário vê e faz.
@@ -24,7 +24,7 @@ deve ser registrada explicitamente, nunca preenchida por suposição.
 
 ### User Story 1 - Aprender a usar o aplicativo do zero (Priority: P1)
 
-Uma pessoa instala o Hot Wheels Collector pela primeira vez, sem conhecer a diferença entre
+Uma pessoa instala o Diecast Collector pela primeira vez, sem conhecer a diferença entre
 modelo, variante e exemplar, e precisa chegar a uma pequena coleção cadastrada: primeiro
 fabricante, modelo, variante, exemplar, fotos, aquisição, localização, coleção, leitura do
 painel e primeiro backup.
@@ -267,7 +267,7 @@ documentação e das capturas; a conferência de alterações mostra apenas arqu
 
 - A versão documentada é a instalada no momento da captura (`0.1.0`, versionCode 1); se o
   código mudar durante a produção, o manual registra o commit usado e a diferença.
-- As capturas serão feitas no emulador `hotwheels_test` (API 36) com dados fictícios, salvo se um
+- As capturas serão feitas no emulador `diecast_test` (API 36) com dados fictícios, salvo se um
   aparelho físico estiver disponível; a ausência de aparelho físico não impede a entrega,
   mas deve ser registrada quando afetar uma evidência.
 - O manual cobre também telas de recursos declarados fora do escopo da v1 (importação,

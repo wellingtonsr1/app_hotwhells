@@ -14,7 +14,7 @@ contém código do aplicativo: nada aqui altera `app/`, `core/`, banco ou config
 |---|---|
 | JDK | 17 (Temurin) — `jvmTarget = 17` |
 | Android SDK | `sdk.dir=.tools/android-sdk` (`platforms;android-36`, `platform-tools`, `emulator`) |
-| Emulador | `hotwheels_test` (API 36, x86_64) |
+| Emulador | `diecast_test` (API 36, x86_64) |
 | Python | `python3` com `markdown` 3.10.3 e `weasyprint` 70.0 |
 | Versão documentada | `0.1.0`, versionCode 1 |
 
@@ -33,12 +33,12 @@ export EMU="$SDK/emulator/emulator"
 ./gradlew :app:assembleDebug
 
 # subir o AVD sem snapshot e esperar o boot
-"$EMU" -avd hotwheels_test -no-snapshot-load &
+"$EMU" -avd diecast_test -no-snapshot-load &
 "$ADB" wait-for-device
 until [ "$("$ADB" shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do sleep 2; done
 
 # instalar do zero (instalação limpa para o roteiro de primeiros passos)
-"$ADB" uninstall br.com.hotwheelscollector.debug || true
+"$ADB" uninstall br.com.diecastcollector.debug || true
 "$ADB" install app/build/outputs/apk/debug/app-debug.apk
 ```
 
@@ -52,7 +52,7 @@ Registrar no início, para o cabeçalho do manual:
 ```bash
 git rev-parse --short HEAD       # commit usado
 git log -1 --format=%cI          # data
-adb shell dumpsys package br.com.hotwheelscollector.debug | grep versionName
+adb shell dumpsys package br.com.diecastcollector.debug | grep versionName
 ```
 
 ## 3. Capturar as telas
@@ -98,7 +98,7 @@ html = markdown.markdown(
 )
 documento = f"""<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
-<title>Manual do Usuário — Hot Wheels Collector 0.1.0</title></head>
+<title>Manual do Usuário — Diecast Collector 0.1.0</title></head>
 <body><article class="manual">{html}</article></body></html>"""
 HTML(string=documento, base_url=str(base.resolve())).write_pdf(
     base / "MANUAL_USUARIO_COMPLETO.pdf",
@@ -118,7 +118,7 @@ legíveis. Se sumário ou paginação não funcionarem, registrar a limitação 
 
 ```bash
 grep -oP 'data object \K\w+' \
-  app/src/main/java/br/com/hotwheelscollector/navigation/AppNavHost.kt | sort -u
+  app/src/main/java/br/com/diecastcollector/navigation/AppNavHost.kt | sort -u
 ```
 
 Comparar com as 30 linhas da matriz; toda diferença é falha. O conjunto esperado tem

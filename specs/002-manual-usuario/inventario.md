@@ -1,6 +1,6 @@
 # Inventário de telas (30 destinos)
 
-Fonte: `app/src/main/java/br/com/hotwheelscollector/navigation/AppNavHost.kt` (commit `424e4fb`).
+Fonte: `app/src/main/java/br/com/diecastcollector/navigation/AppNavHost.kt` (commit `424e4fb`).
 Títulos são os textos exibidos; telas sem título próprio usam o identificador do exemplar.
 
 | # | Rota | Título visível | Arquivo | ViewModel | Acesso | Cap. |

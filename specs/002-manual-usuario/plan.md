@@ -9,7 +9,7 @@
 ## Summary
 
 Produzir um manual de usuário profissional, em pt-BR, que permita a uma pessoa sem
-conhecimento prévio operar o Hot Wheels Collector `0.1.0` do primeiro cadastro ao backup.
+conhecimento prévio operar o Diecast Collector `0.1.0` do primeiro cadastro ao backup.
 O manual será derivado de uma auditoria somente-leitura dos **30 destinos de navegação**, das
 strings exibidas, dos ViewModels/regras e das telas executadas no emulador, e entregue em
 Markdown e PDF, acompanhado de índice funcional, matriz de cobertura e registro de lacunas.
@@ -36,7 +36,7 @@ caminhos de imagem, checklist do contrato de capítulo, revisão técnica contra
 execução do roteiro de primeiros passos no emulador.
 
 **Target Platform**: leitores humanos (Markdown e PDF A4); aplicativo Android 0.1.0
-(versionCode 1), emulador `hotwheels_test` API 36 (AVD existente; `adb` em
+(versionCode 1), emulador `diecast_test` API 36 (AVD existente; `adb` em
 `.tools/android-sdk/platform-tools`).
 
 **Project Type**: documentação de produto sobre aplicativo móvel existente.
@@ -106,7 +106,7 @@ docs/manual/
 ### Source Code (repository root, somente leitura)
 
 ```text
-app/src/main/java/br/com/hotwheelscollector/
+app/src/main/java/br/com/diecastcollector/
 ├── navigation/AppNavHost.kt          # fonte da lista de destinos
 ├── feature/<área>/*Screen.kt         # telas e componentes visuais
 ├── feature/<área>/*ViewModel.kt      # estados, validações e mensagens
@@ -149,7 +149,7 @@ Decisões fixadas:
    ao arquivo/ViewModel, extrair rótulos de `strings.xml` e listar diálogos/sheets.
 2. **Regras** — ler ViewModels, casos de uso, DAOs e serviços para confirmar validações,
    cálculos, duplicidade, arquivamento, reconhecimento e limites de relatórios/importação.
-3. **Capturas** — subir o emulador `hotwheels_test`, criar dados fictícios, capturar cada
+3. **Capturas** — subir o emulador `diecast_test`, criar dados fictícios, capturar cada
 tela/estado com `adb exec-out screencap`, nomear e registrar data/commit; anotar elementos
 quando necessário.
 4. **Redação** — escrever os capítulos na ordem editorial, aplicando o contrato de capítulo e

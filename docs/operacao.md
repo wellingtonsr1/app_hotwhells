@@ -1,9 +1,9 @@
-# Operação — Coleção de Miniaturas
+# Operação — Diecast Collector
 
 Guia de instalação, backup, restauração e solução de problemas da **v1 de uso pessoal**
 (0.1.0, Android 8.0 / API 26 ou superior). Ele descreve o aplicativo como ele está, sem
 prometer importação de planilha, relatórios em PDF/XLSX ou reconhecimento por câmera —
-esses blocos estão fora do escopo desta v1 (ver `specs/001-hot-wheels-collector/tasks.md`,
+esses blocos estão fora do escopo desta v1 (ver `specs/001-diecast-collector/tasks.md`,
 seção «Revisão de fechamento»).
 
 > **Regra de ouro:** o acervo vive num único banco SQLite dentro do aparelho. Antes de
@@ -14,12 +14,12 @@ seção «Revisão de fechamento»).
 
 | O quê | Onde |
 |---|---|
-| Coleção (modelos, variantes, exemplares, fotos, finanças, desejos, coleções, localizações) | banco privado do app, `databases/hotwheels.db` |
+| Coleção (modelos, variantes, exemplares, fotos, finanças, desejos, coleções, localizações) | banco privado do app, `databases/diecast.db` |
 | Fotos | `files/images/<idDoExemplar>/` no armazenamento privado do app |
 | Lembrete de backup (último pacote e intervalo) | `SharedPreferences` do app, fora do banco |
 
-O pacote de release usa o pacote `br.com.hotwheelscollector`; o de debug,
-`br.com.hotwheelscollector.debug`. **São dois apps distintos** — instalar um não atualiza o
+O pacote de release usa o pacote `br.com.diecastcollector`; o de debug,
+`br.com.diecastcollector.debug`. **São dois apps distintos** — instalar um não atualiza o
 outro e os dados de um não aparecem no outro sem backup/restauração.
 
 O app **não faz chamadas de rede**: nenhum fluxo lê ou envia dados pela internet. O
@@ -80,7 +80,7 @@ não consiga migrar aborta e mantém o banco anterior intacto, em vez de recriar
 
 O que vai no ZIP:
 
-- `data/hotwheels.db` — o banco SQLite completo (snapshot após checkpoint do WAL);
+- `data/diecast.db` — o banco SQLite completo (snapshot após checkpoint do WAL);
 - `images/...` — as fotos referenciadas por `photo.path`;
 - `data/<tabela>.json` e `CSV/<tabela>.csv` — a mesma informação em formato aberto, uma
   linha por registro, para abrir em planilha ou editor de texto;
@@ -120,12 +120,12 @@ manual para trocar de aparelho.
 
 O ZIP é autocontido:
 
-- `data/hotwheels.db` abre em qualquer leitor de SQLite (por exemplo, DB Browser for
+- `data/diecast.db` abre em qualquer leitor de SQLite (por exemplo, DB Browser for
   SQLite);
 - `CSV/*.csv` e `data/*.json` abrem em planilha ou editor de texto;
 - para conferir a integridade, compare cada arquivo com o SHA-256 listado em
-  `manifest.json`. No Linux/macOS: `sha256sum data/hotwheels.db`. No Windows:
-  `certutil -hashfile data\hotwheels.db SHA256`.
+  `manifest.json`. No Linux/macOS: `sha256sum data/diecast.db`. No Windows:
+  `certutil -hashfile data\diecast.db SHA256`.
 
 Não edite o ZIP e não o descompacte/recompacte antes de restaurar: a validação confere
 tamanho e hash de cada arquivo e recusará o pacote alterado.
@@ -146,7 +146,7 @@ contagens, tamanho e fotos ausentes, se houver).
    o que o reabre.
 
 Antes de substituir, o estado atual é guardado no armazenamento privado como
-`hotwheels.db.pre-restore-<data>` e `images.pre-restore-<data>`. Em caso de erro no meio da
+`diecast.db.pre-restore-<data>` e `images.pre-restore-<data>`. Em caso de erro no meio da
 gravação, o app faz rollback e mantém o estado anterior. Essas cópias não aparecem na
 interface e não são removidas automaticamente.
 

@@ -23,11 +23,11 @@ val keystoreProperties: Properties = Properties().apply {
 }
 
 android {
-    namespace = "br.com.hotwheelscollector"
+    namespace = "br.com.diecastcollector"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "br.com.hotwheelscollector"
+        applicationId = "br.com.diecastcollector"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

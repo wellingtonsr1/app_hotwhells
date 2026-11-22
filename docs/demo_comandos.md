@@ -23,7 +23,7 @@ mostra exatamente o que o vídeo deveria mostrar: o Painel com os três valores.
 ## Dados do banco (para reprodução)
 
 O estado do banco que gera essa tela está no aparelho/emulador
-(`br.com.hotwheelscollector.debug`, SQLite `hotwheels.db`). Para reproduzir
+(`br.com.diecastcollector.debug`, SQLite `diecast.db`). Para reproduzir
 apenas a tela (sem gravar), basta iniciar o app; os dados já estão lá se o teste
 `DemoRecordingTest` rodou antes (ele popula e não apaga ao sair — mas o
 `freshInstallRule` rodeia cada teste e reconstrói o banco a cada execução).
@@ -52,7 +52,7 @@ Se quiser regenerar os dados sem rodar o teste, insere manualmente no aparelho:
 
 ```bash
 # abre um shell com acesso ao banco do app (precisa de run-as)
-adb shell run-as br.com.hotwheelscollector.debug sqlite3 databases/hotwheels.db
+adb shell run-as br.com.diecastcollector.debug sqlite3 databases/diecast.db
 ```
 
 Uma sequência mínima que gera a tela (IDs são UUIDs reais do teste; substitua
@@ -67,7 +67,7 @@ VALUES ('val-1', '5f3d9ee6-4bb0-447d-8341-e4a017e236a5', 7500, 'BRL', '2026-11-1
 ```
 
 Se o banco estiver vazio, rode o teste de populate (ele faz todo o fluxo):
-`app/src/androidTest/java/br/com/hotwheelscollector/DemoRecordingTest.kt`.
+`app/src/androidTest/java/br/com/diecastcollector/DemoRecordingTest.kt`.
 
 ## Commands exatos usados nesta sessão
 
@@ -81,12 +81,12 @@ export PATH="$LOCALAPPDATA/Android/Sdk/platform-tools:$PATH"
 export ADB="$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe"
 ```
 
-### 1. Subir o emulador (API 36, x86_64, hw_test)
+### 1. Subir o emulador (API 36, x86_64, diecast_test)
 
 ```bash
 # em background; o adb devices só confirma quando o boot completa (~40s)
 "$LOCALAPPDATA/Android/Sdk/emulator/emulator.exe" \
-  -avd hw_test \
+  -avd diecast_test \
   -no-window -no-audio -no-boot-anim \
   -gpu swiftshader_indirect &
 sleep 45
@@ -122,8 +122,8 @@ Se os APKs não existirem, build antes:
 
 ```bash
 MSYS_NO_PATHCONV=1 adb shell am instrument -w -r \
-  -e class br.com.hotwheelscollector.DemoRecordingTest \
-  br.com.hotwheelscollector.debug.test/androidx.test.runner.AndroidJUnitRunner
+  -e class br.com.diecastcollector.DemoRecordingTest \
+  br.com.diecastcollector.debug.test/androidx.test.runner.AndroidJUnitRunner
 ```
 
 Esperado: `OK (1 test)`, tempo ~17s. Ao final, o app fica no Painel com

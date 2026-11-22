@@ -1,4 +1,4 @@
-# Constituição do Projeto — Hot Wheels Collector
+# Constituição do Projeto — Diecast Collector
 
 **Sistema de gerenciamento profissional de coleções de miniaturas em escala 1:64**
 
@@ -19,7 +19,7 @@ Esta constituição é o documento de maior autoridade do projeto. Ela prevalece
 
 ## Preâmbulo
 
-O Hot Wheels Collector não é um CRUD de carrinhos. É um sistema de registro patrimonial e histórico de uma coleção, no qual a **precisão do dado** importa mais do que a velocidade de cadastro, e no qual a distinção entre *modelo*, *variante* e *exemplar físico* é a base de toda a modelagem. Um erro de agrupamento (tratar duas variantes como duplicata, ou dois exemplares como um só) destrói informação que o colecionador não consegue reconstruir depois.
+O Diecast Collector não é um CRUD de carrinhos. É um sistema de registro patrimonial e histórico de uma coleção, no qual a **precisão do dado** importa mais do que a velocidade de cadastro, e no qual a distinção entre *modelo*, *variante* e *exemplar físico* é a base de toda a modelagem. Um erro de agrupamento (tratar duas variantes como duplicata, ou dois exemplares como um só) destrói informação que o colecionador não consegue reconstruir depois.
 
 Toda decisão subsequente de requisito, arquitetura, banco de dados, interface, teste e implantação deve ser rastreável a um princípio desta constituição.
 

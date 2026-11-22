@@ -55,7 +55,7 @@ A conferência roda antes da entrega e o resultado é registrado no próprio doc
 
 ```bash
 # 1. Destinos declarados no código
-grep -oP 'data object \K\w+' app/src/main/java/br/com/hotwheelscollector/navigation/AppNavHost.kt \
+grep -oP 'data object \K\w+' app/src/main/java/br/com/diecastcollector/navigation/AppNavHost.kt \
   | sort > /tmp/destinos-codigo.txt
 
 # 2. Destinos citados na matriz (coluna Destino/funcionalidade)

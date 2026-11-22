@@ -48,11 +48,11 @@ Documentação entregue: `docs/manual/`. Artefatos internos de inventário:
 
 **⚠️ CRITICAL**: nenhuma história começa antes desta fase.
 
-- [X] T008 Inventariar os 30 destinos em `specs/002-manual-usuario/inventario.md` a partir de `app/src/main/java/br/com/hotwheelscollector/navigation/AppNavHost.kt`, com colunas: rota, título visível, arquivo `*Screen.kt`, ViewModel, acesso, estados (vazio/carregando/erro/sucesso), capítulo previsto
+- [X] T008 Inventariar os 30 destinos em `specs/002-manual-usuario/inventario.md` a partir de `app/src/main/java/br/com/diecastcollector/navigation/AppNavHost.kt`, com colunas: rota, título visível, arquivo `*Screen.kt`, ViewModel, acesso, estados (vazio/carregando/erro/sucesso), capítulo previsto
 - [X] T009 Inventariar os elementos interativos por tela em `specs/002-manual-usuario/inventario-elementos.md`, com rótulo literal de `app/src/main/res/values/strings.xml`, `contentDescription` (ou ausência declarada), posição, ação e resultado
 - [X] T010 Inventariar regras em `specs/002-manual-usuario/inventario-regras.md`: validações de `core/domain/.../validation/CatalogValidation.kt`, duplicidade por variante, cálculo financeiro de `FinanceDao.observeSummary()`, progresso de coleção, limites de backup/relatórios/importação e estados de reconhecimento
 - [X] T011 Definir numeração e ordem editorial dos capítulos no sumário de `docs/manual/MANUAL_USUARIO_COMPLETO.md` conforme o inventário (navegação principal → primeiros passos → catálogo → organização → financeiro → ajustes)
-- [X] T012 Preparar o ambiente de captura: `./gradlew :app:assembleDebug`, subir `hotwheels_test`, instalar limpo com `.tools/android-sdk/platform-tools/adb` e registrar commit/versão no «Registro de evidências»
+- [X] T012 Preparar o ambiente de captura: `./gradlew :app:assembleDebug`, subir `diecast_test`, instalar limpo com `.tools/android-sdk/platform-tools/adb` e registrar commit/versão no «Registro de evidências»
 - [X] T013 Criar o conjunto de dados fictícios de demonstração (fabricante, modelo, variante, exemplar, coleção, localização, aquisição, avaliação, item de desejo) e registrar os valores e o roteiro de criação no «Registro de evidências» de `docs/manual/MANUAL_USUARIO_COMPLETO.md`
 - [X] T014 Registrar em `docs/manual/LIMITACOES_DOCUMENTACAO.md` as divergências encontradas entre `docs/operacao.md`/`docs/continua.md` e o código (relatórios, importação, reconhecimento, coleções), com status AUSENTE/PARCIAL
 
@@ -258,7 +258,7 @@ redação de US1; a redação de capítulos é sequencial por causa do arquivo �
 
 ## Estado da execução
 
-Executado em 22/11/2026 no emulador `hotwheels_test` (API 36), APK de debug do commit `424e4fb`.
+Executado em 22/11/2026 no emulador `diecast_test` (API 36), APK de debug do commit `424e4fb`.
 
 - 74 tarefas concluídas; 35 capítulos; 61 capturas reais, todas citadas e embutidas no manual.
 - Desvios registrados: T060 usou as capturas já existentes (`05b`, `15`, `25`) em vez de

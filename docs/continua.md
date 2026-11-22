@@ -1,7 +1,7 @@
 # Continuar em outra máquina
 
 Estado do projeto em 2026-11-18. A verdade tarefa a tarefa está em
-[`specs/001-hot-wheels-collector/tasks.md`](../specs/001-hot-wheels-collector/tasks.md),
+[`specs/001-diecast-collector/tasks.md`](../specs/001-diecast-collector/tasks.md),
 nos blocos «Evidências» de cada fase. Este documento é operacional.
 
 ## 1. O que está no repositório
@@ -60,7 +60,7 @@ sdk.dir=/caminho/para/Android/Sdk
 ./gradlew :app:assembleDebug :app:lintDebug
 
 # c) fluxo real no emulador (API 36)
-.tools/android-sdk/emulator/emulator -avd hw_test -no-window -no-audio \
+.tools/android-sdk/emulator/emulator -avd diecast_test -no-window -no-audio \
   -gpu swiftshader_indirect -no-snapshot -accel on &
 ./gradlew :app:connectedDebugAndroidTest
 ```

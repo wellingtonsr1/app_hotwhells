@@ -179,7 +179,7 @@ def sc_title(p):
     status_bar(d)
     a = seg(p, 0.05, 0.35)
     car(d, 40, 240, 280, 140, blend(BG, RED, a), "profile")
-    text(d, 180, 412, "Coleção de Miniaturas", 18, True, blend(BG, TEXT, a), anchor="mm")
+    text(d, 180, 412, "Diecast Collector", 18, True, blend(BG, TEXT, a), anchor="mm")
     text(d, 180, 438, "modelo · variante · exemplar", 10, False,
          blend(BG, MUTED, a), anchor="mm")
     b = seg(p, 0.3, 0.5)
@@ -512,7 +512,7 @@ def sc_detail(p):
 
 
 SCENES = [
-    (sc_title, 2.6, "Coleção de Miniaturas — qualquer fabricante, tudo no aparelho"),
+    (sc_title, 2.6, "Diecast Collector — qualquer fabricante, tudo no aparelho"),
     (sc_catalog, 4.6, "Coleção offline: busca, filtros e exemplares por variante"),
     (sc_detail, 5.6, "Detalhe da variante: fotos por ângulo, dados do exemplar e histórico"),
     (sc_new_model, 4.2, "Cadastro em dois passos: primeiro o modelo"),

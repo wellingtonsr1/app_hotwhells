@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Coleção de Miniaturas</string>
+    <string name="app_name">Diecast Collector</string>
 
     <!-- Erros de domínio traduzidos para o usuário (T027). -->
     <string name="error_validation">Não foi possível salvar: %1$s</string>
@@ -191,7 +191,7 @@
     <string name="settings_title">Ajustes</string>
     <string name="settings_about">Sobre o app</string>
     <string name="settings_about_subtitle">Versão instalada, código de build e pacote</string>
-    <string name="settings_about_body">Hot Wheels Collector organiza o acervo de miniaturas inteiramente no aparelho: catálogo, fotos, desejos e finanças.</string>
+    <string name="settings_about_body">Diecast Collector organiza o acervo de miniaturas inteiramente no aparelho: catálogo, fotos, desejos e finanças.</string>
     <string name="settings_privacy">Política de privacidade</string>
     <string name="settings_privacy_subtitle">O que fica no aparelho e o que nunca é enviado</string>
     <string name="settings_offline_note">Este app funciona sem conta e sem internet. Nada do acervo sai do aparelho.</string>

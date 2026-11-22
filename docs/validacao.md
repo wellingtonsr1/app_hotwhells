@@ -22,7 +22,7 @@ SC-012 e SC-014).
 |---|---|
 | Data | 2026-11-20, entre 18:20 e 18:32 (America/Sao_Paulo) |
 | Commit | `e925c98` (working tree limpo durante a execução; só docs e capturas foram criados depois) |
-| Build | `:app:assembleDebug` — `0.1.0`, versionCode 1, pacote `br.com.hotwheelscollector.debug` |
+| Build | `:app:assembleDebug` — `0.1.0`, versionCode 1, pacote `br.com.diecastcollector.debug` |
 | Aparelho | emulador `hw_test`, Android 16 (API 36), x86_64, perfil Pixel 5 (1080×2340) |
 | Toolchain | JDK 17 local (`.tools/jdk-17`), Gradle 8.11.1, AGP 8.9.2 |
 | Rede | **modo avião ligado** durante toda a suíte (`airplane_mode_on=1`) |
@@ -43,8 +43,8 @@ export ANDROID_AVD_HOME="$PWD/.tools/avd"
 adb shell cmd connectivity airplane-mode enable      # airplane_mode_on=1
 ./gradlew :app:connectedDebugAndroidTest             # 51 testes, 0 falhas, 4m14s
 
-adb shell am force-stop br.com.hotwheelscollector.debug
-adb shell am start -W -n br.com.hotwheelscollector.debug/br.com.hotwheelscollector.MainActivity
+adb shell am force-stop br.com.diecastcollector.debug
+adb shell am start -W -n br.com.diecastcollector.debug/br.com.diecastcollector.MainActivity
 adb exec-out screencap -p > docs/validacao-painel-com-dados.png
 
 adb shell settings put system font_scale 2.0          # fonte máxima
@@ -133,7 +133,7 @@ Verificação executada por: Buffy (agente de código)
 Data: 2026-11-20 18:32 (America/Sao_Paulo)
 Commit: e925c98
 Dispositivo: emulador hw_test, Android 16 (API 36), x86_64
-Build: debug 0.1.0 (versionCode 1), pacote br.com.hotwheelscollector.debug
+Build: debug 0.1.0 (versionCode 1), pacote br.com.diecastcollector.debug
 Rede: modo avião ligado
 
 SC-003 .................. VERIFICADO (escopo da v1)

@@ -1,4 +1,4 @@
-# Coleção de Miniaturas
+# Diecast Collector
 
 Aplicativo Android nativo, offline-first, para catalogar miniaturas 1:64 de **qualquer
 fabricante** — Hot Wheels, Matchbox, Mini GT, Greenlight — distinguindo
@@ -11,7 +11,7 @@ Gradle: `:core:domain` (Kotlin puro), `:core:data` (Room, arquivos, import/expor
 `:core:ui` (design system) e `:app` (navegação, features, DI).
 
 A especificação funcional, o plano, o modelo de dados e a lista de tarefas ficam em
-[`specs/001-hot-wheels-collector/`](specs/001-hot-wheels-collector/). Para retomar o
+[`specs/001-diecast-collector/`](specs/001-diecast-collector/). Para retomar o
 trabalho em outra máquina, use [`docs/continua.md`](docs/continua.md).
 
 A simulação do app completo (maquete animada, não gravação de tela) está em
@@ -67,7 +67,7 @@ há como instalar uma atualização por cima — só reinstalar do zero.
 ./gradlew :app:bundleRelease     # app/build/outputs/bundle/release/app-release.aab
 ```
 
-O debug usa o pacote `br.com.hotwheelscollector.debug`; o release, `br.com.hotwheelscollector`.
+O debug usa o pacote `br.com.diecastcollector.debug`; o release, `br.com.diecastcollector`.
 Para trocar de um para o outro sem perder a coleção: crie um backup no app instalado,
 instale o release e restaure o pacote em **Ajustes → Backup e restauração**.
 

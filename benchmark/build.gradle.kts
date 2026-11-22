@@ -12,7 +12,7 @@ plugins {
  * empacota em `assets/dexopt/baseline.prof`.
  */
 android {
-    namespace = "br.com.hotwheelscollector.benchmark"
+    namespace = "br.com.diecastcollector.benchmark"
     compileSdk = 36
 
     defaultConfig {
