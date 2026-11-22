@@ -2,7 +2,10 @@ package br.com.diecastcollector.feature.catalog
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
@@ -38,6 +42,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.PhotoAngle
 import coil.compose.AsyncImage
@@ -76,6 +82,9 @@ public fun PhotoGrid(
     modifier: Modifier = Modifier,
 ) {
     var selectedAngle by remember { mutableStateOf(PhotoAngle.FRONT) }
+    // Tocar na miniatura abre a foto inteira; o visualizador é local à grade para
+    // servir tanto às capturas pendentes quanto às fotos já gravadas.
+    var fullScreenIndex by remember { mutableStateOf<Int?>(null) }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -119,6 +128,9 @@ public fun PhotoGrid(
                         rowPhotos.forEach { tile ->
                             PhotoItemCard(
                                 tile = tile,
+                                onOpen = {
+                                    fullScreenIndex = photos.indexOfFirst { it.id == tile.id }
+                                },
                                 onSetPrimary = { onSetPrimary(tile.id) },
                                 onRemove = { onRemovePhoto(tile.id) },
                                 modifier = Modifier.weight(1f),
@@ -132,11 +144,109 @@ public fun PhotoGrid(
             }
         }
     }
+
+    fullScreenIndex?.let { index ->
+        PhotoViewerDialog(
+            photos = photos,
+            initialIndex = index,
+            onDismiss = { fullScreenIndex = null },
+        )
+    }
+}
+
+/**
+ * Foto em tamanho cheio, sobre fundo escuro, com deslize entre os ângulos do exemplar.
+ *
+ * `usePlatformDefaultWidth = false` deixa a imagem usar a tela inteira. O gesto horizontal
+ * do pager não fecha o visualizador: fechar fica no X e no botão voltar, para um arrasto
+ * lateral nunca encerrar a foto por engano.
+ */
+@Composable
+private fun PhotoViewerDialog(
+    photos: List<PhotoTile>,
+    initialIndex: Int,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    val pagerState = rememberPagerState(
+        initialPage = initialIndex.coerceIn(0, (photos.size - 1).coerceAtLeast(0)),
+        pageCount = { photos.size },
+    )
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.95f)),
+        ) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+            ) { page ->
+                val tile = photos[page]
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(tile.source)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = stringResource(tile.angle.labelRes()),
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(12.dp),
+                )
+            }
+
+            val current = photos.getOrNull(pagerState.currentPage)
+            if (current != null) {
+                Surface(
+                    color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 24.dp),
+                ) {
+                    Text(
+                        text = if (photos.size > 1) {
+                            stringResource(
+                                R.string.photo_viewer_position,
+                                stringResource(current.angle.labelRes()),
+                                pagerState.currentPage + 1,
+                                photos.size,
+                            )
+                        } else {
+                            stringResource(current.angle.labelRes())
+                        },
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.inverseOnSurface,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    )
+                }
+            }
+
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.common_close),
+                    tint = MaterialTheme.colorScheme.inverseOnSurface,
+                )
+            }
+        }
+    }
 }
 
 @Composable
 private fun PhotoItemCard(
     tile: PhotoTile,
+    onOpen: () -> Unit,
     onSetPrimary: () -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
@@ -146,7 +256,8 @@ private fun PhotoItemCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(1f),
+            .aspectRatio(1f)
+            .clickable(onClick = onOpen),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {

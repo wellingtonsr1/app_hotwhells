@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -35,9 +36,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,13 +56,16 @@ import br.com.diecastcollector.domain.model.LocationType
 import br.com.diecastcollector.domain.model.MoneyCents
 import br.com.diecastcollector.domain.model.Movement
 import br.com.diecastcollector.domain.model.PackagingCondition
+import br.com.diecastcollector.domain.model.PhotoAngle
 import br.com.diecastcollector.domain.model.Valuation
 import br.com.diecastcollector.domain.repository.ExemplarDependents
 import br.com.diecastcollector.ui.theme.DiecastTheme
+import java.io.File
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.launch
 
 /**
  * Edição de um exemplar físico (FR-028, FR-091): condição, embalagem, observações,
@@ -78,6 +84,8 @@ public fun ExemplarDetailScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val permissionDeniedMessage = stringResource(R.string.photo_permission_denied)
 
     val messageText = state.message?.text()
 
@@ -117,6 +125,12 @@ public fun ExemplarDetailScreen(
             onAcquisitionMethodChange = viewModel::onAcquisitionMethodChange,
             onAcquisitionNotesChange = viewModel::onAcquisitionNotesChange,
             onSaveAcquisition = viewModel::onSaveAcquisition,
+            onAddPhoto = viewModel::onAddPhoto,
+            onSetPrimaryPhoto = viewModel::onSetPrimaryPhoto,
+            onRemovePhoto = viewModel::onRemovePhoto,
+            onPhotoPermissionDenied = {
+                scope.launch { snackbarHostState.showSnackbar(permissionDeniedMessage) }
+            },
             onValuationValueChange = viewModel::onValuationValueChange,
             onValuationDateChange = viewModel::onValuationDateChange,
             onValuationSourceChange = viewModel::onValuationSourceChange,
@@ -149,6 +163,10 @@ internal fun ExemplarDetailContent(
     onAcquisitionMethodChange: (String) -> Unit = {},
     onAcquisitionNotesChange: (String) -> Unit = {},
     onSaveAcquisition: () -> Unit = {},
+    onAddPhoto: (ByteArray, PhotoAngle) -> Unit = { _, _ -> },
+    onSetPrimaryPhoto: (String) -> Unit = {},
+    onRemovePhoto: (String) -> Unit = {},
+    onPhotoPermissionDenied: () -> Unit = {},
     onValuationValueChange: (String) -> Unit = {},
     onValuationDateChange: (String) -> Unit = {},
     onValuationSourceChange: (String) -> Unit = {},
@@ -157,6 +175,8 @@ internal fun ExemplarDetailContent(
 ) {
     var showArchiveDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var photoToRemove by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
 
     Surface(modifier = Modifier.fillMaxSize()) {
         when {
@@ -279,6 +299,23 @@ internal fun ExemplarDetailContent(
                 ) {
                     Text(stringResource(R.string.exemplar_save))
                 }
+
+                // As fotos do cadastro ficam gravadas no exemplar: é aqui, na ficha dele,
+                // que o colecionador revê, troca a principal e acrescenta novos ângulos.
+                PhotoGrid(
+                    photos = state.photos.map { photo ->
+                        PhotoTile(
+                            id = photo.id,
+                            angle = photo.angle,
+                            isPrimary = photo.isPrimary,
+                            source = File(context.filesDir, photo.path),
+                        )
+                    },
+                    onAddPhotoBytes = onAddPhoto,
+                    onSetPrimary = onSetPrimaryPhoto,
+                    onRemovePhoto = { photoId -> photoToRemove = photoId },
+                    onPermissionDenied = onPhotoPermissionDenied,
+                )
 
                 HorizontalDivider()
 
@@ -600,6 +637,27 @@ internal fun ExemplarDetailContent(
                 onArchive()
             },
             onDismiss = { showDeleteDialog = false },
+        )
+    }
+    photoToRemove?.let { photoId ->
+        AlertDialog(
+            onDismissRequest = { photoToRemove = null },
+            title = { Text(stringResource(R.string.photo_remove_title)) },
+            // Aqui a foto já está gravada: remover apaga o registro e o arquivo.
+            text = { Text(stringResource(R.string.photo_remove_saved_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        photoToRemove = null
+                        onRemovePhoto(photoId)
+                    },
+                ) { Text(stringResource(R.string.photo_remove_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { photoToRemove = null }) {
+                    Text(stringResource(R.string.common_cancel))
+                }
+            },
         )
     }
 }

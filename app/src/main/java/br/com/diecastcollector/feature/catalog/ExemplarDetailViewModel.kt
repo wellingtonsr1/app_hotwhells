@@ -13,11 +13,14 @@ import br.com.diecastcollector.domain.model.Location
 import br.com.diecastcollector.domain.model.MoneyCents
 import br.com.diecastcollector.domain.model.Movement
 import br.com.diecastcollector.domain.model.PackagingCondition
+import br.com.diecastcollector.domain.model.Photo
+import br.com.diecastcollector.domain.model.PhotoAngle
 import br.com.diecastcollector.domain.model.Valuation
 import br.com.diecastcollector.domain.repository.AcquisitionRepository
 import br.com.diecastcollector.domain.repository.ExemplarDependents
 import br.com.diecastcollector.domain.repository.ExemplarRepository
 import br.com.diecastcollector.domain.repository.LocationRepository
+import br.com.diecastcollector.domain.repository.PhotoRepository
 import br.com.diecastcollector.domain.repository.ValuationRepository
 import br.com.diecastcollector.navigation.RouteArgs
 import br.com.diecastcollector.ui.UiMessage
@@ -53,6 +56,9 @@ public data class ExemplarDetailUiState(
     val moveNote: String = "",
     val movements: List<Movement> = emptyList(),
     val dependents: ExemplarDependents = ExemplarDependents(),
+    /** Fotos gravadas do exemplar, na ordem do repositório (principal primeiro). */
+    val photos: List<Photo> = emptyList(),
+    val workingPhoto: Boolean = false,
     val rowVersion: Long = 0L,
     val createdAt: Instant? = null,
     val updatedAt: Instant? = null,
@@ -98,6 +104,7 @@ public class ExemplarDetailViewModel @Inject constructor(
     locationRepository: LocationRepository,
     private val acquisitionRepository: AcquisitionRepository,
     private val valuationRepository: ValuationRepository,
+    private val photoRepository: PhotoRepository,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -130,6 +137,60 @@ public class ExemplarDetailViewModel @Inject constructor(
             valuationRepository.observeByExemplar(exemplarId).collect { valuations ->
                 _state.update { it.copy(valuations = valuations) }
             }
+        }
+        viewModelScope.launch {
+            photoRepository.observeByExemplar(exemplarId).collect { photos ->
+                _state.update { it.copy(photos = photos) }
+            }
+        }
+    }
+
+    // ---- Fotografias -------------------------------------------------------------
+
+    /** Nova captura vai direto para o exemplar: ele já existe, então não há pendência. */
+    public fun onAddPhoto(bytes: ByteArray, angle: PhotoAngle) {
+        if (bytes.isEmpty() || _state.value.workingPhoto) return
+        _state.update { it.copy(workingPhoto = true) }
+        viewModelScope.launch {
+            photoRepository.add(exemplarId, angle, bytes).fold(
+                onSuccess = {
+                    _state.update { it.copy(workingPhoto = false) }
+                    refresh(showLoading = false)
+                },
+                onFailure = { error ->
+                    _state.update { it.copy(workingPhoto = false, message = error.toMessage()) }
+                },
+            )
+        }
+    }
+
+    public fun onSetPrimaryPhoto(photoId: String) {
+        if (_state.value.workingPhoto) return
+        _state.update { it.copy(workingPhoto = true) }
+        viewModelScope.launch {
+            photoRepository.setPrimary(exemplarId, photoId).fold(
+                onSuccess = { _state.update { it.copy(workingPhoto = false) } },
+                onFailure = { error ->
+                    _state.update { it.copy(workingPhoto = false, message = error.toMessage()) }
+                },
+            )
+        }
+    }
+
+    /** Apaga o registro e o arquivo; os dependentes são recarregados para o botão de excluir. */
+    public fun onRemovePhoto(photoId: String) {
+        if (_state.value.workingPhoto) return
+        _state.update { it.copy(workingPhoto = true) }
+        viewModelScope.launch {
+            photoRepository.remove(photoId).fold(
+                onSuccess = {
+                    _state.update { it.copy(workingPhoto = false) }
+                    refresh(showLoading = false)
+                },
+                onFailure = { error ->
+                    _state.update { it.copy(workingPhoto = false, message = error.toMessage()) }
+                },
+            )
         }
     }
 
