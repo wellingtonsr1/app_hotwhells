@@ -1,0 +1,10 @@
+fabricante,modelo,escala,ano_lancamento,cor_principal,condicao,codigo_interno,data_aquisicao,preco,localizacao,cor_errada
+Hot Wheels,"Ford Mustang 1965",1:64,1965,Vermelho,lacrado,HW-900001,22/11/2026,29.90,"Caixa 12",x
+,"Chevrolet Camaro 1969",1:64,1969,Preto,solto,HW-900003,22/11/2026,39.90,"Caixa 12",
+Hot Wheels,,1:64,1970,Azul,lacrado,HW-900004,22/11/2026,19.90,"Caixa 12",
+Hot Wheels,"Chevrolet Corvette 1963",1:64,1963,Prata,novo,HW-900005,22/11/2026,49.90,"Caixa 12",
+Hot Wheels,"Plymouth Barracuda 1970",1:64,1970,Roxo,lacrado,HW-900006,31/02/2026,24.90,"Caixa 12",
+Hot Wheels,"Dodge Dart 1968",1:64,1968,Branco,lacrado,HW-900007,22/11/2026,abc,"Caixa 12",
+Hot Wheels,"Nissan Skyline GT-R R34",1:64,2025,Azul,lacrado,HW-000001,22/11/2026,19.90,"Caixa 12",
+Hot Wheels,"Pontiac GTO 1966",1:64,1966,Verde,lacrado,HW-900008,22/11/2026,34.90,"Caixa >> Prateleira",
+Hot Wheels,"Ford GT40 1966",1:64,1966,Azul,lacrado,HW-900002,22/11/2026,59.90,"Caixa 12",

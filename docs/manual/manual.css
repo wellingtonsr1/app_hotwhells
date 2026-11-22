@@ -1,0 +1,167 @@
+/* Manual do Usuário — Hot Wheels Collector
+   Folha de estilo para impressão (WeasyPrint). */
+
+@page {
+  size: A4;
+  margin: 22mm 18mm 20mm 18mm;
+
+  @top-center {
+    content: "Hot Wheels Collector — Manual do Usuário 0.1.0";
+    font-family: "DejaVu Sans", sans-serif;
+    font-size: 8pt;
+    color: #666;
+    border-bottom: 0.4pt solid #ddd;
+    padding-bottom: 3mm;
+  }
+
+  @bottom-center {
+    content: counter(page) " / " counter(pages);
+    font-family: "DejaVu Sans", sans-serif;
+    font-size: 8pt;
+    color: #666;
+  }
+}
+
+@page cover {
+  margin: 0;
+
+  @top-center { content: none; }
+  @bottom-center { content: none; }
+}
+
+html { font-size: 10.5pt; }
+
+body {
+  font-family: "DejaVu Serif", Georgia, serif;
+  color: #1a1a1a;
+  line-height: 1.45;
+}
+
+.cover {
+  page: cover;
+  height: 297mm;
+  padding: 40mm 24mm;
+  box-sizing: border-box;
+  background: #b3121a;
+  color: #fff;
+  page-break-after: always;
+}
+
+.cover h1 {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 34pt;
+  color: #fff;
+  line-height: 1.1;
+  margin: 0 0 8mm 0;
+  border: none;
+  page-break-before: auto;
+}
+
+.cover .subtitle { font-size: 15pt; margin: 0 0 30mm 0; }
+.cover .meta { font-size: 10pt; line-height: 1.7; }
+
+h1 {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 20pt;
+  color: #b3121a;
+  page-break-before: always;
+  margin: 0 0 6mm 0;
+  border-bottom: 1.2pt solid #b3121a;
+  padding-bottom: 2mm;
+}
+
+h1.nobreak { page-break-before: auto; }
+
+h2 {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 14pt;
+  color: #222;
+  margin: 7mm 0 3mm 0;
+  page-break-after: avoid;
+}
+
+h3 {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 12pt;
+  color: #333;
+  margin: 5mm 0 2mm 0;
+  page-break-after: avoid;
+}
+
+p, li { orphans: 2; widows: 2; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8.8pt;
+  margin: 3mm 0 5mm 0;
+}
+
+tr { page-break-inside: avoid; }
+
+td code { word-break: break-all; }
+
+th, td {
+  border: 0.4pt solid #bbb;
+  padding: 1.6mm 2mm;
+  text-align: left;
+  vertical-align: top;
+}
+
+th { background: #f2e6e7; font-family: "DejaVu Sans", sans-serif; }
+
+code {
+  font-family: "DejaVu Sans Mono", monospace;
+  font-size: 8.6pt;
+  background: #f4f4f4;
+  padding: 0 0.6mm;
+}
+
+pre {
+  background: #f4f4f4;
+  padding: 2mm;
+  font-size: 8.4pt;
+  white-space: pre-wrap;
+  page-break-inside: avoid;
+}
+
+img {
+  max-width: 100%;
+  max-height: 168mm;
+  width: auto;
+  height: auto;
+  display: block;
+  margin: 2mm auto 1mm auto;
+  border: 0.4pt solid #ccc;
+}
+
+figure {
+  display: inline-block;
+  width: 48%;
+  margin: 2mm 1% 4mm 0;
+  vertical-align: top;
+  page-break-inside: avoid;
+  text-align: center;
+}
+
+figcaption, .figcaption {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 8.4pt;
+  color: #555;
+  text-align: center;
+  margin-top: 1mm;
+}
+
+blockquote {
+  margin: 3mm 0;
+  padding: 2mm 4mm;
+  border-left: 2.5pt solid #b3121a;
+  background: #fbf5f5;
+  font-size: 9.2pt;
+}
+
+.toc { page-break-after: always; font-family: "DejaVu Sans", sans-serif; font-size: 9.5pt; }
+.toc ul { list-style: none; padding-left: 0; }
+.toc ul ul { padding-left: 5mm; }
+.toc a { color: #1a1a1a; text-decoration: none; }
+.toc li { margin: 1mm 0; }

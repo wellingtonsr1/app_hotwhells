@@ -1,0 +1,8 @@
+linha,campo,codigo,mensagem,valor_informado
+3,fabricante,E001,Campo obrigatório vazio,
+4,modelo,E001,Campo obrigatório vazio,
+5,condicao,E004,Valor fora do domínio,novo
+6,data_aquisicao,E003,Data inválida,31/02/2026
+7,preco,E002,Número inválido,abc
+8,codigo_interno,E005,Código interno duplicado,HW-000001
+9,localizacao,E007,Hierarquia inválida (use > entre níveis),Caixa >> Prateleira
