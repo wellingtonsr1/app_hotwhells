@@ -1,13 +1,14 @@
 <div class="cover">
-<h1>Hot Wheels Collector</h1>
+<h1>Diecast Collector</h1>
 <p class="subtitle">Manual do Usuário</p>
 <p class="meta">Versão 0.1.0 (versionCode 1)<br>
-Commit 424e4fb — 21/11/2026<br>
+Árvore de trabalho — 22/11/2026<br>
 Android 8.0 (API 26) ou superior<br>
 Português brasileiro</p>
 </div>
 **Versão documentada**: 0.1.0 (versionCode 1)
-**Commit de referência**: `424e4fb` — 2026-11-21 19:52:50 −03:00
+**Referência**: árvore de trabalho em 2026-11-22, após a renomeação para **Diecast Collector**
+(capturas regeradas nessa data no emulador `diecast_test`)
 **Plataforma**: Android 8.0 (API 26) ou superior
 **Idioma**: português brasileiro
 
@@ -58,15 +59,17 @@ Português brasileiro</p>
 
 > **Tela**: todas as telas de primeiro nível · **Acesso**: barra inferior · **Capturas**: `capturas/01-painel-vazio.png`, `capturas/05b-painel-com-dados.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/01-painel-vazio.png" alt="Painel vazio">
 <figcaption>Figura 1.1 — Painel vazio</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/05b-painel-com-dados.png" alt="Painel com dados">
 <figcaption>Figura 1.2 — Painel com dados</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -111,7 +114,7 @@ A aba ativa fica destacada; as demais aparecem com ícone e rótulo em cor secun
 ### Exemplos
 
 Na captura `01-painel-vazio.png`, a coleção está vazia e a aba **Painel** aparece destacada.
-Depois de cadastrar a primeira miniatura (`05b-painel-com-dados.png`), a mesma barra continua
+Com o acervo do exemplo já cadastrado (`05b-painel-com-dados.png`), a mesma barra continua
 visível, agora com números no resumo.
 
 ### Regras e validações
@@ -143,15 +146,17 @@ visível, agora com números no resumo.
 
 > **Tela**: introdução · **Acesso**: abertura do app · **Capturas**: `capturas/01-painel-vazio.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/02-catalogo-vazio.png" alt="Catalogo vazio">
 <figcaption>Figura 2.1 — Catalogo vazio</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/28-ajustes.png" alt="Ajustes">
 <figcaption>Figura 2.2 — Ajustes</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -238,39 +243,50 @@ aquisição de R$ 19,90 + R$ 4,50 de frete e avaliação de R$ 45,00.
 
 > **Tela**: roteiro completo · **Acesso**: abertura do app · **Capturas**: `capturas/01-painel-vazio.png` a `capturas/29b-backup-criado.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/03-cadastro-inicial.png" alt="Cadastro inicial">
 <figcaption>Figura 3.1 — Cadastro inicial</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/04-cadastro-preenchido.png" alt="Cadastro preenchido">
 <figcaption>Figura 3.2 — Cadastro preenchido</figcaption>
 </figure>
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/05-formulario-variante-vazio.png" alt="Formulario variante vazio">
 <figcaption>Figura 3.3 — Formulario variante vazio</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/06-formulario-variante-preenchido.png" alt="Formulario variante preenchido">
 <figcaption>Figura 3.4 — Formulario variante preenchido</figcaption>
 </figure>
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/13-adicionar-exemplar.png" alt="Adicionar exemplar">
 <figcaption>Figura 3.5 — Adicionar exemplar</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/15b-detalhe-exemplar-aquisicao.png" alt="Detalhe exemplar aquisicao">
 <figcaption>Figura 3.6 — Detalhe exemplar aquisicao</figcaption>
 </figure>
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/17b-adicionar-item-colecao.png" alt="Adicionar item colecao">
 <figcaption>Figura 3.7 — Adicionar item colecao</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/29b-backup-criado.png" alt="Backup criado">
 <figcaption>Figura 3.8 — Backup criado</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -434,15 +450,17 @@ O diagrama `diagramas/dominio.svg` resume os relacionamentos.
 
 > **Tela**: `dashboard` · **Arquivo**: `feature/dashboard/DashboardScreen.kt` · **Acesso**: aba **Painel** · **Capturas**: `capturas/01-painel-vazio.png`, `capturas/05b-painel-com-dados.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/01-painel-vazio.png" alt="Painel vazio">
 <figcaption>Figura 5.1 — Painel vazio</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/05b-painel-com-dados.png" alt="Painel com dados">
 <figcaption>Figura 5.2 — Painel com dados</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -488,21 +506,15 @@ de últimas aquisições/cadastros. Com a coleção vazia, mostra apenas a mensa
 
 ### Exemplos
 
-Com dois exemplares do Skyline e uma avaliação de R$ 45,00:
-`2` Exemplares, `1` Modelo, `1` Variante, `1` Fabricante, `0` Séries, `1` Coleção,
+Com o acervo fictício do manual, que tem duas unidades do Skyline e uma única avaliação de
+R$ 45,00: `6` Exemplares, `5` Modelos, `5` Variantes, `1` Fabricante, `0` Séries, `1` Coleção,
 `1` Variante repetida, `1` Na lista de desejos, **Investido R$ 44,30**,
-**Estimado R$ 45,00**, **Diferença R$ 0,70** — e «1 exemplar(es) sem avaliação ficam de fora
+**Estimado R$ 45,00**, **Diferença R$ 0,70** — e «5 exemplar(es) sem avaliação ficam de fora
 da estimativa».
 
-Depois de acrescentar uma terceira miniatura fictícia (`Dodge Charger 1970`, com foto), os
-mesmos indicadores passam a **3** Exemplares, **2** Modelos, **2** Variantes; **Investido**,
-**Estimado** e **Diferença** não mudam, porque a nova unidade não tem aquisição nem avaliação,
-e o rodapé da estimativa passa a «2 exemplar(es) sem avaliação».
-
-<figure>
-<img src="capturas/05d-painel-final.png" alt="Painel com tres exemplares">
-<figcaption>Figura 5.3 — Painel com três exemplares e uma foto no acervo</figcaption>
-</figure>
+Cada miniatura sem aquisição nem avaliação (como o `Dodge Charger 1970`) soma um exemplar,
+modelo e variante, mas não mexe em **Investido**, **Estimado** e **Diferença**; o rodapé da
+estimativa conta quantos exemplares ficaram de fora.
 
 ### Regras e validações
 
@@ -542,14 +554,18 @@ e o rodapé da estimativa passa a «2 exemplar(es) sem avaliação».
 
 > **Tela**: `catalog` · **Arquivo**: `feature/catalog/CatalogScreen.kt` · **Acesso**: aba **Catálogo** · **Capturas**: `capturas/02-catalogo-vazio.png`, `capturas/07-catalogo-com-miniatura.png`, `capturas/02b-catalogo-com-incompleto.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/02-catalogo-vazio.png" alt="Catalogo vazio">
 <figcaption>Figura 6.1 — Catalogo vazio</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/07-catalogo-com-miniatura.png" alt="Catalogo com miniatura">
 <figcaption>Figura 6.2 — Catalogo com miniatura</figcaption>
 </figure>
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/02b-catalogo-com-incompleto.png" alt="Catalogo com incompleto">
 <figcaption>Figura 6.3 — Catalogo com incompleto</figcaption>
@@ -557,9 +573,10 @@ e o rodapé da estimativa passa a «2 exemplar(es) sem avaliação».
 
 <figure>
 <img src="capturas/07b-catalogo-com-foto.png" alt="Catalogo com dois modelos">
-<figcaption>Figura 6.4 — Catálogo com dois modelos, um deles com foto anexada</figcaption>
+<figcaption>Figura 6.4 — Catálogo com dois modelos; o Skyline tem um exemplar com foto anexada,
+que o cartão não exibe</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -601,7 +618,7 @@ o botão **+ Mini**.
 ### Exemplos
 
 Após o roteiro do capítulo 3, o catálogo mostra «Nissan Skyline GT-R R34» com
-«Hot Wheels · 2025 · 2 exemplares». Com um modelo sem variante, aparece também
+«Hot Wheels · 2025 · 1 exemplar». Com um modelo sem variante, aparece também
 **Incompletos (1)** no topo (`02b-catalogo-com-incompleto.png`).
 
 ### Regras e validações
@@ -639,11 +656,12 @@ Após o roteiro do capítulo 3, o catálogo mostra «Nissan Skyline GT-R R34» c
 
 > **Tela**: `catalog/search` · **Arquivo**: `feature/search/SearchScreen.kt` · **Acesso**: ícone de lupa no Catálogo · **Capturas**: `capturas/07-busca.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/07-busca.png" alt="Busca">
 <figcaption>Figura 7.1 — Busca</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -733,15 +751,17 @@ Busque `Skyline` e o app lista as duas unidades do exemplo. Filtre **Condição*
 
 > **Tela**: `catalog/create` · **Arquivo**: `feature/catalog/CreateCatalogEntryScreen.kt` · **Acesso**: **+ Mini** no Catálogo · **Capturas**: `capturas/03-cadastro-inicial.png`, `capturas/04-cadastro-preenchido.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/03-cadastro-inicial.png" alt="Cadastro inicial">
 <figcaption>Figura 8.1 — Cadastro inicial</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/04-cadastro-preenchido.png" alt="Cadastro preenchido">
 <figcaption>Figura 8.2 — Cadastro preenchido</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -813,24 +833,28 @@ Captura `04-cadastro-preenchido.png`: fabricante `Hot Wheels`, modelo
 
 > **Tela**: `catalog/variant/{modelId}` · **Arquivo**: `feature/catalog/VariantFormScreen.kt` · **Acesso**: após **Salvar miniatura**; item de **Incompletos** · **Capturas**: `capturas/05-formulario-variante-vazio.png`, `capturas/06-formulario-variante-preenchido.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/05-formulario-variante-vazio.png" alt="Formulario variante vazio">
 <figcaption>Figura 9.1 — Formulario variante vazio</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/06-formulario-variante-preenchido.png" alt="Formulario variante preenchido">
 <figcaption>Figura 9.2 — Formulario variante preenchido</figcaption>
 </figure>
-
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/06b-seletor-de-fotos.png" alt="Seletor de fotos do Android">
 <figcaption>Figura 9.3 — Seletor de fotos aberto por Galeria</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/06c-variante-com-foto.png" alt="Variante com foto ainda nao salva">
 <figcaption>Figura 9.4 — Foto escolhida, marcada como «Ainda não salva» até gravar</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -915,6 +939,7 @@ Cor principal `Azul`, ano `2025`, condição `Lacrado`; o catálogo passa a most
 
 > **Tela**: `catalog/incomplete` · **Arquivo**: `feature/catalog/IncompleteEntriesScreen.kt` · **Acesso**: **Incompletos (N)** no Catálogo · **Capturas**: `capturas/10b-incompletos-com-item.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/10b-incompletos-com-item.png" alt="Incompletos com item">
 <figcaption>Figura 10.1 — Incompletos com item</figcaption>
@@ -924,7 +949,7 @@ Cor principal `Azul`, ano `2025`, condição `Lacrado`; o catálogo passa a most
 <img src="capturas/10c-incompletos-com-variante.png" alt="Incompletos com modelo e variante">
 <figcaption>Figura 10.2 — Incompletos com um modelo sem variante e uma variante sem cor/ano</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -992,11 +1017,12 @@ Título **Cadastros incompletos**. Cada item mostra nome do modelo, fabricante e
 
 > **Tela**: `catalog/model/{modelId}` · **Arquivo**: `feature/catalog/ModelFormScreen.kt` · **Acesso**: **Editar modelo** em Incompletos · **Capturas**: `capturas/11-edicao-modelo.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/11-edicao-modelo.png" alt="Edicao modelo">
 <figcaption>Figura 11.1 — Edicao modelo</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -1071,10 +1097,12 @@ ano `1999`.
 
 > **Tela**: `catalog/variant/{variantId}/edit` · **Arquivo**: `feature/catalog/VariantFormScreen.kt` (`VariantEditScreen`) · **Acesso**: **Editar variante** em Incompletos · **Capturas**: `capturas/12-edicao-variante.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/12-edicao-variante.png" alt="Editar variante">
 <figcaption>Figura 12.1 — Editar variante de um item de Incompletos</figcaption>
 </figure>
+</div>
 
 ### Finalidade
 
@@ -1148,11 +1176,12 @@ Variante cadastrada sem ano: preencha `2025` e salve; o item sai dos incompletos
 
 > **Tela**: `exemplar/add/{variantId}` · **Arquivo**: `feature/catalog/AddExemplarScreen.kt` · **Acesso**: toque na variante no Catálogo; **+ Exemplar** na lista · **Capturas**: `capturas/13-adicionar-exemplar.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/13-adicionar-exemplar.png" alt="Adicionar exemplar">
 <figcaption>Figura 13.1 — Adicionar exemplar</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -1193,7 +1222,9 @@ localização, dados de compra e o botão **Salvar exemplar**.
 
 ### Exemplos
 
-Segunda unidade do Skyline: condição `Lacrado`, localização `Caixa 12`, preço `19,90`.
+Segunda unidade do Skyline: condição `Lacrado` e preço `19,90`. Em
+`13-adicionar-exemplar.png` nenhuma localização estava cadastrada ainda, por isso o seletor
+mostra «Sem localização» e o aviso «Nenhuma localização cadastrada ainda.».
 O catálogo passa a mostrar «2 exemplares».
 
 ### Regras e validações
@@ -1229,6 +1260,7 @@ O catálogo passa a mostrar «2 exemplares».
 
 > **Tela**: `catalog/variant/{variantId}/exemplars` · **Arquivo**: `feature/catalog/ExemplarListScreen.kt` · **Acesso**: **Ver exemplares** no Catálogo · **Capturas**: `capturas/14-lista-exemplares.png`, `capturas/14c-lista-dois-exemplares.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/14-lista-exemplares.png" alt="Lista exemplares">
 <figcaption>Figura 14.1 — Lista exemplares</figcaption>
@@ -1238,11 +1270,13 @@ O catálogo passa a mostrar «2 exemplares».
 <img src="capturas/14b-lista-dois-exemplares.png" alt="Lista com dois exemplares">
 <figcaption>Figura 14.2 — Lista com dois exemplares</figcaption>
 </figure>
-
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/14c-lista-dois-exemplares.png" alt="Lista com dois exemplares, detalhe">
 <figcaption>Figura 14.3 — Lista com dois exemplares, detalhe</figcaption>
 </figure>
+</div>
 
 ### Finalidade
 
@@ -1274,7 +1308,8 @@ inferior direito, **+ Exemplar**.
 
 ### Exemplos
 
-`HW-000001 · Lacrado · Caixa 12` e `HW-000002 · Lacrado · Caixa 12`.
+`HW-000001 · Lacrado · Caixa 12` e `HW-000004 · Lacrado · Sem localização`. Em `14b` o
+segundo exemplar apareceu antes de ser movido; em `14c` o primeiro já está na `Caixa 12`.
 
 ### Regras e validações
 
@@ -1304,22 +1339,29 @@ inferior direito, **+ Exemplar**.
 
 > **Tela**: `exemplar/{exemplarId}` · **Arquivo**: `feature/catalog/ExemplarDetailScreen.kt` · **Acesso**: lista de exemplares · **Capturas**: `capturas/15-detalhe-exemplar.png` a `capturas/15e-detalhe-exemplar-movido.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/15-detalhe-exemplar.png" alt="Detalhe do exemplar">
 <figcaption>Figura 15.1 — Detalhe do exemplar</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/15b-detalhe-exemplar-aquisicao.png" alt="Aquisição registrada">
 <figcaption>Figura 15.2 — Aquisição registrada</figcaption>
 </figure>
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/15c-detalhe-exemplar-avaliacao.png" alt="Avaliação registrada">
 <figcaption>Figura 15.3 — Avaliação registrada</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/15d-detalhe-exemplar-movimentacao.png" alt="Movimentação em andamento">
 <figcaption>Figura 15.4 — Movimentação em andamento</figcaption>
 </figure>
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/15e-detalhe-exemplar-movido.png" alt="Exemplar movido de localização">
 <figcaption>Figura 15.5 — Exemplar movido de localização</figcaption>
@@ -1329,7 +1371,7 @@ inferior direito, **+ Exemplar**.
 <img src="capturas/15f-exemplar-com-foto.png" alt="Detalhe de exemplar com foto no cadastro">
 <figcaption>Figura 15.6 — Detalhe de um exemplar criado com foto: a imagem não aparece nesta tela</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -1422,15 +1464,17 @@ fonte `colecionador` → «Valor estimado atual: R$ 45,00»; movimentação
 
 > **Tela**: `catalog/collections` · **Arquivo**: `feature/organization/CollectionsScreen.kt` · **Acesso**: **Coleções** no Catálogo · **Capturas**: `capturas/16-colecoes-vazio.png`, `capturas/16b-colecoes-com-uma.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/16-colecoes-vazio.png" alt="Colecoes vazio">
 <figcaption>Figura 16.1 — Colecoes vazio</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/16b-colecoes-com-uma.png" alt="Colecoes com uma">
 <figcaption>Figura 16.2 — Colecoes com uma</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -1497,19 +1541,23 @@ Título **Coleções**, ação **Séries** no topo, lista de coleções com perc
 
 > **Tela**: `collections/{collectionId}` · **Arquivo**: `feature/organization/CollectionDetailScreen.kt` · **Acesso**: item da lista de coleções · **Capturas**: `capturas/17-detalhe-colecao-vazio.png`, `capturas/17b-adicionar-item-colecao.png`, `capturas/17c-detalhe-colecao-com-item.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/17-detalhe-colecao-vazio.png" alt="Detalhe colecao vazio">
 <figcaption>Figura 17.1 — Detalhe colecao vazio</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/17b-adicionar-item-colecao.png" alt="Adicionar item colecao">
 <figcaption>Figura 17.2 — Adicionar item colecao</figcaption>
 </figure>
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/17c-detalhe-colecao-com-item.png" alt="Detalhe colecao com item">
 <figcaption>Figura 17.3 — Detalhe colecao com item</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -1548,7 +1596,8 @@ Título com o nome da coleção, percentual à direita, **Voltar**, **Editar**, 
 
 ### Exemplos
 
-Coleção `Skyline 2025` com um item: `100%`, `1 de 1 unidades`, «Nada faltando».
+Coleção `Skyline 2025` com um item: `100%`, `1 de 1 unidades`, «Nada faltando: todos os itens
+estão na estante.».
 
 ### Regras e validações
 
@@ -1584,11 +1633,12 @@ Coleção `Skyline 2025` com um item: `100%`, `1 de 1 unidades`, «Nada faltando
 
 > **Tela**: `collections/form` · **Arquivo**: `feature/organization/CollectionFormScreen.kt` · **Acesso**: **+ Coleção**; **Editar** no detalhe · **Capturas**: `capturas/18-formulario-colecao.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/18-formulario-colecao.png" alt="Formulario colecao">
 <figcaption>Figura 18.1 — Formulario colecao</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -1651,11 +1701,12 @@ botões **Salvar coleção** e **Cancelar**.
 
 > **Tela**: `catalog/series` · **Arquivo**: `feature/organization/SeriesScreen.kt` · **Acesso**: **Séries** em Coleções · **Capturas**: `capturas/19-series.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/19-series.png" alt="Series">
 <figcaption>Figura 19.1 — Series</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -1667,15 +1718,16 @@ Ver e manter as séries do fabricante, com hierarquia, renomeação e arquivamen
 
 ### Identificação visual
 
-Título **Séries**, seletor de fabricante no topo, lista de séries com ações **Renomear** e
-**Arquivar**, **+ Série** no canto inferior e **Voltar**.
+Título **Séries**, seletor de fabricante no topo (o nome do fabricante em vermelho),
+**+ Série** logo abaixo e **Voltar** à direita; cada série tem as ações **Renomear** e
+**Arquivar**.
 
 ### Elementos da tela
 
 | Elemento | Tipo | Onde fica | O que faz | Resultado |
 |---|---|---|---|---|
 | seletor de **Fabricante** | seletor | topo | escolhe o fabricante | lista daquele fabricante |
-| **+ Série** | botão | canto inferior direito | cria série | diálogo |
+| **+ Série** | botão | topo, sob o seletor de fabricante | cria série | diálogo |
 | **Renomear** | botão | item | abre o diálogo de edição | — |
 | **Arquivar** | botão | item | arquiva a série | variantes perdem o agrupamento |
 | **Voltar** | botão | topo | retorna às coleções | — |
@@ -1722,11 +1774,12 @@ Fabricante `Hot Wheels`, série `Mainline 2025`, sem série superior.
 
 > **Tela**: `catalog/barcode` · **Arquivo**: `feature/recognition/BarcodeScanScreen.kt` · **Acesso**: **Código de barras** no Catálogo · **Capturas**: `capturas/20-codigo-barras.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/20-codigo-barras.png" alt="Codigo barras">
 <figcaption>Figura 20.1 — Codigo barras</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -1767,8 +1820,9 @@ Título **Código de barras**, aviso de que a leitura só sugere dados, campo **
 
 ### Exemplos
 
-Código `7891234567890`: o app pode sugerir fabricante/modelo; sem correspondência, mostra
-«Nenhuma correspondência no catálogo.» e oferece o cadastro manual.
+Código `7891234567890`: na captura `20-codigo-barras.png` a leitura não achou variante
+parecida, então mostra «Nenhuma correspondência no catálogo.» e oferece **Cadastrar
+manualmente**; a sugestão traz o próprio código em **Sugestões da leitura**.
 
 ### Regras e validações
 
@@ -1806,15 +1860,17 @@ Código `7891234567890`: o app pode sugerir fabricante/modelo; sem correspondên
 
 > **Tela**: `duplicates` · **Arquivo**: `feature/duplicates/DuplicatesScreen.kt` · **Acesso**: **Duplicados** no Catálogo · **Capturas**: `capturas/21-duplicados.png`, `capturas/21b-duplicados-com-grupo.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/21-duplicados.png" alt="Duplicados">
 <figcaption>Figura 21.1 — Duplicados</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/21b-duplicados-com-grupo.png" alt="Duplicados com grupo">
 <figcaption>Figura 21.2 — Duplicados com grupo</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -1850,7 +1906,7 @@ variante» e, por unidade, código, condição, disponibilidade e **Negociar**.
 ### Exemplos
 
 `Hot Wheels · Nissan Skyline GT-R R34 · Azul` — «2 exemplares nesta variante»:
-`HW-000001` e `HW-000002`, ambos **Indisponível**.
+`HW-000001` **Indisponível** e `HW-000004` **Troca**.
 
 ### Regras e validações
 
@@ -1881,11 +1937,12 @@ variante» e, por unidade, código, condição, disponibilidade e **Negociar**.
 
 > **Tela**: `duplicates/{exemplarId}/negotiation` · **Arquivo**: `feature/duplicates/NegotiationScreen.kt` · **Acesso**: **Negociar** em Duplicados · **Capturas**: `capturas/22-negociacao.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/22-negociacao.png" alt="Negociacao">
 <figcaption>Figura 22.1 — Negociacao</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -1909,7 +1966,7 @@ Título **Negociação**, código e identificação da variante, seção **Nova 
 | **Canal** | campo | corpo | onde negocia | — |
 | **Valor discutido (R$)** | campo | corpo | valor | — |
 | **Observações** | campo | corpo | notas | — |
-| **Reservar o exemplar** | botão | corpo | reserva sem abrir | — |
+| **Reservar o exemplar** | interruptor | corpo | marca a unidade como reservada ao abrir | — |
 | **Abrir negociação** | botão | corpo | cria negociação | estado ativo |
 | **Concluir venda** | ação | ativa | fecha como venda | exemplar sai do acervo |
 | **Concluir troca** | ação | ativa | fecha como troca | exemplar sai e outro entra |
@@ -1927,7 +1984,7 @@ Título **Negociação**, código e identificação da variante, seção **Nova 
 
 ### Exemplos
 
-Venda de `HW-000002` por `R$ 50,00`, contraparte `Colecionador Demo`, canal `WhatsApp`;
+Venda de `HW-000004` por `R$ 50,00`, contraparte `Colecionador Demo`, canal `WhatsApp`;
 concluída, a unidade sai do investido e aparece em **Vendas e trocas** no Financeiro.
 
 ### Regras e validações
@@ -1963,15 +2020,17 @@ concluída, a unidade sai do investido e aparece em **Vendas e trocas** no Finan
 
 > **Tela**: `wishlist` · **Arquivo**: `feature/wishlist/WishlistScreen.kt` · **Acesso**: aba **Desejos** · **Capturas**: `capturas/23-desejos-vazio.png`, `capturas/23b-desejos-com-item.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/23-desejos-vazio.png" alt="Desejos vazio">
 <figcaption>Figura 23.1 — Desejos vazio</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/23b-desejos-com-item.png" alt="Desejos com item">
 <figcaption>Figura 23.2 — Desejos com item</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -2010,7 +2069,8 @@ valores e ações **Comprei**, **Abrir link** e **Desistir**.
 
 ### Exemplos
 
-`Nissan Skyline R34 azul` · **Média** · **Em aberto** · **Máximo R$ 60,00**.
+`Nissan Skyline GT-R R34 Azul` · **Alta** · **Em aberto** · **Máximo R$ 120,00** ·
+`Loja: Loja Demo`.
 
 ### Regras e validações
 
@@ -2044,11 +2104,12 @@ valores e ações **Comprei**, **Abrir link** e **Desistir**.
 
 > **Tela**: `wishlist/form` · **Arquivo**: `feature/wishlist/WishlistFormScreen.kt` · **Acesso**: **Novo desejo**; cartão da lista · **Capturas**: `capturas/24-formulario-desejo.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/24-formulario-desejo.png" alt="Formulario desejo">
 <figcaption>Figura 24.1 — Formulario desejo</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -2088,7 +2149,7 @@ prioridade, valores, loja, link, observações e **Salvar desejo**.
 
 ### Exemplos
 
-`Nissan Skyline R34 azul`, prioridade **Média**, valor máximo `60,00`.
+`Nissan Skyline GT-R R34 Azul`, prioridade **Alta**, valor máximo `120,00`.
 
 ### Regras e validações
 
@@ -2120,11 +2181,12 @@ prioridade, valores, loja, link, observações e **Salvar desejo**.
 
 > **Tela**: `finance` · **Arquivo**: `feature/finance/FinanceScreen.kt` · **Acesso**: aba **Financeiro** · **Capturas**: `capturas/25-financeiro.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/25-financeiro.png" alt="Financeiro">
 <figcaption>Figura 25.1 — Financeiro</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -2164,7 +2226,7 @@ listas de gastos e filtro de período **De**/**Até**.
 
 ### Exemplos
 
-Investido `R$ 44,30`; estimado `R$ 45,00`; diferença `R$ 0,70`; custo médio `R$ 44,30`.
+Investido `R$ 44,30`; estimado `R$ 45,00`; diferença `R$ 0,70`; custo médio `R$ 22,15`.
 Gastos por fabricante: `Hot Wheels R$ 44,30`.
 
 ### Regras e validações
@@ -2182,7 +2244,7 @@ Gastos por fabricante: `Hot Wheels R$ 44,30`.
 | «Nenhuma venda ou troca concluída.» | sem histórico | — |
 | «Nenhuma aquisição com valor.» | gastos sem preço | informe preço nas aquisições |
 | «Sem valor» | sem exemplar com valor | registre aquisição |
-| «Avaliações até AAAA-MM-DD.» | data da última avaliação | — |
+| «Avaliações até dd/mm/aaaa.» | data da última avaliação (no Financeiro, `22/11/2026`) | — |
 
 ### Dicas
 
@@ -2201,19 +2263,23 @@ Gastos por fabricante: `Hot Wheels R$ 44,30`.
 
 > **Tela**: `locations` · **Arquivo**: `feature/locations/LocationsScreen.kt` · **Acesso**: Ajustes → Localizações · **Capturas**: `capturas/26-localizacoes-vazio.png`, `capturas/26b-localizacao-nova.png`, `capturas/26c-localizacoes-com-caixa.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/26-localizacoes-vazio.png" alt="Localizacoes vazio">
 <figcaption>Figura 26.1 — Localizacoes vazio</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/26b-localizacao-nova.png" alt="Localizacao nova">
 <figcaption>Figura 26.2 — Localizacao nova</figcaption>
 </figure>
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/26c-localizacoes-com-caixa.png" alt="Localizacoes com caixa">
 <figcaption>Figura 26.3 — Localizacoes com caixa</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -2252,7 +2318,7 @@ Título **Localizações**, **Voltar**, árvore com nome, tipo, contagem e açõ
 
 ### Exemplos
 
-`Caixa 12` · tipo `Caixa` · `0 exemplares`, depois `2 exemplares` após mover as unidades.
+`Caixa 12` · tipo `Caixa` · `0 exemplares`, depois `1 exemplar` após mover a unidade.
 
 ### Regras e validações
 
@@ -2285,11 +2351,12 @@ Título **Localizações**, **Voltar**, árvore com nome, tipo, contagem e açõ
 
 > **Tela**: `locations/{locationId}` · **Arquivo**: `feature/locations/LocationContentsScreen.kt` · **Acesso**: item da árvore de Localizações · **Capturas**: `capturas/27-inventario-localizacao.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/27-inventario-localizacao.png" alt="Inventario localizacao">
 <figcaption>Figura 27.1 — Inventario localizacao</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -2320,8 +2387,7 @@ variante e «código · localização · condição» e **Voltar**.
 
 ### Exemplos
 
-`Caixa 12` — «2 exemplares · Inclui as sublocalizações» — `HW-000001 · Caixa 12 · Lacrado`
-e `HW-000002 · Caixa 12 · Lacrado`.
+`Caixa 12` — «1 exemplar · Inclui as sublocalizações» — `HW-000001 · Caixa 12 · Lacrado`.
 
 ### Regras e validações
 
@@ -2351,11 +2417,12 @@ e `HW-000002 · Caixa 12 · Lacrado`.
 
 > **Tela**: `settings` · **Arquivo**: `feature/settings/SettingsScreen.kt` · **Acesso**: aba **Ajustes** · **Capturas**: `capturas/28-ajustes.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/28-ajustes.png" alt="Ajustes">
 <figcaption>Figura 28.1 — Ajustes</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -2429,32 +2496,39 @@ subtítulo. No fim, a nota de funcionamento offline.
 
 > **Tela**: `settings/backup` · **Arquivo**: `feature/transfer/BackupScreen.kt` · **Acesso**: Ajustes → Backup e restauração · **Capturas**: `capturas/29-backup.png`, `capturas/29b-backup-criado.png`, `capturas/29c-salvar-backup.png`, `capturas/29d-escolher-backup.png`, `capturas/29e-restaurar-opcoes.png`, `capturas/29f-restauracao-concluida.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/29-backup.png" alt="Backup">
 <figcaption>Figura 29.1 — Backup</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/29b-backup-criado.png" alt="Backup criado">
 <figcaption>Figura 29.2 — Backup criado</figcaption>
 </figure>
-
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/29c-salvar-backup.png" alt="Seletor de destino do backup">
 <figcaption>Figura 29.3 — Seletor do sistema para gravar o pacote</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/29d-escolher-backup.png" alt="Escolher pacote para restaurar">
 <figcaption>Figura 29.4 — Escolha do pacote na restauração</figcaption>
 </figure>
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/29e-restaurar-opcoes.png" alt="Como aplicar o backup">
 <figcaption>Figura 29.5 — Diálogo «Como aplicar este backup?» com Cancelar, Mesclar e Substituir</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/29f-restauracao-concluida.png" alt="Restauracao concluida">
 <figcaption>Figura 29.6 — «Restauração concluída» e o botão Reabrir o app</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -2496,10 +2570,9 @@ Android, **Criar backup** e **Restaurar backup**.
 
 ### Exemplos
 
-Backup do exemplo: «Criado em 22/11/2026 01:13», «1 exemplar · 0 fotos», «Tamanho: 446 KB».
-Depois de anexar uma foto, o segundo pacote mostrou «3 exemplares · 1 foto», «Tamanho: 464 KB»; a
-restauração com **Substituir** respondeu «Restauração concluída» e, após **Reabrir o app**, o
-painel voltou com os mesmos 3 exemplares — confirmando que o pacote leva banco e fotos.
+Backup do exemplo: «Criado em 22/11/2026 13:25», «6 exemplares · 1 foto», «Tamanho: 478 KB».
+A restauração com **Substituir** respondeu «Restauração concluída» e, após **Reabrir o app**, o
+painel voltou com os mesmos 6 exemplares — confirmando que o pacote leva banco e fotos.
 
 ### Regras e validações
 
@@ -2548,6 +2621,7 @@ painel voltou com os mesmos 3 exemplares — confirmando que o pacote leva banco
 
 > **Tela**: `settings/reports` · **Arquivo**: `feature/reports/ReportsScreen.kt` · **Acesso**: Ajustes → Relatórios · **Capturas**: `capturas/30-relatorios.png`, `capturas/30b-salvar-relatorio.png`, `capturas/30c-relatorio-gerado.png`, `capturas/30d-relatorio-csv.png`, `capturas/30e-relatorio-xlsx.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/30-relatorios.png" alt="Relatorios">
 <figcaption>Figura 30.1 — Relatórios</figcaption>
@@ -2557,19 +2631,24 @@ painel voltou com os mesmos 3 exemplares — confirmando que o pacote leva banco
 <img src="capturas/30b-salvar-relatorio.png" alt="Seletor de destino do relatorio">
 <figcaption>Figura 30.2 — Seletor do sistema com o nome sugerido `colecao-inventario-AAAAMMDD-HHMMSS.pdf`</figcaption>
 </figure>
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/30c-relatorio-gerado.png" alt="Relatorio PDF gerado">
-<figcaption>Figura 30.3 — PDF gerado: arquivo e «3 exemplares · 1 páginas»</figcaption>
+<figcaption>Figura 30.3 — PDF gerado: arquivo e «6 exemplares · 1 páginas»</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/30d-relatorio-csv.png" alt="Relatorio CSV gerado">
 <figcaption>Figura 30.4 — CSV gerado: resumo só com a contagem de exemplares</figcaption>
 </figure>
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/30e-relatorio-xlsx.png" alt="Relatorio XLSX gerado">
 <figcaption>Figura 30.5 — XLSX gerado, também sem contagem de páginas</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -2603,21 +2682,24 @@ mensagens de andamento/resultado.
 
 ### Exemplos
 
-PDF do exemplo: «Relatório gerado», «Arquivo: colecao-inventario-20261122-024611.pdf»,
-«3 exemplares · 1 páginas». CSV e XLSX mostram apenas «3 exemplares».
+PDF do exemplo: «Relatório gerado», «Arquivo: colecao-inventario-AAAAMMDD-HHMMSS.pdf»,
+«6 exemplares · 1 páginas». CSV e XLSX mostram apenas «6 exemplares».
 
 O conteúdo dos três arquivos é o mesmo inventário, com as colunas **Código**, **Modelo**,
 **Variante**, **Condição** e **Fotos**:
 
 ```text
-Código      Modelo                    Variante  Condição  Fotos
-HW-000003   Dodge Charger 1970        Verde     SEALED    1
-HW-000001   Nissan Skyline GT-R R34   Azul      SEALED    0
-HW-000002   Nissan Skyline GT-R R34   Azul      SEALED    0
-Total de exemplares: 3
+Código      Modelo                    Variante        Condição  Fotos
+HW-000002   Dodge Charger 1970        Laranja         SEALED    0
+HW-900002   Ford GT40 1966            Azul            SEALED    0
+HW-900001   Ford Mustang 1965         Vermelho        SEALED    0
+HW-000001   Nissan Skyline GT-R R34   Azul            SEALED    1
+HW-000004   Nissan Skyline GT-R R34   Azul            SEALED    0
+HW-000003   Pontiac Firebird 1968     não informado   SEALED    0
+Total de exemplares: 6
 ```
 
-No PDF o total aparece como «Total de exemplares: 3»; no CSV e no XLSX o total não é escrito —
+No PDF o total aparece como «Total de exemplares: 6»; no CSV e no XLSX o total não é escrito —
 só as linhas. O CSV é gravado com BOM e quebras CRLF, e o XLSX traz uma planilha chamada
 **Inventário** com esses mesmos valores como texto.
 
@@ -2661,6 +2743,7 @@ Os três arquivos gerados nesta sessão estão preservados em `exemplos/inventar
 
 > **Tela**: `settings/import` · **Arquivo**: `feature/transfer/ImportScreen.kt` · **Acesso**: Ajustes → Importar planilha · **Capturas**: `capturas/31-importacao.png`, `capturas/31b-previa-com-erros.png`, `capturas/31c-importacao-concluida.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/31-importacao.png" alt="Importacao">
 <figcaption>Figura 31.1 — Importação</figcaption>
@@ -2670,11 +2753,13 @@ Os três arquivos gerados nesta sessão estão preservados em `exemplos/inventar
 <img src="capturas/31b-previa-com-erros.png" alt="Previa de CSV com erros">
 <figcaption>Figura 31.2 — Prévia de um CSV com 9 linhas, 7 inválidas e 1 duplicata</figcaption>
 </figure>
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/31c-importacao-concluida.png" alt="Importacao concluida">
 <figcaption>Figura 31.3 — «2 exemplares importados · 1 pulados por duplicata»</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -2778,11 +2863,12 @@ Os arquivos usados estão em `exemplos/importacao-com-erros.csv` (entrada) e
 
 > **Tela**: `settings/data` · **Arquivo**: `feature/settings/DataControlScreen.kt` · **Acesso**: Ajustes → Dados da coleção · **Capturas**: `capturas/32-dados-da-colecao.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/32-dados-da-colecao.png" alt="Dados da colecao">
 <figcaption>Figura 32.1 — Dados da colecao</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -2821,7 +2907,7 @@ Título **Dados da coleção**, texto explicativo, **O que está no aparelho** c
 
 ### Exemplos
 
-Exportação do exemplo: «Pacote de 446 KB gravado no local escolhido. Guarde-o fora do aparelho.»
+Exportação do exemplo: «Pacote de 478 KB gravado no local escolhido. Guarde-o fora do aparelho.»
 
 ### Regras e validações
 
@@ -2859,11 +2945,12 @@ Exportação do exemplo: «Pacote de 446 KB gravado no local escolhido. Guarde-o
 
 > **Tela**: `settings/about` · **Arquivo**: `feature/settings/AboutScreen.kt` · **Acesso**: Ajustes → Sobre o app · **Capturas**: `capturas/33-sobre.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/33-sobre.png" alt="Sobre">
 <figcaption>Figura 33.1 — Sobre</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -2894,7 +2981,8 @@ Título **Sobre**, texto de apresentação, «Versão X (build Y)», «Compilado
 
 ### Exemplos
 
-«Versão 0.1.0 (build 1)», «Pacote: br.com.hotwheelscollector.debug» (no build de debug).
+«Versão 0.1.0-debug (build 1)», «Compilado em 22/11/2026 11:48»,
+«Pacote: br.com.diecastcollector.debug» (no build de debug).
 
 ### Regras e validações
 
@@ -2920,11 +3008,12 @@ Título **Sobre**, texto de apresentação, «Versão X (build Y)», «Compilado
 
 > **Tela**: `settings/privacy` · **Arquivo**: `feature/settings/PrivacyPolicyScreen.kt` · **Acesso**: Ajustes → Política de privacidade · **Capturas**: `capturas/34-privacidade.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/34-privacidade.png" alt="Privacidade">
 <figcaption>Figura 34.1 — Privacidade</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -2980,19 +3069,23 @@ você escolhe tirar ou anexar uma foto.
 
 > **Tela**: exemplo transversal · **Acesso**: capítulos 8–15 e 25 · **Capturas**: `capturas/07-catalogo-com-miniatura.png`, `capturas/15b-detalhe-exemplar-aquisicao.png`, `capturas/17c-detalhe-colecao-com-item.png`, `capturas/05b-painel-com-dados.png`, `capturas/25-financeiro.png`
 
+<div class="fig-row">
 <figure>
 <img src="capturas/05b-painel-com-dados.png" alt="Painel com dados">
 <figcaption>Figura 35.1 — Painel com dados</figcaption>
 </figure>
+
 <figure>
 <img src="capturas/15-detalhe-exemplar.png" alt="Detalhe exemplar">
 <figcaption>Figura 35.2 — Detalhe exemplar</figcaption>
 </figure>
+</div>
+<div class="fig-row">
 <figure>
 <img src="capturas/25-financeiro.png" alt="Financeiro">
 <figcaption>Figura 35.3 — Financeiro</figcaption>
 </figure>
-
+</div>
 
 ### Finalidade
 
@@ -3041,10 +3134,11 @@ O registro aparece como `Nissan Skyline GT-R R34` no catálogo, `HW-000001` no d
 - Catálogo: «Hot Wheels · 2025 · 1 exemplar».
 - Detalhe: «Custo total: R$ 24,40»; «Valor estimado atual: R$ 45,00».
 - Coleção: «100%», «1 de 1 unidades».
-- Painel: Exemplares 1, Modelos 1, Variantes 1, Fabricantes 1, Coleções 1,
-  Investido `R$ 24,40`, Estimado `R$ 45,00`, Diferença `R$ 20,60`.
-- Financeiro: Investido `R$ 24,40`, Estimado `R$ 45,00`, Diferença `R$ 20,60`,
-  Custo médio `R$ 24,40`; Gastos por fabricante `Hot Wheels R$ 24,40`.
+- Painel (Figura 35.1, com o acervo completo do manual): `6` Exemplares, `5` Modelos,
+  `5` Variantes, `1` Fabricante, `0` Séries, `1` Coleção, `1` Variante repetida,
+  `1` Na lista de desejos, Investido `R$ 44,30`, Estimado `R$ 45,00`, Diferença `R$ 0,70`.
+- Financeiro (Figura 35.3): Investido `R$ 44,30`, Estimado `R$ 45,00`, Diferença `R$ 0,70`,
+  Custo médio `R$ 22,15`; Gastos por fabricante `Hot Wheels R$ 44,30`.
 
 ### Regras e validações
 
@@ -3072,92 +3166,92 @@ O registro aparece como `Nissan Skyline GT-R R34` no catálogo, `HW-000001` no d
 
 ## Apêndice A — Registro de evidências
 
-Todas as capturas abaixo foram feitas no emulador `hotwheels_test` (API 36), com o APK de
-debug do commit `424e4fb`, usando apenas dados fictícios.
+Todas as capturas abaixo foram feitas no emulador `diecast_test` (API 36), com o APK de
+debug da árvore de trabalho após a renomeação para **Diecast Collector** (22/11/2026),
+usando apenas dados fictícios.
 
 | Arquivo | Tela / estado | Origem | Data | Commit | Dados fictícios |
 |---|---|---|---|---|---|
-| `01-painel-vazio.png` | Painel vazio | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `02-catalogo-vazio.png` | Catálogo vazio | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `02b-catalogo-com-incompleto.png` | Catálogo com incompleto | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `03-cadastro-inicial.png` | Cadastro inicial | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `04-cadastro-preenchido.png` | Cadastro preenchido | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `05-formulario-variante-vazio.png` | Formulario variante vazio | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `05b-painel-com-dados.png` | Painel com dados | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `05d-painel-final.png` | Painel final | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `06-formulario-variante-preenchido.png` | Formulario variante preenchido | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `06b-seletor-de-fotos.png` | Seletor de fotos | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `06c-variante-com-foto.png` | Variante com foto | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `07-busca.png` | Busca | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `07-catalogo-com-miniatura.png` | Catálogo com miniatura | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `07b-catalogo-com-foto.png` | Catálogo com foto | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `10b-incompletos-com-item.png` | Incompletos com item | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `10c-incompletos-com-variante.png` | Incompletos com variante | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `11-edicao-modelo.png` | Edicao modelo | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `12-edicao-variante.png` | Edicao variante | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `13-adicionar-exemplar.png` | Adicionar exemplar | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `14-lista-exemplares.png` | Lista exemplares | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `14b-lista-dois-exemplares.png` | Lista dois exemplares | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `14c-lista-dois-exemplares.png` | Lista dois exemplares | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `15-detalhe-exemplar.png` | Detalhe exemplar | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `15b-detalhe-exemplar-aquisicao.png` | Detalhe exemplar aquisicao | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `15c-detalhe-exemplar-avaliacao.png` | Detalhe exemplar avaliacao | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `15d-detalhe-exemplar-movimentacao.png` | Detalhe exemplar movimentacao | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `15e-detalhe-exemplar-movido.png` | Detalhe exemplar movido | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `15f-exemplar-com-foto.png` | Exemplar com foto | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `16-colecoes-vazio.png` | Colecoes vazio | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `16b-colecoes-com-uma.png` | Colecoes com uma | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `17-detalhe-colecao-vazio.png` | Detalhe colecao vazio | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `17b-adicionar-item-colecao.png` | Adicionar item colecao | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `17c-detalhe-colecao-com-item.png` | Detalhe colecao com item | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `18-formulario-colecao.png` | Formulario colecao | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `19-series.png` | Series | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `20-codigo-barras.png` | Codigo barras | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `21-duplicados.png` | Duplicados | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `21b-duplicados-com-grupo.png` | Duplicados com grupo | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `22-negociacao.png` | Negociacao | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `23-desejos-vazio.png` | Desejos vazio | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `23b-desejos-com-item.png` | Desejos com item | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `24-formulario-desejo.png` | Formulario desejo | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `25-financeiro.png` | Financeiro | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `26-localizacoes-vazio.png` | Localizacoes vazio | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `26b-localizacao-nova.png` | Localizacao nova | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `26c-localizacoes-com-caixa.png` | Localizacoes com caixa | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `27-inventario-localizacao.png` | Inventario localizacao | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `28-ajustes.png` | Ajustes | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `29-backup.png` | Backup | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `29b-backup-criado.png` | Backup criado | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `29c-salvar-backup.png` | Salvar backup | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `29d-escolher-backup.png` | Escolher backup | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `29e-restaurar-opcoes.png` | Restaurar opcoes | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `29f-restauracao-concluida.png` | Restauracao concluida | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `30-relatorios.png` | Relatórios | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `30b-salvar-relatorio.png` | Salvar relatorio | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `30c-relatorio-gerado.png` | Relatorio gerado | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `30d-relatorio-csv.png` | Relatorio csv | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `30e-relatorio-xlsx.png` | Relatorio xlsx | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `31-importacao.png` | Importação | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `31b-previa-com-erros.png` | Prévia com erros | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `31c-importacao-concluida.png` | Importação concluida | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `32-dados-da-colecao.png` | Dados da colecao | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `33-sobre.png` | Sobre | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
-| `34-privacidade.png` | Privacidade | emulador `hotwheels_test` | 22/11/2026 | `424e4fb` | sim |
+| `01-painel-vazio.png` | Painel vazio | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `02-catalogo-vazio.png` | Catálogo vazio | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `02b-catalogo-com-incompleto.png` | Catálogo com incompleto | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `03-cadastro-inicial.png` | Cadastro inicial | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `04-cadastro-preenchido.png` | Cadastro preenchido | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `05-formulario-variante-vazio.png` | Formulario variante vazio | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `05b-painel-com-dados.png` | Painel com dados | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `06-formulario-variante-preenchido.png` | Formulario variante preenchido | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `06b-seletor-de-fotos.png` | Seletor de fotos | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `06c-variante-com-foto.png` | Variante com foto | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `07-busca.png` | Busca | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `07-catalogo-com-miniatura.png` | Catálogo com miniatura | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `07b-catalogo-com-foto.png` | Catálogo com foto | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `10b-incompletos-com-item.png` | Incompletos com item | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `10c-incompletos-com-variante.png` | Incompletos com variante | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `11-edicao-modelo.png` | Edição modelo | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `12-edicao-variante.png` | Edição variante | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `13-adicionar-exemplar.png` | Adicionar exemplar | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `14-lista-exemplares.png` | Lista de exemplares | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `14b-lista-dois-exemplares.png` | Lista com dois exemplares | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `14c-lista-dois-exemplares.png` | Lista com dois exemplares | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `15-detalhe-exemplar.png` | Detalhe do exemplar | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `15b-detalhe-exemplar-aquisicao.png` | Detalhe do exemplar: aquisição | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `15c-detalhe-exemplar-avaliacao.png` | Detalhe do exemplar: avaliação | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `15d-detalhe-exemplar-movimentacao.png` | Detalhe do exemplar: movimentação | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `15e-detalhe-exemplar-movido.png` | Detalhe do exemplar: movido | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `15f-exemplar-com-foto.png` | Exemplar com foto | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `16-colecoes-vazio.png` | Coleções vazio | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `16b-colecoes-com-uma.png` | Coleções com uma | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `17-detalhe-colecao-vazio.png` | Detalhe da coleção vazio | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `17b-adicionar-item-colecao.png` | Adicionar item à coleção | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `17c-detalhe-colecao-com-item.png` | Detalhe da coleção com item | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `18-formulario-colecao.png` | Formulário de coleção | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `19-series.png` | Séries | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `20-codigo-barras.png` | Código de barras | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `21-duplicados.png` | Duplicados | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `21b-duplicados-com-grupo.png` | Duplicados com grupo | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `22-negociacao.png` | Negociação | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `23-desejos-vazio.png` | Desejos vazio | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `23b-desejos-com-item.png` | Desejos com item | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `24-formulario-desejo.png` | Formulário de desejo | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `25-financeiro.png` | Financeiro | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `26-localizacoes-vazio.png` | Localizações vazio | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `26b-localizacao-nova.png` | Nova localização | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `26c-localizacoes-com-caixa.png` | Localizações com caixa | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `27-inventario-localizacao.png` | Inventário por localização | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `28-ajustes.png` | Ajustes | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `29-backup.png` | Backup | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `29b-backup-criado.png` | Backup criado | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `29c-salvar-backup.png` | Salvar backup | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `29d-escolher-backup.png` | Escolher backup | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `29e-restaurar-opcoes.png` | Restaurar opções | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `29f-restauracao-concluida.png` | Restauração concluída | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `30-relatorios.png` | Relatórios | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `30b-salvar-relatorio.png` | Salvar relatório | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `30c-relatorio-gerado.png` | Relatório gerado | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `30d-relatorio-csv.png` | Relatório CSV | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `30e-relatorio-xlsx.png` | Relatório XLSX | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `31-importacao.png` | Importação | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `31b-previa-com-erros.png` | Prévia com erros | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `31c-importacao-concluida.png` | Importação concluída | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `32-dados-da-colecao.png` | Dados da coleção | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `33-sobre.png` | Sobre | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `34-privacidade.png` | Privacidade | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 
 ## Apêndice B — Decisões de demonstração
 
 - Fabricante `Hot Wheels`; modelo `Nissan Skyline GT-R R34`; variante `Azul`/`2025`.
-- Dois exemplares (`HW-000001` e `HW-000002`) para demonstrar Duplicados e Negociação.
-- Um modelo sem variante (`Modelo Incompleto`) para demonstrar **Incompletos**.
-- Localização `Caixa 12`; coleção `Skyline 2025`; desejo `Nissan Skyline R34 azul`.
-- Aquisição de `R$ 19,90` + `R$ 4,50`; avaliação de `R$ 45,00` em `22/11/2026`.
-- Uma terceira miniatura fictícia (`Dodge Charger 1970`, `Verde`/`1970`, foto de demonstração)
-  foi cadastrada para capturar o seletor de fotos e a restauração; ela é a única unidade com foto
-  e não tem aquisição nem avaliação, por isso não altera Investido, Estimado nem Diferença.
-- A variante incompleta `Pontiac Firebird 1968` foi criada pela importação de um CSV sem cor
-  principal e sem ano só para capturar o capítulo 12; o conjunto final foi restaurado a partir
-  do pacote, que não a inclui.
-- Os dois pacotes de backup são reais: o primeiro com «1 exemplar · 0 fotos» (446 KB), o segundo
-  com «3 exemplares · 1 foto» (464 KB). O segundo foi restaurado com **Substituir**.
+- Dois exemplares do Skyline, um deles com foto, para demonstrar **Duplicados** e **Negociação**.
+- Um modelo sem variante (`Modelo Incompleto`) e uma variante sem cor nem ano (`Pontiac Firebird
+  1968`), esta criada pelo próprio formulário de variante, para demonstrar **Incompletos** e a
+  edição da variante.
+- Localização `Caixa 12`; coleção `Skyline 2025`; desejo `Nissan Skyline GT-R R34 Azul`.
+- Aquisição de `R$ 19,90` + `R$ 4,50` no primeiro exemplar e de `R$ 19,90` no segundo;
+  avaliação de `R$ 45,00` em `22/11/2026`, fonte `colecionador`.
+- Miniaturas extras (`Dodge Charger 1970` e os dois modelos do CSV de exemplo, `Ford Mustang
+  1965` e `Ford GT40 1966`) entraram para capturar catálogo, relatórios e importação: o acervo
+  final tem **6 exemplares**, **5 modelos** e **5 variantes**.
+- O pacote de backup final é real: «6 exemplares · 1 foto» (478 KB) e foi restaurado com
+  **Substituir**.
 
 ## Apêndice C — Glossário
 

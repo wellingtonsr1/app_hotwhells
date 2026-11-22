@@ -77,7 +77,7 @@ Colunas conforme `specs/002-manual-usuario/contracts/coverage-contract.md`.
 | 53 | INDICE_FUNCIONALIDADES.md | entregável | — | — | `INDICE_FUNCIONALIDADES.md` | DOCUMENTADO | — |
 | 54 | MATRIZ_COBERTURA.md | entregável | — | — | `MATRIZ_COBERTURA.md` | DOCUMENTADO | — |
 | 55 | LIMITACOES_DOCUMENTACAO.md | entregável | — | — | `LIMITACOES_DOCUMENTACAO.md` | DOCUMENTADO | lac-01 |
-| 56 | capturas/ | entregável | — | 65 arquivos | `capturas/` | DOCUMENTADO | ver Apêndice A |
+| 56 | capturas/ | entregável | — | 64 arquivos | `capturas/` | DOCUMENTADO | ver Apêndice A |
 
 ## Conferência automatizada
 

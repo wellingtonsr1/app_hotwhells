@@ -1,7 +1,7 @@
-# Limitações da Documentação — Hot Wheels Collector
+# Limitações da Documentação — Diecast Collector
 
 **Versão documentada**: 0.1.0 (versionCode 1) · **Commit**: `424e4fb`
-**Data da apuração**: 22/11/2026 · **Ambiente**: emulador `hotwheels_test` (API 36, headless)
+**Data da apuração**: 22/11/2026 · **Ambiente**: emulador `diecast_test` (API 36, headless)
 
 Este documento declara o que **não** pôde ser comprovado por captura ou execução real. Nenhuma
 tela, botão ou comportamento foi inventado: onde não há evidência, o manual aponta para a
@@ -19,8 +19,8 @@ As lacunas anteriores desta documentação foram **fechadas** em 22/11/2026:
 |---|---|---|
 | Edição de variante sem captura | variante incompleta criada por importação de CSV sem cor/ano; acesso por **Incompletos** → **Editar variante** | `capturas/10c-incompletos-com-variante.png`, `capturas/12-edicao-variante.png` |
 | Nenhuma foto de exemplar | foto fictícia anexada pela **Galeria** no cadastro da variante | `capturas/06b-seletor-de-fotos.png`, `capturas/06c-variante-com-foto.png`, `capturas/07b-catalogo-com-foto.png`, backup com «1 foto» |
-| Restauração de backup não executada | dois pacotes criados e o segundo restaurado com **Substituir** e **Reabrir o app** | `capturas/29c-salvar-backup.png` a `capturas/29f-restauracao-concluida.png` |
-| Relatórios não abertos | PDF, CSV e XLSX gerados no app, extraídos por `adb pull` e abertos: os três traziam as mesmas 3 linhas e as colunas Código/Modelo/Variante/Condição/Fotos | `capturas/30b` a `capturas/30e` |
+| Restauração de backup não executada | pacote final (6 exemplares · 1 foto, 478 KB) restaurado com **Substituir** e **Reabrir o app**; o painel voltou com os 6 exemplares | `capturas/29c-salvar-backup.png` a `capturas/29f-restauracao-concluida.png` |
+| Relatórios não abertos | PDF, CSV e XLSX gerados no app, extraídos por `adb pull` e abertos: os três traziam as mesmas 6 linhas e as colunas Código/Modelo/Variante/Condição/Fotos | `capturas/30b` a `capturas/30e`, `exemplos/inventario-exemplo.*` |
 
 ## lac-01 — Leitura de código de barras não concluída
 

@@ -1,4 +1,4 @@
-/* Manual do Usuário — Hot Wheels Collector
+/* Manual do Usuário — Diecast Collector
    Folha de estilo para impressão (WeasyPrint). */
 
 @page {
@@ -6,7 +6,7 @@
   margin: 22mm 18mm 20mm 18mm;
 
   @top-center {
-    content: "Hot Wheels Collector — Manual do Usuário 0.1.0";
+    content: "Diecast Collector — Manual do Usuário 0.1.0";
     font-family: "DejaVu Sans", sans-serif;
     font-size: 8pt;
     color: #666;
@@ -127,7 +127,7 @@ pre {
 
 img {
   max-width: 100%;
-  max-height: 168mm;
+  max-height: 154mm;
   width: auto;
   height: auto;
   display: block;
@@ -165,3 +165,13 @@ blockquote {
 .toc ul ul { padding-left: 5mm; }
 .toc a { color: #1a1a1a; text-decoration: none; }
 .toc li { margin: 1mm 0; }
+
+/* Agrupa figuras em linhas de no máximo duas: cria ponto de quebra entre linhas
+   sem separar uma figura da legenda e evita páginas com só o título do capítulo. */
+.fig-row {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* O título de capítulo já força página nova; a régua do Markdown criava página vazia. */
+hr { display: none; }
