@@ -6,6 +6,7 @@ import br.com.diecastcollector.data.db.AppDatabase
 import br.com.diecastcollector.data.db.AuditLogWriter
 import br.com.diecastcollector.data.db.TransactionRunner
 import br.com.diecastcollector.data.db.entity.ExemplarEntity
+import br.com.diecastcollector.data.db.entity.PhotoEntity
 import br.com.diecastcollector.domain.error.DomainError
 import br.com.diecastcollector.domain.model.Variant
 import br.com.diecastcollector.domain.usecase.CreateVariantUseCase
@@ -229,6 +230,62 @@ public class VariantRepositoryTest {
             .getOrThrow()
         assertThat(variants.findById(variant.id)!!.secondaryColorIds).containsExactly(blue.id)
         Unit
+    }
+
+    @Test
+    public fun `resumo do catalogo traz a foto principal do exemplar`() = runBlocking {
+        val model = newModel()
+        val variant = newVariant(model.id, "fp-foto")
+        variants.create(variant).getOrThrow()
+        database.exemplarDao().insert(
+            ExemplarEntity(
+                "ex-foto",
+                variant.id,
+                "HW-000009",
+                "SEALED",
+                null,
+                null,
+                "OWNED",
+                null,
+                0L,
+                1L,
+                1L,
+            ),
+        )
+        database.photoDao().insert(
+            PhotoEntity(
+                id = "p1",
+                exemplarId = "ex-foto",
+                angle = "FRONT",
+                path = "images/ex-foto/front.jpg",
+                checksum = "c1",
+                isPrimary = false,
+                sortOrder = 0,
+                width = null,
+                height = null,
+                bytes = null,
+                capturedAt = null,
+            ),
+        )
+        // A foto marcada como principal vence mesmo com sort_order maior.
+        database.photoDao().insert(
+            PhotoEntity(
+                id = "p2",
+                exemplarId = "ex-foto",
+                angle = "BACK",
+                path = "images/ex-foto/back.jpg",
+                checksum = "c2",
+                isPrimary = true,
+                sortOrder = 1,
+                width = null,
+                height = null,
+                bytes = null,
+                capturedAt = null,
+            ),
+        )
+
+        val summary = variants.observeSummaries().first().single { it.variantId == variant.id }
+        assertThat(summary.primaryPhotoPath).isEqualTo("images/ex-foto/back.jpg")
     }
 
     private suspend fun newModel(): br.com.diecastcollector.domain.model.CarModel {

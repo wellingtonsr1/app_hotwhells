@@ -8,6 +8,7 @@ import br.com.diecastcollector.data.db.TransactionRunner
 import br.com.diecastcollector.data.db.entity.CarModelEntity
 import br.com.diecastcollector.data.db.entity.ExemplarEntity
 import br.com.diecastcollector.data.db.entity.ManufacturerEntity
+import br.com.diecastcollector.data.db.entity.PhotoEntity
 import br.com.diecastcollector.data.db.entity.VariantEntity
 import br.com.diecastcollector.domain.error.DomainError
 import com.google.common.truth.Truth.assertThat
@@ -76,6 +77,20 @@ public class CollectionRepositoryTest {
         assertThat(progress.percent).isEqualTo(50)
         assertThat(progress.itemCount).isEqualTo(3)
         assertThat(progress.missing.map { it.variantId }).containsExactly("v2")
+    }
+
+    @Test
+    public fun `cartao da colecao usa a foto de um exemplar possuido`(): Unit = runBlocking {
+        seedCatalog()
+        database.photoDao().insert(photo("p1", "e1", "images/e1/front.jpg"))
+        val collection = repository.create("Car Culture").getOrThrow()
+        repository.addVariant(collection.id, "v1").getOrThrow()
+        repository.addVariant(collection.id, "v2").getOrThrow()
+
+        val progress = repository.observeAll().first().single()
+
+        // v2 não tem foto: a capa vem do item que já está na estante.
+        assertThat(progress.photoPath).isEqualTo("images/e1/front.jpg")
     }
 
     @Test
@@ -215,6 +230,20 @@ public class CollectionRepositoryTest {
         archivedAt = null,
         createdAt = 0L,
         updatedAt = 0L,
+    )
+
+    private fun photo(id: String, exemplarId: String, path: String): PhotoEntity = PhotoEntity(
+        id = id,
+        exemplarId = exemplarId,
+        angle = "FRONT",
+        path = path,
+        checksum = "checksum-$id",
+        isPrimary = true,
+        sortOrder = 0,
+        width = null,
+        height = null,
+        bytes = null,
+        capturedAt = null,
     )
 
     private fun exemplar(

@@ -4,9 +4,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -23,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -33,6 +36,7 @@ import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.WishlistItem
 import br.com.diecastcollector.domain.model.WishlistStatus
 import br.com.diecastcollector.domain.repository.WishlistEntry
+import br.com.diecastcollector.ui.components.ItemThumbnail
 import br.com.diecastcollector.ui.format.formatMoneyPtBr
 
 /**
@@ -164,58 +168,69 @@ private fun WishlistCard(
             },
         ),
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = entry.title.ifBlank { stringResource(R.string.wishlist_untitled) },
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = priorityLabel(item.priority),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-
-            Text(
-                text = statusLabel(item.status),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            val title = entry.title.ifBlank { stringResource(R.string.wishlist_untitled) }
+            ItemThumbnail(
+                photoPath = entry.photoPath,
+                contentDescription = stringResource(R.string.catalog_thumbnail_photo, title),
             )
-
-            PriceLine(item = item)
-
-            item.store?.let { store ->
-                Text(
-                    text = stringResource(R.string.wishlist_store_value, store),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-
-            if (open) {
+            Spacer(Modifier.width(12.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    TextButton(onClick = onBuy, enabled = !working) {
-                        Text(stringResource(R.string.wishlist_buy))
-                    }
-                    item.referenceUrl?.let { url ->
-                        TextButton(onClick = { openReferenceLink(context, url) }) {
-                            Text(stringResource(R.string.wishlist_open_link))
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        text = priorityLabel(item.priority),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+
+                Text(
+                    text = statusLabel(item.status),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                PriceLine(item = item)
+
+                item.store?.let { store ->
+                    Text(
+                        text = stringResource(R.string.wishlist_store_value, store),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+
+                if (open) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        TextButton(onClick = onBuy, enabled = !working) {
+                            Text(stringResource(R.string.wishlist_buy))
                         }
-                    }
-                    TextButton(onClick = onDismiss, enabled = !working) {
-                        Text(stringResource(R.string.wishlist_dismiss))
+                        item.referenceUrl?.let { url ->
+                            TextButton(onClick = { openReferenceLink(context, url) }) {
+                                Text(stringResource(R.string.wishlist_open_link))
+                            }
+                        }
+                        TextButton(onClick = onDismiss, enabled = !working) {
+                            Text(stringResource(R.string.wishlist_dismiss))
+                        }
                     }
                 }
             }

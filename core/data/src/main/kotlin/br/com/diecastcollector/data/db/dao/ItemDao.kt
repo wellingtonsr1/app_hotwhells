@@ -20,6 +20,13 @@ public data class VariantSummaryRow(
     @ColumnInfo(name = "color_name") val colorName: String?,
     @ColumnInfo(name = "release_year") val releaseYear: Int?,
     @ColumnInfo(name = "exemplar_count") val exemplarCount: Int,
+    @ColumnInfo(name = "primary_photo_path") val primaryPhotoPath: String?,
+)
+
+/** Foto principal de um exemplar, para a miniatura das listas. */
+public data class ExemplarPhotoRow(
+    @ColumnInfo(name = "exemplar_id") val exemplarId: String,
+    @ColumnInfo(name = "path") val path: String,
 )
 
 /** Projeção do relatório de inventário: exemplar com modelo, variante e contagem de fotos. */
@@ -52,7 +59,13 @@ public interface VariantDao {
                mf.name AS manufacturer_name,
                c.name AS color_name,
                v.release_year AS release_year,
-               (SELECT COUNT(*) FROM exemplar e WHERE e.variant_id = v.id AND e.status = 'OWNED') AS exemplar_count
+               (SELECT COUNT(*) FROM exemplar e WHERE e.variant_id = v.id AND e.status = 'OWNED') AS exemplar_count,
+               (SELECT p.path
+                FROM photo p
+                JOIN exemplar e ON e.id = p.exemplar_id
+                WHERE e.variant_id = v.id
+                ORDER BY (1 - p.is_primary), p.sort_order, p.captured_at
+                LIMIT 1) AS primary_photo_path
         FROM variant v
         JOIN car_model m ON m.id = v.model_id
         JOIN manufacturer mf ON mf.id = m.manufacturer_id
@@ -242,6 +255,23 @@ public interface PhotoDao {
 
     @Query("SELECT * FROM photo WHERE exemplar_id = :exemplarId AND is_primary = 1 LIMIT 1")
     public suspend fun findPrimary(exemplarId: String): PhotoEntity?
+
+    /** Foto de capa de cada exemplar da variante: a principal e, nela, a de menor ordem. */
+    @Query(
+        """
+        SELECT p.exemplar_id AS exemplar_id,
+               p.path AS path
+        FROM photo p
+        JOIN exemplar e ON e.id = p.exemplar_id
+        WHERE e.variant_id = :variantId
+          AND p.id = (SELECT p2.id
+                      FROM photo p2
+                      WHERE p2.exemplar_id = p.exemplar_id
+                      ORDER BY (1 - p2.is_primary), p2.sort_order, p2.captured_at
+                      LIMIT 1)
+        """,
+    )
+    public fun observePrimaryPathsByVariant(variantId: String): Flow<List<ExemplarPhotoRow>>
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun insert(entity: PhotoEntity)

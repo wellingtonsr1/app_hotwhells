@@ -7,6 +7,7 @@ import br.com.diecastcollector.domain.model.Exemplar
 import br.com.diecastcollector.domain.model.Location
 import br.com.diecastcollector.domain.repository.ExemplarRepository
 import br.com.diecastcollector.domain.repository.LocationRepository
+import br.com.diecastcollector.domain.repository.PhotoRepository
 import br.com.diecastcollector.navigation.RouteArgs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -25,6 +26,8 @@ public data class ExemplarListUiState(
     val variantId: String = "",
     val exemplars: List<Exemplar> = emptyList(),
     val locationNames: Map<String, String> = emptyMap(),
+    /** Foto de capa por id de exemplar; quem não tem foto fica de fora e recebe o marcador. */
+    val photoPaths: Map<String, String> = emptyMap(),
     val loading: Boolean = true,
 ) {
     public val isEmpty: Boolean get() = !loading && exemplars.isEmpty()
@@ -35,6 +38,7 @@ public class ExemplarListViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     exemplarRepository: ExemplarRepository,
     locationRepository: LocationRepository,
+    photoRepository: PhotoRepository,
 ) : ViewModel() {
 
     private val variantId: String = savedStateHandle[RouteArgs.VARIANT_ID] ?: ""
@@ -42,11 +46,13 @@ public class ExemplarListViewModel @Inject constructor(
     public val state: StateFlow<ExemplarListUiState> = combine(
         exemplarRepository.observeByVariant(variantId),
         locationRepository.observeActive(),
-    ) { exemplars: List<Exemplar>, locations: List<Location> ->
+        photoRepository.observePrimaryPathsByVariant(variantId),
+    ) { exemplars: List<Exemplar>, locations: List<Location>, photos: Map<String, String> ->
         ExemplarListUiState(
             variantId = variantId,
             exemplars = exemplars,
             locationNames = locations.associate { it.id to it.name },
+            photoPaths = photos,
             loading = false,
         )
     }.stateIn(

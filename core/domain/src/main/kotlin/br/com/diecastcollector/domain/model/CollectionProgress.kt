@@ -17,6 +17,8 @@ public data class CollectionItemStatus(
     val expected: Int = 1,
     val nonCollectible: Boolean = false,
     val ownedExemplars: Int = 0,
+    /** Foto de capa de um exemplar possuído do alvo, quando existe alguma. */
+    val photoPath: String? = null,
 ) {
     init {
         require((variantId == null) != (modelId == null)) {
@@ -61,6 +63,10 @@ public object CollectionProgressCalculator {
             missing = relevant
                 .filter { it.isMissing }
                 .sortedBy { it.label.lowercase() },
+            // A capa da coleção é a foto de um item possuído; sem nenhuma, um item
+            // ainda faltante serve de referência visual.
+            photoPath = items.firstOrNull { it.isOwned && it.photoPath != null }?.photoPath
+                ?: items.firstNotNullOfOrNull { it.photoPath },
         )
     }
 }

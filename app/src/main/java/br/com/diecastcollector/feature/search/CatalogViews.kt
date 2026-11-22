@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -33,6 +35,7 @@ import br.com.diecastcollector.domain.model.Condition
 import br.com.diecastcollector.domain.model.ExemplarStatus
 import br.com.diecastcollector.domain.model.SearchResultItem
 import br.com.diecastcollector.feature.catalog.labelRes
+import br.com.diecastcollector.ui.components.ItemThumbnail
 import br.com.diecastcollector.ui.format.formatMoneyPtBr
 import coil.compose.AsyncImage
 import java.io.File
@@ -52,7 +55,12 @@ internal fun SearchResultsGrid(
         contentPadding = PaddingValues(bottom = 24.dp),
     ) {
         items(items, key = { it.exemplarId }) { item ->
-            SearchResultCard(item = item, onOpen = { onOpenExemplar(item.exemplarId) })
+            // A grade já é a visão compacta: sem foto, o texto caberia em duas colunas.
+            SearchResultCard(
+                item = item,
+                onOpen = { onOpenExemplar(item.exemplarId) },
+                showThumbnail = false,
+            )
         }
     }
 }
@@ -174,61 +182,74 @@ internal fun SearchResultCard(
     item: SearchResultItem,
     onOpen: () -> Unit,
     modifier: Modifier = Modifier,
+    showThumbnail: Boolean = true,
 ) {
     Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(
-                text = "${item.manufacturerName} · ${item.modelName}",
-                style = MaterialTheme.typography.titleSmall,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            val detail = listOfNotNull(
-                item.seriesName,
-                item.releaseYear?.toString(),
-                item.scale,
-                item.primaryColorName,
-            ).joinToString(" · ")
-            if (detail.isNotEmpty()) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (showThumbnail) {
+                ItemThumbnail(
+                    photoPath = item.primaryPhotoPath,
+                    contentDescription = stringResource(
+                        R.string.catalog_thumbnail_photo,
+                        item.modelName,
+                    ),
+                )
+                Spacer(Modifier.width(12.dp))
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
                 Text(
-                    text = detail,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = "${item.manufacturerName} · ${item.modelName}",
+                    style = MaterialTheme.typography.titleSmall,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-            }
-            Text(
-                text = item.condition.labelText() + " · " + item.status.labelText(),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            item.locationName?.let { location ->
+                val detail = listOfNotNull(
+                    item.seriesName,
+                    item.releaseYear?.toString(),
+                    item.scale,
+                    item.primaryColorName,
+                ).joinToString(" · ")
+                if (detail.isNotEmpty()) {
+                    Text(
+                        text = detail,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 Text(
-                    text = location,
+                    text = item.condition.labelText() + " · " + item.status.labelText(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
                 )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = item.internalCode,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = item.priceCents?.let(::formatMoneyPtBr)
-                        ?: stringResource(R.string.finance_average_none),
-                    style = MaterialTheme.typography.labelMedium,
-                )
+                item.locationName?.let { location ->
+                    Text(
+                        text = location,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = item.internalCode,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = item.priceCents?.let(::formatMoneyPtBr)
+                            ?: stringResource(R.string.finance_average_none),
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
             }
         }
     }

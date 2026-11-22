@@ -6,7 +6,9 @@ import br.com.diecastcollector.data.db.AppDatabase
 import br.com.diecastcollector.data.db.AuditLogWriter
 import br.com.diecastcollector.data.db.TransactionRunner
 import br.com.diecastcollector.data.db.entity.CarModelEntity
+import br.com.diecastcollector.data.db.entity.ExemplarEntity
 import br.com.diecastcollector.data.db.entity.ManufacturerEntity
+import br.com.diecastcollector.data.db.entity.PhotoEntity
 import br.com.diecastcollector.data.db.entity.VariantEntity
 import br.com.diecastcollector.domain.model.Condition
 import br.com.diecastcollector.domain.model.IsoDate
@@ -81,6 +83,38 @@ public class WishlistRepositoryTest {
         assertThat(entries.map { it.title })
             .containsExactly("Camaro preto", "Mattel · Twin Mill", "Mattel · Twin Mill")
         assertThat(entries.map { it.item.priority }).containsExactly(1, 2, 3)
+    }
+
+    @Test
+    public fun `desejo de variante com exemplar fotografado mostra a foto`(): Unit = runBlocking {
+        seedCatalog()
+        database.exemplarDao().insert(
+            ExemplarEntity("ex1", "variant1", "HW-1", "SEALED", null, null, "OWNED", null, 0L, 0L, 0L),
+        )
+        database.photoDao().insert(
+            PhotoEntity(
+                id = "p1",
+                exemplarId = "ex1",
+                angle = "FRONT",
+                path = "images/ex1/front.jpg",
+                checksum = "c1",
+                isPrimary = true,
+                sortOrder = 0,
+                width = null,
+                height = null,
+                bytes = null,
+                capturedAt = null,
+            ),
+        )
+        repository.add(wish("w-variante", variantId = "variant1"))
+        repository.add(wish("w-livre", freeText = "Camaro preto"))
+
+        val entries = repository.observeAll().first()
+
+        assertThat(entries.single { it.item.id == "w-variante" }.photoPath)
+            .isEqualTo("images/ex1/front.jpg")
+        // Desejo sem vínculo com o acervo não tem foto para mostrar.
+        assertThat(entries.single { it.item.id == "w-livre" }.photoPath).isNull()
     }
 
     @Test

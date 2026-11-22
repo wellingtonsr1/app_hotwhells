@@ -121,6 +121,18 @@ public class PhotoRepositoryTest {
     }
 
     @Test
+    fun `mapa por variante traz so a foto de capa de cada exemplar`() = runBlocking {
+        val bytes = createTestImageBytes()
+        repository.add(exemplarId = "ex1", angle = PhotoAngle.FRONT, source = bytes).getOrThrow()
+        val back = repository.add(exemplarId = "ex1", angle = PhotoAngle.BACK, source = bytes).getOrThrow()
+        repository.setPrimary(exemplarId = "ex1", photoId = back.id).getOrThrow()
+
+        val paths = repository.observePrimaryPathsByVariant("v1").first()
+        assertThat(paths).containsExactly("ex1", back.path)
+        Unit
+    }
+
+    @Test
     fun `remove apaga registro do banco e arquivo do disco`() = runBlocking {
         val bytes = createTestImageBytes()
         val photo = repository.add(exemplarId = "ex1", angle = PhotoAngle.TOP, source = bytes).getOrThrow()

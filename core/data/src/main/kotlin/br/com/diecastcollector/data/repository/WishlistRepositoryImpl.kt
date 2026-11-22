@@ -141,7 +141,7 @@ public class WishlistRepositoryImpl @Inject constructor(
     }
 
     private fun WishlistRow.toDomain(): WishlistEntry =
-        WishlistEntry(item = item.toDomain(), title = title.orEmpty())
+        WishlistEntry(item = item.toDomain(), title = title.orEmpty(), photoPath = photoPath)
 
     private fun WishlistItemEntity.toDomain(): WishlistItem = WishlistItem(
         id = id,

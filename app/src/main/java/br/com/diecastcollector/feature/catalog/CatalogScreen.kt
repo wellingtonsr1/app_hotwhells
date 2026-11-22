@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -27,7 +29,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.VariantSummary
+import br.com.diecastcollector.ui.components.ItemThumbnail
 import br.com.diecastcollector.ui.theme.DiecastTheme
 
 /**
@@ -184,34 +186,16 @@ private fun VariantCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
     ) {
-        val fontScale = LocalConfiguration.current.fontScale
-        if (fontScale > 1.25f) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(14.dp),
-            ) {
-                Text(text = variant.modelName, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = variantSubtitle(variant),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ItemThumbnail(
+                    photoPath = variant.primaryPhotoPath,
+                    contentDescription = stringResource(
+                        R.string.catalog_thumbnail_photo,
+                        variant.modelName,
+                    ),
                 )
-                TextButton(
-                    onClick = onOpenExemplars,
-                    modifier = Modifier.align(Alignment.End),
-                ) {
-                    Text(stringResource(R.string.catalog_open_exemplars))
-                }
-            }
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(14.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+                Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = variant.modelName, style = MaterialTheme.typography.titleMedium)
                     Text(
@@ -220,11 +204,16 @@ private fun VariantCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                // O cartão continua abrindo o cadastro rápido; este atalho leva às unidades
-                // já existentes, onde ficam edição, movimentação e arquivamento (FR-028).
-                TextButton(onClick = onOpenExemplars) {
-                    Text(stringResource(R.string.catalog_open_exemplars))
-                }
+            }
+            // O atalho fica abaixo do texto: com a miniatura ao lado, na mesma linha ele
+            // espremia o nome em telas estreitas e em fonte ampliada.
+            // O cartão continua abrindo o cadastro rápido; este atalho leva às unidades
+            // já existentes, onde ficam edição, movimentação e arquivamento (FR-028).
+            TextButton(
+                onClick = onOpenExemplars,
+                modifier = Modifier.align(Alignment.End),
+            ) {
+                Text(stringResource(R.string.catalog_open_exemplars))
             }
         }
     }

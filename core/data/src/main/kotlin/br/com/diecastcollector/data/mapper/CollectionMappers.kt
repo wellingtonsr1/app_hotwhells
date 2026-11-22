@@ -18,4 +18,5 @@ internal fun CollectionItemRow.toDomain(): CollectionItemStatus = CollectionItem
     expected = expected,
     nonCollectible = nonCollectible != 0,
     ownedExemplars = owned,
+    photoPath = photoPath,
 )

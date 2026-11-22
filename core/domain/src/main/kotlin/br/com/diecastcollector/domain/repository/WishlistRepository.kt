@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.Flow
 public data class WishlistEntry(
     val item: WishlistItem,
     val title: String,
+    /** Foto de capa de um exemplar do mesmo alvo, quando o acervo já tem algum. */
+    val photoPath: String? = null,
 )
 
 /** Lista de desejos: intenção de compra que não conta como acervo (FR-057–FR-064). */

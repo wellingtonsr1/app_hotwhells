@@ -525,6 +525,9 @@ private class FakePhotoRepository : PhotoRepository {
 
     override fun observeByExemplar(exemplarId: String): Flow<List<Photo>> = flowOf(emptyList())
 
+    override fun observePrimaryPathsByVariant(variantId: String): Flow<Map<String, String>> =
+        flowOf(emptyMap())
+
     override suspend fun add(
         exemplarId: String,
         angle: PhotoAngle,

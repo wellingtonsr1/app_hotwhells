@@ -44,6 +44,11 @@ public class PhotoRepositoryImpl @Inject constructor(
             rows.map { it.toDomain() }
         }
 
+    override fun observePrimaryPathsByVariant(variantId: String): Flow<Map<String, String>> =
+        database.photoDao().observePrimaryPathsByVariant(variantId).map { rows ->
+            rows.associate { it.exemplarId to it.path }
+        }
+
     override suspend fun add(
         exemplarId: String,
         angle: PhotoAngle,

@@ -115,6 +115,9 @@ public data class AddExemplarOutcome(
 
 public interface PhotoRepository {
     public fun observeByExemplar(exemplarId: String): Flow<List<Photo>>
+
+    /** Caminho da foto de capa de cada exemplar da variante, por id de exemplar. */
+    public fun observePrimaryPathsByVariant(variantId: String): Flow<Map<String, String>>
     public suspend fun add(exemplarId: String, angle: PhotoAngle, source: ByteArray): DomainResult<Photo>
     public suspend fun setPrimary(exemplarId: String, photoId: String): DomainResult<Unit>
     public suspend fun remove(photoId: String): DomainResult<Unit>

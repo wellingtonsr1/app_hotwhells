@@ -61,6 +61,8 @@ public data class CollectionProgress(
     val parentId: String? = null,
     val itemCount: Int = 0,
     val missing: List<CollectionItemStatus> = emptyList(),
+    /** Foto de capa vinda de um item da coleção, para o cartão da lista. */
+    val photoPath: String? = null,
 ) {
     /** Percentual inteiro de 0 a 100; coleção sem itens não conta como completa. */
     val percent: Int

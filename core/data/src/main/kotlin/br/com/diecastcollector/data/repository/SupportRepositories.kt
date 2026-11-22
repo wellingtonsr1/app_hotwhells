@@ -52,6 +52,7 @@ public class VariantRepositoryImpl @Inject constructor(
                     colorName = it.colorName,
                     releaseYear = it.releaseYear,
                     exemplarCount = it.exemplarCount,
+                    primaryPhotoPath = it.primaryPhotoPath,
                 )
             }
         }

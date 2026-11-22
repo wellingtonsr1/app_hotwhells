@@ -49,6 +49,7 @@ public data class CollectionItemRow(
     @ColumnInfo(name = "non_collectible") val nonCollectible: Int,
     @ColumnInfo(name = "label") val label: String,
     @ColumnInfo(name = "owned") val owned: Int,
+    @ColumnInfo(name = "photo_path") val photoPath: String?,
 )
 
 @Dao
@@ -87,7 +88,16 @@ public interface CollectionItemDao {
                 WHERE e.status = 'OWNED' AND e.variant_id = i.variant_id)
              + (SELECT COUNT(*) FROM exemplar e
                 JOIN variant v ON v.id = e.variant_id
-                WHERE e.status = 'OWNED' AND v.model_id = i.model_id) AS owned
+                WHERE e.status = 'OWNED' AND v.model_id = i.model_id) AS owned,
+               (SELECT p.path
+                FROM photo p
+                JOIN exemplar e ON e.id = p.exemplar_id
+                WHERE e.status = 'OWNED'
+                  AND (e.variant_id = i.variant_id
+                       OR e.variant_id IN (SELECT vx.id FROM variant vx
+                                           WHERE vx.model_id = i.model_id))
+                ORDER BY (1 - p.is_primary), p.sort_order, p.captured_at
+                LIMIT 1) AS photo_path
         FROM collection_item i
         JOIN collection col ON col.id = i.collection_id AND col.archived_at IS NULL
         LEFT JOIN variant v ON v.id = i.variant_id
@@ -116,6 +126,7 @@ public interface CollectionItemDao {
 public data class WishlistRow(
     @Embedded public val item: WishlistItemEntity,
     @ColumnInfo(name = "title") public val title: String?,
+    @ColumnInfo(name = "photo_path") public val photoPath: String?,
 )
 
 @Dao
@@ -135,7 +146,15 @@ public interface WishlistDao {
             CASE
                 WHEN TRIM(COALESCE(w.free_text, '')) <> '' THEN TRIM(w.free_text)
                 ELSE COALESCE(mf.name || ' · ' || cm.name, cm.name, '')
-            END AS title
+            END AS title,
+            (SELECT p.path
+             FROM photo p
+             JOIN exemplar e ON e.id = p.exemplar_id
+             WHERE e.variant_id = w.variant_id
+                OR e.variant_id IN (SELECT vx.id FROM variant vx
+                                    WHERE vx.model_id = w.model_id)
+             ORDER BY (1 - p.is_primary), p.sort_order, p.captured_at
+             LIMIT 1) AS photo_path
         FROM wishlist_item w
         LEFT JOIN variant v ON v.id = w.variant_id
         LEFT JOIN car_model cm ON cm.id = COALESCE(w.model_id, v.model_id)

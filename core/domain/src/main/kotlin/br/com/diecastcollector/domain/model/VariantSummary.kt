@@ -17,4 +17,6 @@ public data class VariantSummary(
     val colorName: String?,
     val releaseYear: Int?,
     val exemplarCount: Int,
+    /** Caminho relativo da foto principal de um dos exemplares, para a miniatura da lista. */
+    val primaryPhotoPath: String? = null,
 )

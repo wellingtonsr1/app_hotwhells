@@ -5,9 +5,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
@@ -29,6 +32,7 @@ import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.Condition
 import br.com.diecastcollector.domain.model.Exemplar
 import br.com.diecastcollector.domain.model.ExemplarStatus
+import br.com.diecastcollector.ui.components.ItemThumbnail
 import br.com.diecastcollector.ui.theme.DiecastTheme
 import java.time.Instant
 
@@ -90,6 +94,7 @@ internal fun ExemplarListContent(
                         ExemplarCard(
                             exemplar = exemplar,
                             locationName = exemplar.locationId?.let { state.locationNames[it] },
+                            photoPath = state.photoPaths[exemplar.id],
                             onClick = { onOpenExemplar(exemplar.id) },
                         )
                     }
@@ -103,6 +108,7 @@ internal fun ExemplarListContent(
 private fun ExemplarCard(
     exemplar: Exemplar,
     locationName: String?,
+    photoPath: String?,
     onClick: () -> Unit,
 ) {
     Card(
@@ -110,23 +116,38 @@ private fun ExemplarCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Text(text = exemplar.internalCode, style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = listOfNotNull(
-                    stringResource(exemplar.condition.labelRes()),
-                    locationName ?: stringResource(R.string.add_exemplar_no_location),
-                ).joinToString(" · "),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ItemThumbnail(
+                photoPath = photoPath,
+                contentDescription = stringResource(
+                    R.string.catalog_thumbnail_photo,
+                    exemplar.internalCode,
+                ),
             )
-            exemplar.notes?.takeIf { it.isNotBlank() }?.let { notes ->
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = exemplar.internalCode, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = notes,
+                    text = listOfNotNull(
+                        stringResource(exemplar.condition.labelRes()),
+                        locationName ?: stringResource(R.string.add_exemplar_no_location),
+                    ).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp),
                 )
+                exemplar.notes?.takeIf { it.isNotBlank() }?.let { notes ->
+                    Text(
+                        text = notes,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
             }
         }
     }
