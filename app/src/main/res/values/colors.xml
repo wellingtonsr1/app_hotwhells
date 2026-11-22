@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="window_background">#121212</color>
-    <!-- Fundo do ícone adaptativo: FlameRed da paleta da marca. -->
-    <color name="ic_launcher_background">#D3242B</color>
+    <!-- Fundo do ícone adaptativo: preto da moldura da arte do ícone. -->
+    <color name="ic_launcher_background">#010101</color>
 </resources>
