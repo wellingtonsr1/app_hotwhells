@@ -49,6 +49,11 @@ O APK de release é assinado com a chave local (`keystore/release.jks` +
 senha**: é essa chave que permite instalar uma versão nova por cima, preservando os dados.
 Sem esses arquivos, o build gera `app-release-unsigned.apk`, que o Android não instala.
 
+A chave existe nesta máquina desde 2026-11-23 (`CN=Diecast Collector`, alias `diecast`,
+SHA-256 `a7daef55…484f`) e a senha está somente em `keystore.properties`. Ela não é a
+mesma chave citada em `specs/001-diecast-collector/tasks.md` (T136): aparelho que já tem o
+app assinado pela outra chave precisa desinstalar antes de receber um APK gerado aqui.
+
 ### 2.2 APK de debug (desenvolvimento)
 
 ```bash
@@ -201,7 +206,7 @@ diferentes: o backup feito em um restaura no outro, mas a instalação não é u
 | Erro ao anexar foto | Sem espaço no aparelho, imagem inválida ou limite de 1,5 MB por foto após compressão | Libere espaço e salve de novo: a captura pendente é mantida e o exemplar já criado não é duplicado. |
 | A busca não encontra um item recém-cadastrado | Índice de busca desatualizado após substituição manual do banco | Feche e reabra o app: o índice é reconstruído na abertura quando a contagem diverge. |
 | Não sei onde está o arquivo do backup | O seletor do sistema grava onde você escolheu; o app não mantém uma lista | Procure por `colecao-backup-*.zip` no local escolhido (Arquivos, Downloads, Drive etc.). |
-| Perdi a chave de assinatura (`keystore`) | O `release.jks`/`keystore.properties` não estava guardado | Sem a chave não há atualização por cima: gere um backup, desinstale e instale a versão nova, depois restaure. |
+| Perdi a chave de assinatura (`keystore`) | O `release.jks`/`keystore.properties` não estava guardado | Sem a chave não há atualização por cima: restaure o backup, desinstale e instale a versão nova, depois restaure os dados. **A chave desta máquina está em `keystore/release.jks` + `keystore.properties` e precisa de backup** — ela não vem do repositório. |
 
 ### Se nada resolver
 

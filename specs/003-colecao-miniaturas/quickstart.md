@@ -102,10 +102,24 @@ Esperado: `OK (2 tests)` e, no logcat (`CatalogBenchmark`), a linha com mediana 
 abertura. Resultado da execução registrada em 2026-11-23: mediana **83 ms**, p90 127 ms
 (10 aberturas, emulador `hw_test` API 36 com GPU por software).
 
-`./gradlew :benchmark:connectedBenchmarkBenchmarkAndroidTest` **não** serve hoje: o AGP
-resolve a variante testada para `:app:release` (não assinada, sem x86_64) e a instalação
-falha com `INSTALL_PARSE_FAILED_NO_CERTIFICATES`, mesmo existindo o build type `benchmark`
-no `:app`. Por isso o roteiro acima instala o APK e roda a instrumentação à mão.
+Os passos 3 e 4 são o roteiro manual. Caminho curto equivalente:
+
+```bash
+./gradlew :benchmark:connectedBenchmarkBenchmarkAndroidTest
+```
+
+Ele instala o `:app:benchmark` e o APK de teste e roda as três suítes (`CatalogBenchmark`
+com 2 testes e `StartupBaselineProfile` com 1). Verificado em 2026-11-23: 3 testes,
+0 falhas. O task **não semeia** o banco: a semente do passo 3 precisa já estar no aparelho.
+
+**Defeito corrigido em 2026-11-23**: até então esse task instalava o `:app:release` (sem
+assinatura e sem x86_64) e falhava com `INSTALL_PARSE_FAILED_NO_CERTIFICATES`, apesar de
+existir o build type `benchmark` no `:app`. Causa: o `matchingFallbacks += listOf("release")`
+no build type `benchmark` do módulo `:benchmark` — em um módulo `com.android.test` essa
+lista escolhe a variante alvo do `:app` e vence o build type de mesmo nome. Removida a
+lista, o task empacota `:app:packageBenchmark` (confirmado com `--dry-run`). O fallback de
+bibliotecas continua no build type `benchmark` do próprio `:app`, e a geração do perfil de
+abertura (`:app:generateBaselineProfile`) segue em `nonMinifiedRelease`.
 
 **Limite**: a medição é de emulador; ela vale como comparação entre versões, não como
 desempenho de aparelho real. “Rolagem fluida” segue sem prova em hardware físico.

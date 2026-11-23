@@ -62,6 +62,18 @@ O release é assinado com `keystore.properties` e `keystore/release.jks`, ambos 
 versionamento (`.gitignore`). **Guarde uma cópia dos dois e da senha:** sem essa chave não
 há como instalar uma atualização por cima — só reinstalar do zero.
 
+**Estado nesta máquina (2026-11-23):** os dois arquivos existem e o build de release sai
+assinado — certificado `CN=Diecast Collector`, alias `diecast`, SHA-256
+`a7daef55…484f`. A senha existe **apenas** dentro de `keystore.properties`; ela não é
+registrada em lugar nenhum do repositório. Backup desses dois arquivos é obrigatório: eles
+não são recuperáveis a partir do código.
+
+Essa chave foi gerada aqui e é **diferente** da documentada em
+[specs/001-diecast-collector/tasks.md](specs/001-diecast-collector/tasks.md) (T136,
+`CN=Colecao de Miniaturas`, SHA-256 `45c4bed6…f4775`, de outra máquina). Se algum aparelho
+já tem o app assinado por aquela chave, instalar o APK gerado aqui exige desinstalar antes
+— e isso apaga os dados.
+
 ```bash
 ./gradlew :app:assembleRelease   # app/build/outputs/apk/release/app-release.apk
 ./gradlew :app:bundleRelease     # app/build/outputs/bundle/release/app-release.aab

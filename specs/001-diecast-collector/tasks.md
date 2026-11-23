@@ -1246,7 +1246,13 @@ SQLite real do Android — reproduziu a falha antes da correção e passou depoi
 **Assinatura (T136):** `app/build.gradle.kts` lê `keystore.properties` da raiz (ausente em
 outro checkout: o release continua sem assinatura, sem quebrar o build) e assina o release
 com a chave local. Verificado com `apksigner verify`: APK assinado pelo certificado
-`CN=Colecao de Miniaturas` (SHA-256 `45c4bed6…f4775`), esquema v2; AAB gerado. O debug usa
+`CN=Colecao de Miniaturas` (SHA-256 `45c4bed6…f4775`), esquema v2; AAB gerado.
+
+**Estado em 2026-11-23**: a chave existente nesta máquina é outra, gerada localmente
+(`keystore/release.jks`, alias `diecast`, `CN=Diecast Collector`, SHA-256
+`a7daef55…484f`), e o `keystore.properties` também está aqui — ambos no `.gitignore` e
+**exigindo backup**. A senha não é registrada no repositório. Os dois certificados são
+incompatíveis entre si: atualização por cima só entre APKs assinados pela mesma chave. O debug usa
 `br.com.diecastcollector.debug` e o release `br.com.diecastcollector` — a troca se faz
 com backup no app antigo e restauração no novo (README, «Assinatura e atualização»).
 

@@ -197,7 +197,10 @@ proporção de SC-005: 450 variantes com foto (PNG de 256×256), 25 com arquivo 
 sem foto — os caminhos de fallback entram na medição.
 
 **Como repetir**: `tools/benchmark_seed.py`, `tools/seed-benchmark-device.sh` e o comando
-`am instrument` de [quickstart.md](./quickstart.md). A abertura é cronometrada do toque na
+`am instrument` de [quickstart.md](./quickstart.md) — ou, com o banco já semeado,
+`./gradlew :benchmark:connectedBenchmarkBenchmarkAndroidTest`, que instala o
+`:app:benchmark` sozinho (o `matchingFallbacks` do módulo `benchmark` era o defeito que o
+fazia instalar o `:app:release`; corrigido em 2026-11-23). A abertura é cronometrada do toque na
 aba até o primeiro cartão existir na árvore de acessibilidade, com consulta a cada 10 ms.
 
 ### L2 — Sem teste do placeholder e do arquivo inválido
@@ -290,6 +293,7 @@ há alteração de comportamento no app.
 | `:app:connectedDebugAndroidTest` — `CatalogScreenTest` | 9 testes, 0 falhas (emulador API 36) |
 | `:app:connectedDebugAndroidTest` — `CatalogFlowTest` + `SearchScreenTest` | 7 testes, 0 falhas |
 | `:benchmark:assembleBenchmarkBenchmark` + `am instrument` — `CatalogBenchmark` (500 variantes) | 2 testes, 0 falhas; abertura mediana 83 ms |
+| `:benchmark:connectedBenchmarkBenchmarkAndroidTest` (após a correção do `matchingFallbacks`) | 3 testes, 0 falhas; instala `:app:benchmark` |
 
 **Fechado em 2026-11-23**: L1 e SC-003 medidos — ver a seção L1 acima. O que segue sem
 prova é apenas “rolagem fluida” em aparelho físico, porque a medição disponível é de

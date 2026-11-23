@@ -42,7 +42,7 @@ A inspeção do manifesto compilado final (`app/build/intermediates/merged_manif
 
 - **Verificação**: Varredura por termos `api_key`, `secret`, `password`, `auth_token`, `bearer` no código-fonte e recursos.
 - **Resultado**: `0` credenciais ou chaves presentes.
-- **Assinatura de Release**: O arquivo de chave `keystore/release.jks` e o arquivo de propriedades `keystore.properties` estão devidamente incluídos no `.gitignore`, não sendo versionados no repositório git.
+- **Assinatura de Release**: O arquivo de chave `keystore/release.jks` e o arquivo de propriedades `keystore.properties` estão devidamente incluídos no `.gitignore`, não sendo versionados no repositório git. Os dois existem nesta máquina (chave gerada em 2026-11-23, `CN=Diecast Collector`, alias `diecast`) e **precisam de backup**: a senha vive apenas no `keystore.properties`, fora do repositório, e não há cópia da chave no versionamento.
 
 ---
 

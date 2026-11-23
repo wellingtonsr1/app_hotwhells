@@ -41,10 +41,18 @@ android {
     }
 
     buildTypes {
+        /**
+         * Sem `matchingFallbacks`: em um módulo `com.android.test`, essa lista escolhe a
+         * variante **alvo** do `:app` e vence o build type de mesmo nome. Com
+         * `matchingFallbacks = ["release"]` aqui, o task
+         * `connectedBenchmarkBenchmarkAndroidTest` instalava o `:app:release` (sem
+         * assinatura e sem x86_64) e morria em `INSTALL_PARSE_FAILED_NO_CERTIFICATES`.
+         * O fallback para as bibliotecas `core:*` fica só no build type `benchmark` do
+         * `:app`, que é quem depende delas.
+         */
         create("benchmark") {
             isDebuggable = true
             signingConfig = signingConfigs.getByName("debug")
-            matchingFallbacks += listOf("release")
         }
     }
 }
