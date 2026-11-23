@@ -10,6 +10,7 @@ import br.com.diecastcollector.data.db.entity.ExemplarEntity
 import br.com.diecastcollector.data.db.entity.ManufacturerEntity
 import br.com.diecastcollector.data.db.entity.PhotoEntity
 import br.com.diecastcollector.data.db.entity.VariantEntity
+import br.com.diecastcollector.data.storage.FileImageStore
 import br.com.diecastcollector.domain.model.Condition
 import br.com.diecastcollector.domain.model.IsoDate
 import br.com.diecastcollector.domain.model.MoneyCents
@@ -62,7 +63,13 @@ public class WishlistRepositoryTest {
             auditLogWriter = AuditLogWriter(database.historyDao()),
             clock = clock,
         )
-        repository = WishlistRepositoryImpl(database, exemplarRepository, transactionRunner, clock)
+        repository = WishlistRepositoryImpl(
+            database = database,
+            exemplarRepository = exemplarRepository,
+            transactionRunner = transactionRunner,
+            imageStore = FileImageStore(context),
+            clock = clock,
+        )
     }
 
     @After
@@ -115,6 +122,38 @@ public class WishlistRepositoryTest {
             .isEqualTo("images/ex1/front.jpg")
         // Desejo sem vínculo com o acervo não tem foto para mostrar.
         assertThat(entries.single { it.item.id == "w-livre" }.photoPath).isNull()
+    }
+
+    @Test
+    public fun `foto anexada ao desejo tem precedencia sobre a do acervo`(): Unit = runBlocking {
+        seedCatalog()
+        database.exemplarDao().insert(
+            ExemplarEntity("ex1", "variant1", "HW-1", "SEALED", null, null, "OWNED", null, 0L, 0L, 0L),
+        )
+        database.photoDao().insert(
+            PhotoEntity(
+                id = "p1",
+                exemplarId = "ex1",
+                angle = "FRONT",
+                path = "images/ex1/front.jpg",
+                checksum = "c1",
+                isPrimary = true,
+                sortOrder = 0,
+                width = null,
+                height = null,
+                bytes = null,
+                capturedAt = null,
+            ),
+        )
+        val wish = wish("w-foto", variantId = "variant1").copy(photoPath = "images/wish-w-foto/front_1.jpg")
+        repository.add(wish)
+
+        val stored = repository.findById("w-foto")!!
+        val entry = repository.observeAll().first().single { it.item.id == "w-foto" }
+
+        // A foto do desejo é a que a pessoa escolheu; a do acervo só entra quando não há.
+        assertThat(stored.photoPath).isEqualTo("images/wish-w-foto/front_1.jpg")
+        assertThat(entry.photoPath).isEqualTo("images/wish-w-foto/front_1.jpg")
     }
 
     @Test

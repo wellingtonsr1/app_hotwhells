@@ -190,6 +190,9 @@
     <string name="wishlist_form_store">Loja</string>
     <string name="wishlist_form_link">Link de referência</string>
     <string name="wishlist_form_notes">Observações</string>
+    <string name="wishlist_form_photo">Foto do que você procura</string>
+    <string name="wishlist_form_photo_description">Foto do desejo</string>
+    <string name="wishlist_form_photo_remove">Remover foto</string>
     <string name="wishlist_form_save">Salvar desejo</string>
 
     <!-- Ajustes, Sobre e privacidade (T132, T133, FR-171, FR-172). -->
@@ -811,6 +814,7 @@
     <string name="wishlist_acquired_without_exemplar">Desejo marcado como adquirido. Ele não aponta para uma variante, então nenhum exemplar foi criado.</string>
     <string name="wishlist_dismissed">Desejo removido da lista em aberto.</string>
     <string name="wishlist_error_save">Não foi possível salvar o desejo.</string>
+    <string name="wishlist_error_photo">Não foi possível salvar a foto do desejo.</string>
     <string name="exemplar_acquisition_saved">Aquisição salva.</string>
     <string name="exemplar_valuation_registered">Avaliação registrada.</string>
     <string name="exemplar_changes_saved">Alterações salvas.</string>

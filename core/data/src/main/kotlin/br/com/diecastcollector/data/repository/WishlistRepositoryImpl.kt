@@ -4,6 +4,8 @@ import br.com.diecastcollector.data.db.AppDatabase
 import br.com.diecastcollector.data.db.TransactionRunner
 import br.com.diecastcollector.data.db.dao.WishlistRow
 import br.com.diecastcollector.data.db.entity.WishlistItemEntity
+import br.com.diecastcollector.data.storage.ImageStore
+import java.io.ByteArrayInputStream
 import br.com.diecastcollector.domain.error.DomainError
 import br.com.diecastcollector.domain.error.DomainResult
 import br.com.diecastcollector.domain.model.MoneyCents
@@ -33,6 +35,7 @@ public class WishlistRepositoryImpl @Inject constructor(
     private val database: AppDatabase,
     private val exemplarRepository: ExemplarRepository,
     private val transactionRunner: TransactionRunner,
+    private val imageStore: ImageStore,
     private val clock: Clock,
 ) : WishlistRepository {
 
@@ -140,6 +143,31 @@ public class WishlistRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * A foto do desejo vive em `images/wish-<id>/`, separada das pastas de exemplar: não
+     * existe exemplar para guardá-la e a pasta dá o mesmo tratamento de arquivo privado.
+     */
+    override suspend fun storePhoto(wishId: String, source: ByteArray): DomainResult<String> = try {
+        val stored = imageStore.save(
+            exemplarId = "wish-$wishId",
+            source = ByteArrayInputStream(source),
+            angle = WISH_PHOTO_ANGLE,
+        )
+        Result.success(stored.relativePath)
+    } catch (error: Throwable) {
+        Result.failure(
+            if (error is DomainError) {
+                error
+            } else {
+                DomainError.Storage(error.message ?: "Falha ao gravar foto do desejo.")
+            },
+        )
+    }
+
+    override suspend fun deletePhoto(relativePath: String) {
+        runCatching { imageStore.delete(relativePath) }
+    }
+
     private fun WishlistRow.toDomain(): WishlistEntry =
         WishlistEntry(item = item.toDomain(), title = title.orEmpty(), photoPath = photoPath)
 
@@ -155,6 +183,7 @@ public class WishlistRepositoryImpl @Inject constructor(
         store = store,
         referenceUrl = referenceUrl,
         notes = notes,
+        photoPath = photoPath,
         convertedExemplarId = convertedExemplarId,
         createdAt = Instant.ofEpochMilli(createdAt),
         updatedAt = Instant.ofEpochMilli(updatedAt),
@@ -175,9 +204,14 @@ public class WishlistRepositoryImpl @Inject constructor(
         store = store?.trim()?.takeIf { it.isNotEmpty() },
         referenceUrl = referenceUrl?.trim()?.takeIf { it.isNotEmpty() },
         notes = notes?.trim()?.takeIf { it.isNotEmpty() },
+        photoPath = photoPath?.takeIf { it.isNotBlank() },
         status = status.name,
         convertedExemplarId = convertedExemplarId,
         createdAt = createdAt,
         updatedAt = updatedAt,
     )
+
+    private companion object {
+        const val WISH_PHOTO_ANGLE = "FRONT"
+    }
 }

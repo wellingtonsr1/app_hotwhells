@@ -99,7 +99,7 @@ import br.com.diecastcollector.data.db.entity.WishlistItemEntity
         SearchIndexEntity::class,
         DuplicateOfferEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 public abstract class AppDatabase : RoomDatabase() {
@@ -209,6 +209,20 @@ public abstract class AppDatabase : RoomDatabase() {
                     "CREATE INDEX IF NOT EXISTS " +
                         "`index_negotiation_received_exemplar_id` ON `negotiation` (`received_exemplar_id`)",
                 )
+            }
+        }
+
+        /**
+         * v2 → v3: foto própria do desejo, para quem procura um carro que ainda não tem.
+         * Nula por padrão; a lista continua caindo na foto de um exemplar do mesmo alvo.
+         *
+         * O índice parcial de `variant` não está no schema exportado e o Room valida a
+         * tabela inteira depois da migração; ele sai antes da validação e volta no callback.
+         */
+        public val MIGRATION_2_3: Migration = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP INDEX IF EXISTS `index_variant_fingerprint_active`")
+                db.execSQL("ALTER TABLE `wishlist_item` ADD COLUMN `photo_path` TEXT")
             }
         }
 

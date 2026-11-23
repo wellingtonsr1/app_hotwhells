@@ -61,6 +61,9 @@ public data class WishlistItemEntity(
     val referenceUrl: String?,
     @ColumnInfo(name = "notes")
     val notes: String?,
+    /** Foto própria do desejo: o exemplar desejado ainda não existe no acervo. */
+    @ColumnInfo(name = "photo_path")
+    val photoPath: String? = null,
     @ColumnInfo(name = "status", defaultValue = "WANTED")
     val status: String = "WANTED",
     @ColumnInfo(name = "converted_exemplar_id")

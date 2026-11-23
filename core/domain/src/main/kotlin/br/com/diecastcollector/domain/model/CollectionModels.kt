@@ -53,6 +53,8 @@ public data class WishlistItem(
     val store: String? = null,
     val referenceUrl: String? = null,
     val notes: String? = null,
+    /** Foto anexada ao desejo; o exemplar desejado ainda não existe para ter foto própria. */
+    val photoPath: String? = null,
     val convertedExemplarId: String? = null,
     val createdAt: Instant,
     val updatedAt: Instant,

@@ -126,7 +126,8 @@ public interface CollectionItemDao {
 public data class WishlistRow(
     @Embedded public val item: WishlistItemEntity,
     @ColumnInfo(name = "title") public val title: String?,
-    @ColumnInfo(name = "photo_path") public val photoPath: String?,
+    /** Foto a exibir: a do desejo ou, na falta dela, a de um exemplar do mesmo alvo. */
+    @ColumnInfo(name = "display_photo_path") public val photoPath: String?,
 )
 
 @Dao
@@ -139,6 +140,9 @@ public interface WishlistDao {
      * Lista completa: o que está em aberto primeiro, depois o histórico, sempre por
      * prioridade e data de criação. O título prefere o texto livre; sem ele, monta
      * «Fabricante · Modelo» a partir da variante ou do modelo do desejo.
+     *
+     * A foto é a que a pessoa anexou ao desejo; só quando não existe nenhuma ela cai na
+     * foto de um exemplar do mesmo alvo, que é o que o acervo já tem para mostrar.
      */
     @Query(
         """
@@ -147,14 +151,15 @@ public interface WishlistDao {
                 WHEN TRIM(COALESCE(w.free_text, '')) <> '' THEN TRIM(w.free_text)
                 ELSE COALESCE(mf.name || ' · ' || cm.name, cm.name, '')
             END AS title,
-            (SELECT p.path
-             FROM photo p
-             JOIN exemplar e ON e.id = p.exemplar_id
-             WHERE e.variant_id = w.variant_id
-                OR e.variant_id IN (SELECT vx.id FROM variant vx
-                                    WHERE vx.model_id = w.model_id)
-             ORDER BY (1 - p.is_primary), p.sort_order, p.captured_at
-             LIMIT 1) AS photo_path
+            COALESCE(NULLIF(TRIM(COALESCE(w.photo_path, '')), ''),
+                (SELECT p.path
+                 FROM photo p
+                 JOIN exemplar e ON e.id = p.exemplar_id
+                 WHERE e.variant_id = w.variant_id
+                    OR e.variant_id IN (SELECT vx.id FROM variant vx
+                                        WHERE vx.model_id = w.model_id)
+                 ORDER BY (1 - p.is_primary), p.sort_order, p.captured_at
+                 LIMIT 1)) AS display_photo_path
         FROM wishlist_item w
         LEFT JOIN variant v ON v.id = w.variant_id
         LEFT JOIN car_model cm ON cm.id = COALESCE(w.model_id, v.model_id)

@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -25,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -32,7 +35,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
+import br.com.diecastcollector.domain.model.PhotoAngle
 import br.com.diecastcollector.domain.model.VariantSummary
+import br.com.diecastcollector.feature.catalog.PhotoCaptureActions
+import br.com.diecastcollector.ui.components.ItemThumbnail
 
 /** Formulário de desejo (T076): o que se procura, por quanto e onde. */
 @Composable
@@ -74,6 +80,9 @@ public fun WishlistFormScreen(
                 onStoreChange = viewModel::onStoreChange,
                 onReferenceUrlChange = viewModel::onReferenceUrlChange,
                 onNotesChange = viewModel::onNotesChange,
+                onPhotoSelected = viewModel::onPhotoSelected,
+                onRemovePhoto = viewModel::onRemovePhoto,
+                onPhotoPermissionDenied = viewModel::onPhotoPermissionDenied,
                 onSave = viewModel::onSave,
             ),
         )
@@ -91,6 +100,9 @@ internal data class WishlistFormActions(
     val onStoreChange: (String) -> Unit = {},
     val onReferenceUrlChange: (String) -> Unit = {},
     val onNotesChange: (String) -> Unit = {},
+    val onPhotoSelected: (ByteArray) -> Unit = {},
+    val onRemovePhoto: () -> Unit = {},
+    val onPhotoPermissionDenied: () -> Unit = {},
     val onSave: () -> Unit = {},
 )
 
@@ -121,6 +133,31 @@ internal fun WishlistFormContent(
             label = { Text(stringResource(R.string.wishlist_form_free_text)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
+        )
+
+        // O carro desejado ainda não está no acervo, então a foto é do próprio desejo:
+        // sem ela a lista só consegue mostrar a foto de um exemplar do mesmo alvo.
+        Text(
+            text = stringResource(R.string.wishlist_form_photo),
+            style = MaterialTheme.typography.labelLarge,
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            ItemThumbnail(
+                photoPath = state.photoPath,
+                contentDescription = stringResource(R.string.wishlist_form_photo_description),
+                size = 96.dp,
+            )
+            if (state.photoPath != null) {
+                Spacer(Modifier.width(12.dp))
+                TextButton(onClick = actions.onRemovePhoto) {
+                    Text(stringResource(R.string.wishlist_form_photo_remove))
+                }
+            }
+        }
+        PhotoCaptureActions(
+            selectedAngle = PhotoAngle.FRONT,
+            onPhotoBytesReceived = { bytes, _ -> actions.onPhotoSelected(bytes) },
+            onPermissionDenied = actions.onPhotoPermissionDenied,
         )
 
         OutlinedTextField(

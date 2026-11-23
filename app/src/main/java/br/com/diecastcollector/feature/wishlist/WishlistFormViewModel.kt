@@ -14,6 +14,7 @@ import br.com.diecastcollector.ui.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.Instant
+import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +35,8 @@ public data class WishlistFormUiState(
     val store: String = "",
     val referenceUrl: String = "",
     val notes: String = "",
+    val photoPath: String? = null,
+    val savingPhoto: Boolean = false,
     val saving: Boolean = false,
     val message: UiMessage? = null,
     val saved: Boolean = false,
@@ -55,6 +58,17 @@ public class WishlistFormViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val itemId: String? = savedStateHandle[ARG_ITEM_ID]
+
+    /**
+     * Id definitivo do desejo desde o rascunho.
+     *
+     * A foto é gravada em `images/wish-<id>/` antes de salvar o formulário, então o id
+     * precisa existir antes do insert — o repositório já aceitava id vindo da tela.
+     */
+    private val wishId: String = itemId ?: UUID.randomUUID().toString()
+
+    /** Arquivos que o desejo deixou de usar; só saem do disco depois de salvar com sucesso. */
+    private val photosToDelete = mutableListOf<String>()
 
     private val _state = MutableStateFlow(WishlistFormUiState(editing = itemId != null))
     public val state: StateFlow<WishlistFormUiState> = _state.asStateFlow()
@@ -86,6 +100,7 @@ public class WishlistFormViewModel @Inject constructor(
                             store = item.store.orEmpty(),
                             referenceUrl = item.referenceUrl.orEmpty(),
                             notes = item.notes.orEmpty(),
+                            photoPath = item.photoPath,
                         )
                     }
                 } ?: _state.update {
@@ -123,6 +138,37 @@ public class WishlistFormViewModel @Inject constructor(
 
     public fun onMessageShown() = _state.update { it.copy(message = null) }
 
+    /** Foto escolhida na galeria ou na câmera: sai do aparelho já recomprimida e sem EXIF. */
+    public fun onPhotoSelected(source: ByteArray) {
+        if (_state.value.savingPhoto) return
+        _state.update { it.copy(savingPhoto = true) }
+        viewModelScope.launch {
+            wishlistRepository.storePhoto(wishId, source).fold(
+                onSuccess = { path ->
+                    _state.value.photoPath?.let { photosToDelete.add(it) }
+                    _state.update { it.copy(photoPath = path, savingPhoto = false) }
+                },
+                onFailure = { error ->
+                    _state.update {
+                        it.copy(
+                            savingPhoto = false,
+                            message = error.toUiMessage(R.string.wishlist_error_photo),
+                        )
+                    }
+                },
+            )
+        }
+    }
+
+    public fun onRemovePhoto() {
+        _state.value.photoPath?.let { photosToDelete.add(it) }
+        _state.update { it.copy(photoPath = null) }
+    }
+
+    public fun onPhotoPermissionDenied() = _state.update {
+        it.copy(message = UiMessage(R.string.photo_permission_denied))
+    }
+
     public fun onSave() {
         val current = _state.value
         if (current.saving) return
@@ -154,7 +200,7 @@ public class WishlistFormViewModel @Inject constructor(
 
         val now = Instant.now(clock)
         val item = WishlistItem(
-            id = itemId.orEmpty(),
+            id = wishId,
             priority = current.priority,
             variantId = current.variantId,
             freeText = freeText,
@@ -163,6 +209,7 @@ public class WishlistFormViewModel @Inject constructor(
             store = current.store.trim().takeIf { it.isNotEmpty() },
             referenceUrl = url,
             notes = current.notes.trim().takeIf { it.isNotEmpty() },
+            photoPath = current.photoPath,
             createdAt = now,
             updatedAt = now,
         )
@@ -175,7 +222,12 @@ public class WishlistFormViewModel @Inject constructor(
                 wishlistRepository.update(item)
             }
             result.fold(
-                onSuccess = { _state.update { it.copy(saving = false, saved = true) } },
+                onSuccess = {
+                    // Só depois do save a foto antiga pode sumir: cancelar não apaga nada.
+                    photosToDelete.forEach { path -> wishlistRepository.deletePhoto(path) }
+                    photosToDelete.clear()
+                    _state.update { it.copy(saving = false, saved = true) }
+                },
                 onFailure = { error ->
                     _state.update {
                         it.copy(

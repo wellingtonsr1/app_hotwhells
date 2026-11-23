@@ -13,7 +13,10 @@ import kotlinx.coroutines.flow.Flow
 public data class WishlistEntry(
     val item: WishlistItem,
     val title: String,
-    /** Foto de capa de um exemplar do mesmo alvo, quando o acervo já tem algum. */
+    /**
+     * Foto a mostrar na lista: a que a pessoa anexou ao desejo ou, sem ela, a de capa de
+     * um exemplar do mesmo alvo quando o acervo já tem algum.
+     */
     val photoPath: String? = null,
 )
 
@@ -31,6 +34,17 @@ public interface WishlistRepository {
 
     /** Desistência explícita: o desejo continua no histórico, fora da lista em aberto. */
     public suspend fun dismiss(id: String): DomainResult<Unit>
+
+    /**
+     * Grava a foto anexada ao desejo e devolve o caminho relativo.
+     *
+     * Funciona antes de o desejo existir no banco: quem procura um carro que ainda não
+     * tem não teria exemplar para pendurar a foto, e a imagem só precisa da pasta do id.
+     */
+    public suspend fun storePhoto(wishId: String, source: ByteArray): DomainResult<String>
+
+    /** Apaga o arquivo de uma foto que o desejo não usa mais (melhor esforço). */
+    public suspend fun deletePhoto(relativePath: String)
 
     /**
      * Conversão em aquisição em **uma transação**: o exemplar (quando [draft] é informado)

@@ -92,6 +92,39 @@ public class MigrationTest {
     }
 
     /**
+     * v2 → v3: coluna `wishlist_item.photo_path`, nula por padrão. O desejo que já existia
+     * continua sem foto e a lista cai na foto do acervo, como antes.
+     */
+    @Test
+    public fun migracaoV2ParaV3AcrescentaFotoDoDesejo() {
+        helper.createDatabase(TEST_DB_V3, 2).use { db ->
+            db.execSQL(
+                "INSERT INTO wishlist_item (id, status, priority, created_at, updated_at) " +
+                    "VALUES ('w1', 'WANTED', 2, 0, 0)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(
+            TEST_DB_V3,
+            3,
+            true,
+            AppDatabase.MIGRATION_2_3,
+        ).use { db ->
+            val columns = db.query("PRAGMA table_info(wishlist_item)").use { cursor ->
+                buildList {
+                    while (cursor.moveToNext()) add(cursor.getString(1))
+                }
+            }
+            val photo = db.query("SELECT photo_path FROM wishlist_item WHERE id = 'w1'").use { cursor ->
+                if (cursor.moveToNext()) cursor.getString(0) else null
+            }
+
+            assertThat(columns).contains("photo_path")
+            assertThat(photo).isNull()
+        }
+    }
+
+    /**
      * Regressão do aparelho: no banco real, `variant` tem o índice parcial criado pelo
      * callback e o Room o inclui na validação da migração. Sem removê-lo antes de validar,
      * a abertura falha com «Migration didn't properly handle: variant».
@@ -255,11 +288,13 @@ public class MigrationTest {
         .build()
 
     /** Toda migração registrada no banco; a ordem vem de `startVersion`. */
-    private val migrations: List<Migration> = listOf(AppDatabase.MIGRATION_1_2)
+    private val migrations: List<Migration> =
+        listOf(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
 
     private companion object {
         const val TEST_DB = "migration-test.db"
         const val TEST_DB_V2 = "migration-v2-test.db"
+        const val TEST_DB_V3 = "migration-v3-test.db"
         const val RUNTIME_DB = "runtime-test.db"
         const val MIGRATED_DB = "migrated-runtime-test.db"
         const val PARTIAL_INDEX_SQL =

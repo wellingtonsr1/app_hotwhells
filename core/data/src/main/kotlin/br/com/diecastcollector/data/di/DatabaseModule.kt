@@ -76,7 +76,7 @@ public object DatabaseModule {
     public fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
             .addCallback(AppDatabase.CALLBACK)
-            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
             .build()
 
     /** Relógio injetável: os testes trocam por um fixo e o comportamento fica determinístico. */
