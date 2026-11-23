@@ -340,7 +340,7 @@ private fun ItemRow(
             ItemThumbnail(
                 photoPath = item.photoPath,
                 contentDescription = stringResource(R.string.catalog_thumbnail_photo, item.label),
-                size = 56.dp,
+                size = 64.dp,
             )
             Spacer(Modifier.width(12.dp))
             Column(
