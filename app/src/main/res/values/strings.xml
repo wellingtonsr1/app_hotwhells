@@ -123,6 +123,7 @@
     <string name="photo_remove_confirm">Remover</string>
     <string name="photo_duplicate_warning">Esta foto é igual a outra já anexada. Ela foi adicionada mesmo assim.</string>
     <string name="photo_viewer_position">%1$s · %2$d de %3$d</string>
+    <string name="photo_viewer_open_gallery">Ver galeria completa</string>
 
     <!-- Cadastros incompletos (T048 - US2, FR-029). -->
     <string name="incomplete_entries_title">Cadastros incompletos</string>

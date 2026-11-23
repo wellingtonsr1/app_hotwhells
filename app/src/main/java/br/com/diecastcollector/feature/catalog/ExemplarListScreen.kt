@@ -128,6 +128,7 @@ private fun ExemplarCard(
                     R.string.catalog_thumbnail_photo,
                     exemplar.internalCode,
                 ),
+                onOpenGallery = onClick,
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
