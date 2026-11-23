@@ -1,6 +1,9 @@
 package br.com.diecastcollector.feature.catalog
 
 import android.graphics.Bitmap
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -9,12 +12,17 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.Density
 import androidx.test.platform.app.InstrumentationRegistry
 import br.com.diecastcollector.domain.model.VariantSummary
 import br.com.diecastcollector.ui.theme.DiecastTheme
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -177,6 +185,47 @@ class CatalogScreenTest {
         assertEquals("v2", opened)
     }
 
+    /**
+     * FR-014 e o defeito 5 de `docs/validacao.md`: em fonte 200% o subtítulo quebrava
+     * «2 exemplare s» no meio da palavra e a miniatura não podia ser comprimida.
+     */
+    @Test
+    fun emFonteDobradaAMiniaturaMantem64DpESubtituloNaoParteAPalavra() {
+        val subtitle = "Hot Wheels · 2024 · 2 exemplares"
+        show(
+            variants = listOf(
+                variant("v1", "Twin Mill", color = "Vermelho", year = 2024, count = 2, photo = null),
+            ),
+            fontScale = 2f,
+        )
+
+        // O cartão funde a semântica dos filhos; a árvore não fundida dá o ícone do
+        // marcador, que ocupa metade da miniatura — 32 dp de uma caixa de 64 dp.
+        val marker = composeRule
+            .onNodeWithContentDescription(NO_PHOTO, useUnmergedTree = true)
+            .getUnclippedBoundsInRoot()
+        assertEquals(
+            "A miniatura encolheu com a fonte ampliada",
+            32f,
+            (marker.right - marker.left).value,
+            0.5f,
+        )
+
+        composeRule.onNodeWithText(subtitle).assertIsDisplayed()
+        val layouts = mutableListOf<TextLayoutResult>()
+        composeRule.onNodeWithText(subtitle)
+            .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        val layout = layouts.single()
+
+        assertTrue("O subtítulo passou de duas linhas: ${layout.lineCount}", layout.lineCount <= 2)
+        val brokenWord = (0 until layout.lineCount - 1).any { line ->
+            val end = layout.getLineEnd(line, visibleEnd = true)
+            subtitle.getOrNull(end - 1)?.isLetter() == true &&
+                subtitle.getOrNull(end)?.isLetter() == true
+        }
+        assertFalse("O subtítulo partiu uma palavra ao quebrar linha", brokenWord)
+    }
+
     @Test
     fun cartaoComFotoContinuaAbrindoOCadastroRapido() {
         var clicked: String? = null
@@ -196,15 +245,22 @@ class CatalogScreenTest {
         variants: List<VariantSummary>,
         onVariantClick: (String) -> Unit = {},
         onOpenExemplars: (String) -> Unit = {},
+        fontScale: Float = 1f,
     ) {
         composeRule.setContent {
-            DiecastTheme {
-                CatalogContent(
-                    state = CatalogUiState(variants = variants, loading = false),
-                    onVariantClick = onVariantClick,
-                    onOpenExemplars = onOpenExemplars,
-                    onCreateEntry = {},
-                )
+            // Fonte do sistema ampliada: o cartão precisa continuar legível (FR-014).
+            val density = LocalDensity.current
+            CompositionLocalProvider(
+                LocalDensity provides Density(density = density.density, fontScale = fontScale),
+            ) {
+                DiecastTheme {
+                    CatalogContent(
+                        state = CatalogUiState(variants = variants, loading = false),
+                        onVariantClick = onVariantClick,
+                        onOpenExemplars = onOpenExemplars,
+                        onCreateEntry = {},
+                    )
+                }
             }
         }
     }

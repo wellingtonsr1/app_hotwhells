@@ -120,6 +120,8 @@ variante com e sem foto.
 - [x] T024 [P] Registrar o resultado medido e atualizar o status de SC-003 em `specs/003-colecao-miniaturas/plan.md` e `specs/003-colecao-miniaturas/analysis.md` (depende de T023)
 - [x] T025 [P] Verificar que cartão e miniatura usam apenas tokens do tema escuro (`InkBlack`, `SmokyGrey`, `FlameRedDark`) e tipografia Material 3, sem cor ou fonte nova, em `core/ui/src/main/kotlin/br/com/diecastcollector/ui/theme/Theme.kt` e `app/src/main/java/br/com/diecastcollector/feature/catalog/CatalogScreen.kt` (FR-013; evidência em `analysis.md`)
 - [x] T026 [P] [US1] Cobrir que uma lista longa (60 variantes) não compõe cartões fora da tela: o último título não existe até a rolagem em `app/src/androidTest/java/br/com/diecastcollector/feature/catalog/CatalogScreenTest.kt` (FR-011; 8/8 verdes no emulador API 36)
+- [x] T027 [P] [US1] Cobrir em fonte 200% (`fontScale = 2f`) que a miniatura não encolhe e o subtítulo não parte palavra ao quebrar linha, reconferindo o defeito 5 de `docs/validacao.md`, em `app/src/androidTest/java/br/com/diecastcollector/feature/catalog/CatalogScreenTest.kt` (FR-014; 9/9 verdes no emulador API 36), com `maxLines = 2` e ellipsis (FR-014)
+- [x] T028 [P] Fechar o portão G5 com a matriz requisito ↔ código ↔ prova ↔ princípio da Constituição em `specs/003-colecao-miniaturas/analysis.md`
 
 ---
 

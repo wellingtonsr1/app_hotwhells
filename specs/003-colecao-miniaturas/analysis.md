@@ -287,10 +287,43 @@ há alteração de comportamento no app.
 |---|---|
 | `:core:data:testDebugUnitTest --tests "*VariantRepositoryTest*"` | 10 testes, 0 falhas |
 | `:app:compileDebugKotlin` + `:app:compileDebugAndroidTestKotlin` | BUILD SUCCESSFUL |
-| `:app:connectedDebugAndroidTest` — `CatalogScreenTest` | 8 testes, 0 falhas (emulador API 36) |
+| `:app:connectedDebugAndroidTest` — `CatalogScreenTest` | 9 testes, 0 falhas (emulador API 36) |
 | `:app:connectedDebugAndroidTest` — `CatalogFlowTest` + `SearchScreenTest` | 7 testes, 0 falhas |
 | `:benchmark:assembleBenchmarkBenchmark` + `am instrument` — `CatalogBenchmark` (500 variantes) | 2 testes, 0 falhas; abertura mediana 83 ms |
 
 **Fechado em 2026-11-23**: L1 e SC-003 medidos — ver a seção L1 acima. O que segue sem
 prova é apenas “rolagem fluida” em aparelho físico, porque a medição disponível é de
 emulador com renderização por software.
+
+---
+
+## Matriz de rastreabilidade (portão G5)
+
+Requisito → onde vive no código → prova → princípio da Constituição que ele toca.
+
+| Requisito | Código | Prova (teste ou medição) | Princípio |
+|---|---|---|---|
+| FR-001 miniatura 64 dp à esquerda | `ItemThumbnail` (`size = 64.dp`, cantos 10 dp) em `CatalogScreen.kt` | `emFonteDobrada…` (ícone de 32 dp = metade da caixa) e amostra do SC-002 | IV.5 |
+| FR-002 só foto cadastrada | `VariantDao.observeSummaries` (JOIN `photo`) | `VariantRepositoryTest` (10/10) | I.2, R.2 |
+| FR-003 principal, depois ordem | `ORDER BY (1 - is_primary), sort_order, captured_at` | `VariantRepositoryTest` (principal vence; sem principal vale `sort_order`) | I.9 |
+| FR-004 marcador sem foto | `ItemThumbnail` (ramo sem caminho) | `carrinhoSemFotoMostraMarcadorAcessivel` | IV.5, IV.6 |
+| FR-005 nome, fabricante, ano, contagem | `variantSubtitle` | `cartaoSemAnoNaoInventaCampo`, `atalhoVerExemplares…` | I.9 |
+| FR-006 ausente não vira texto | `listOfNotNull` em `variantSubtitle` | `cartaoSemAnoNaoInventaCampo` | I.9 |
+| FR-007 toque no cartão e na foto | `Modifier.clickable` do cartão + ampliação no `ItemThumbnail` | `cartaoComFotoContinuaAbrindoOCadastroRapido`, `atalhoVerExemplares…`; decisão D5 no `spec.md` | — |
+| FR-008 busca e atalhos | `AppNavHost` (rotas) e `SearchScreen` | `CatalogFlowTest` + `SearchScreenTest` (7/7) | — |
+| FR-009 FAB na mesma posição | `Scaffold` de `CatalogContent` | revisão de código + `CatalogFlowTest` | — |
+| FR-010 foto na mesma consulta, sem N+1 | subconsulta em `observeSummaries` | `VariantRepositoryTest` + macrobenchmark (500 variantes, 83 ms) | I.2, R.7 |
+| FR-011 carregamento sob demanda e cache | `LazyColumn` + `AsyncImage` | `listaLongaNaoCompoeCartoesForaDaTela` | R.7 |
+| FR-012 arquivo inválido cai no marcador | `onError` → `loadFailed` | `arquivoInvalidoCaiNoMarcadorSemQuebrarOCartao` | IV.5 |
+| FR-013 identidade visual | `Theme.kt` (`InkBlack`, `SmokyGrey`, `FlameRedDark`), Material 3 | revisão de código + capturas de `docs/validacao.md` | IV.5 |
+| FR-014 altura consistente e fonte ampliada | `maxLines = 2` + ellipsis; miniatura de tamanho fixo | `emFonteDobradaAMiniaturaMantem64DpESubtituloNaoParteAPalavra` | IV.5 |
+| FR-015 descrição acessível | `variantPhotoDescription` + `catalog_thumbnail_no_photo` | `miniaturaDescreveModeloCorEAno`, `carrinhoSemFotoMostraMarcadorAcessivel` | IV.6 |
+| SC-001 todo cartão tem imagem ou marcador | `when` do `ItemThumbnail` | `amostraDoSc002…` (20 cartões) e `listaLonga…` (60) | IV.5 |
+| SC-002 amostra fixa de 20 | consulta + `VariantCard` | `amostraDoSc002MantemCadaMiniaturaNoProprioCartao` | I.2 |
+| SC-003 500 variantes em < 1 s | consulta única + `LazyColumn` | `CatalogBenchmark` (mediana 83 ms; rolagem sem prova em hardware) | V.8, R.7 |
+| SC-004 nada some, nada quebra | `AppNavHost`, `CatalogScreen` | `CatalogFlowTest` + `SearchScreenTest` + testes do cartão | V.1 |
+| SC-005 10% sem foto, 5% inválido | `ItemThumbnail` | `carrinhoSemFoto…`, `arquivoInvalido…`; semente do benchmark reproduz a proporção | IV.5 |
+
+Nenhuma linha depende de tabela nova, migração ou dependência adicionada; os testes citados
+estão em `app/src/androidTest/.../CatalogScreenTest.kt` (9), `core/data/src/test/.../
+VariantRepositoryTest.kt` (10) e no módulo `benchmark`.

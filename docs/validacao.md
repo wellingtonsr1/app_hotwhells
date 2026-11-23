@@ -126,6 +126,16 @@ Todos reproduzidos no emulador, com capturas em `docs/`.
 Em fonte normal (100%) o catálogo, o painel e o FAB não apresentam esses problemas — a
 comparação está em `validacao-catalogo-com-dados.png` e `validacao-ajustes.png`.
 
+> **Reconferência de 2026-11-23 — defeito 5**: não se reproduz no código atual. O atalho
+> «Ver exemplares» saiu da linha do título (commit `899ba85`), liberando a largura que
+> fazia a palavra quebrar, e o subtítulo passou a ter `maxLines = 2` com reticências
+> (`676a01d`). O caso agora é coberto por
+> `CatalogScreenTest.emFonteDobradaAMiniaturaMantem64DpESubtituloNaoParteAPalavra`, com
+> `fontScale = 2f`: 9/9 testes verdes no emulador API 36 em 2026-11-23. Reconferido por
+> teste automatizado, **não** por nova captura — os defeitos 1 a 4 e a captura da fonte
+> 200% continuam como registrados acima, e o veredito de SC-012 segue dependente de
+> TalkBack e de nova verificação visual.
+
 ## 6. Assinatura da verificação
 
 ```text
