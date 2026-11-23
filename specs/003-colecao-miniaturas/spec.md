@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-23
 
-**Status**: Draft
+**Status**: Implemented (v1) — SC-003 atestado só na metade «abre em menos de 1 s»
 
 **Input**: User description: "Melhoria visual da tela Coleção: cada cartão da listagem deve exibir uma miniatura fotográfica do carrinho à esquerda, com nome do modelo, fabricante, ano e quantidade de exemplares à direita, preservando pesquisa, filtros, navegação, botão de inclusão e a identidade visual atual."
 
@@ -198,11 +198,44 @@ termo de pesquisa e cadastrar um item pelo botão «+ Mini».
   principal escolhida pelo usuário.
 - **SC-003**: Uma listagem de 500 variantes abre em menos de 1 segundo e permanece com
   rolagem fluida, com as miniaturas carregadas apenas conforme entram na tela.
+  *(A abertura está medida — 83 ms de mediana; a fluidez da rolagem segue pendente de
+  aparelho físico, ver «Estado da implementação».)*
 - **SC-004**: Nenhuma informação hoje visível no cartão desaparece e nenhum caminho
   atual da tela (pesquisa, atalhos, cadastro, exemplares) deixa de funcionar.
 - **SC-005**: Com 10% das variantes sem foto e 5% com arquivo de foto inválido, nenhuma
   falha ou aviso de erro é apresentado ao usuário; nesses cartões aparece o espaço
   reservado.
+
+## Estado da implementação (2026-11-23)
+
+As três histórias estão implementadas e verificadas neste workspace; a evidência de cada
+comando e cada limitação de análise estão em [analysis.md](./analysis.md), e a marcação
+tarefa a tarefa em [tasks.md](./tasks.md).
+
+| Critério | Situação | Prova |
+|---|---|---|
+| SC-001 | Atendido | `amostraDoSc002MantemCadaMiniaturaNoProprioCartao` (20 cartões) e `listaLongaNaoCompoeCartoesForaDaTela` (60) |
+| SC-002 | Atendido | `VariantRepositoryTest` (seleção da foto) + teste de cartão da amostra fixa |
+| SC-003 | **Parcial** | Abertura medida por macrobenchmark: mediana **83 ms**, p90 127 ms em 10 aberturas. «Rolagem fluida» sem prova |
+| SC-004 | Atendido | `CatalogFlowTest` + `SearchScreenTest` + testes do cartão |
+| SC-005 | Atendido | `carrinhoSemFotoMostraMarcadorAcessivel`, `arquivoInvalidoCaiNoMarcadorSemQuebrarOCartao`; semente na proporção |
+
+A medição de desempenho roda pelo Gradle (`./gradlew
+:benchmark:connectedBenchmarkBenchmarkAndroidTest`, que instala o `:app:benchmark`) ou pelo
+roteiro manual de [quickstart.md](./quickstart.md).
+
+### Limitações que seguem abertas
+
+1. **SC-003 — «rolagem fluida» sem prova.** A medição é do AVD `hw_test` (API 36, x86_64,
+   GPU por software): o P90 de 40,5 ms por quadro (~25 fps) descreve a renderização do
+   emulador, não um aparelho. Falta repetir a medição em hardware físico para atender a
+   Constituição V.8; até lá o SC-003 não pode ser declarado atendido por inteiro.
+2. **Números absolutos não são meta de aparelho.** A mediana de 83 ms serve para comparar
+   versões do app no mesmo ambiente; a primeira abertura (1.230 ms) inclui instalação do
+   perfil e não representa a abertura típica.
+3. **Sem cobertura de aparelho de entrada.** Nem a fluidez nem o consumo de memória foram
+   exercitados em hardware modesto (2 GB de RAM, tela de 60 Hz), que é onde a rolagem com
+   500 miniaturas tem o pior caso.
 
 ## Assumptions
 

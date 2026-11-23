@@ -13,7 +13,8 @@ independentes.
 
 **Estado**: `[x]` = implementado e verificado neste workspace (2026-11-23), com o comando
 registrado em [analysis.md](./analysis.md); `[ ]` = pendente. A marcação de concluído não
-antecipa o portão G6, que exige suíte verde e limitações declaradas.
+antecipa o portão G6, que exige suíte verde e limitações declaradas: T029 e T030 seguem
+abertas porque a fluidez da rolagem não pode ser medida no emulador (Constituição V.8).
 
 ## Formato: `[ID] [P?] [Story] Descrição`
 
@@ -116,12 +117,14 @@ variante com e sem foto.
 
 - [x] T021 [P] Atualizar `specs/003-colecao-miniaturas/analysis.md` com decisões, correções e resultados de teste
 - [x] T022 [P] Validar o roteiro de `specs/003-colecao-miniaturas/quickstart.md` (build, testes de dados e de UI)
-- [x] T023 Medir SC-003 (500 variantes em < 1 s, rolagem fluida): `benchmark/src/main/java/br/com/diecastcollector/benchmark/CatalogBenchmark.kt` (abertura e rolagem), semente de 500 variantes em `tools/benchmark_seed.py` e instalação/semeadura em `tools/seed-benchmark-device.sh`; 2 testes verdes, abertura mediana 83 ms (Constituição V.8)
+- [x] T023 Medir SC-003 (500 variantes em < 1 s, rolagem fluida): `benchmark/src/main/java/br/com/diecastcollector/benchmark/CatalogBenchmark.kt` (abertura e rolagem), semente de 500 variantes em `tools/benchmark_seed.py` e instalação/semeadura em `tools/seed-benchmark-device.sh`; 2 testes verdes, abertura mediana 83 ms (Constituição V.8). O task `:benchmark:connectedBenchmarkBenchmarkAndroidTest` também passou a instalar o `:app:benchmark` (o `matchingFallbacks` do módulo `:benchmark` escolhia o `:app:release`): 3 testes, 0 falhas
 - [x] T024 [P] Registrar o resultado medido e atualizar o status de SC-003 em `specs/003-colecao-miniaturas/plan.md` e `specs/003-colecao-miniaturas/analysis.md` (depende de T023)
 - [x] T025 [P] Verificar que cartão e miniatura usam apenas tokens do tema escuro (`InkBlack`, `SmokyGrey`, `FlameRedDark`) e tipografia Material 3, sem cor ou fonte nova, em `core/ui/src/main/kotlin/br/com/diecastcollector/ui/theme/Theme.kt` e `app/src/main/java/br/com/diecastcollector/feature/catalog/CatalogScreen.kt` (FR-013; evidência em `analysis.md`)
 - [x] T026 [P] [US1] Cobrir que uma lista longa (60 variantes) não compõe cartões fora da tela: o último título não existe até a rolagem em `app/src/androidTest/java/br/com/diecastcollector/feature/catalog/CatalogScreenTest.kt` (FR-011; 8/8 verdes no emulador API 36)
 - [x] T027 [P] [US1] Cobrir em fonte 200% (`fontScale = 2f`) que a miniatura não encolhe e o subtítulo não parte palavra ao quebrar linha, reconferindo o defeito 5 de `docs/validacao.md`, em `app/src/androidTest/java/br/com/diecastcollector/feature/catalog/CatalogScreenTest.kt` (FR-014; 9/9 verdes no emulador API 36), com `maxLines = 2` e ellipsis (FR-014)
 - [x] T028 [P] Fechar o portão G5 com a matriz requisito ↔ código ↔ prova ↔ princípio da Constituição em `specs/003-colecao-miniaturas/analysis.md`
+- [ ] T029 Repetir a medição de SC-003 em aparelho físico (arm64, ≥ 6 GB), com a mesma semente de 500 variantes, para provar a metade «rolagem fluida»: `tools/benchmark_seed.py`, `tools/seed-benchmark-device.sh` e `./gradlew :benchmark:connectedBenchmarkBenchmarkAndroidTest` (Constituição V.8). **Bloqueada**: depende de hardware; no emulador o P90 de 40,5 ms por quadro reflete a GPU por software
+- [ ] T030 [P] Substituir os números de emulador do SC-003 pelos do aparelho físico em `specs/003-colecao-miniaturas/analysis.md` e `specs/003-colecao-miniaturas/plan.md`, mantendo os de emulador como comparação entre versões (depende de T029)
 
 ---
 
@@ -132,7 +135,7 @@ variante com e sem foto.
 - **Setup (Phase 1)**: sem dependências.
 - **Foundational (Phase 2)**: depende do Setup; bloqueia todas as histórias.
 - **User Stories (Phase 3+)**: dependem da Phase 2. US1, US2 e US3 podem ser feitas em paralelo, mas a validação visual compartilha o mesmo arquivo de teste, então na prática US1 → US2 → US3 em sequência.
-- **Polish (Phase 6)**: T023 depende das histórias estarem completas; T024 depende de T023.
+- **Polish (Phase 6)**: T023 depende das histórias estarem completas; T024 depende de T023; T030 depende de T029, que depende de aparelho físico e por isso fica fora deste workspace.
 
 ### Dependências entre histórias
 
@@ -184,7 +187,8 @@ Task: "Descrição composta em CatalogScreen.kt"
 1. US1 → valor visual (foto ou marcador em todo cartão).
 2. US2 → garante que informação e navegação não regrediram.
 3. US3 → garante atalhos, busca e inclusão.
-4. T023/T024 → fecha SC-003 com medição; até lá, o critério é meta.
+4. T023/T024 → SC-003 medido: a abertura (83 ms) está provada; a fluidez da rolagem
+   continua meta até T029 em aparelho físico.
 
 ---
 
