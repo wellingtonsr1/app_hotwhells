@@ -3,9 +3,11 @@ package br.com.diecastcollector.feature.organization
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
@@ -32,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.CollectionItemStatus
+import br.com.diecastcollector.ui.components.ItemThumbnail
 
 /**
  * Detalhe da coleção (T071, T072).
@@ -325,46 +328,62 @@ private fun ItemRow(
     onRemove: () -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+            // A foto vem do exemplar possuído do item (o DAO pega a principal, senão a
+            // primeira da variante/modelo). Item sem exemplar possuído mostra o marcador
+            // neutro: a linha continua legível e diz "0 de 1".
+            ItemThumbnail(
+                photoPath = item.photoPath,
+                contentDescription = stringResource(R.string.catalog_thumbnail_photo, item.label),
+                size = 56.dp,
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text(
-                    text = item.label,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = stringResource(
-                        R.string.collection_detail_units,
-                        item.ownedUnits,
-                        item.expected,
-                    ),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                TextButton(onClick = onToggleNonCollectible, enabled = enabled) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = item.label,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
                     Text(
                         text = stringResource(
-                            if (item.nonCollectible) {
-                                R.string.collection_detail_unmark_non_collectible
-                            } else {
-                                R.string.collection_detail_mark_non_collectible
-                            },
+                            R.string.collection_detail_units,
+                            item.ownedUnits,
+                            item.expected,
                         ),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                TextButton(onClick = onRemove, enabled = enabled) {
-                    Text(stringResource(R.string.collection_detail_remove))
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    TextButton(onClick = onToggleNonCollectible, enabled = enabled) {
+                        Text(
+                            text = stringResource(
+                                if (item.nonCollectible) {
+                                    R.string.collection_detail_unmark_non_collectible
+                                } else {
+                                    R.string.collection_detail_mark_non_collectible
+                                },
+                            ),
+                        )
+                    }
+                    TextButton(onClick = onRemove, enabled = enabled) {
+                        Text(stringResource(R.string.collection_detail_remove))
+                    }
                 }
             }
         }
