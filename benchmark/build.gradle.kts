@@ -5,11 +5,12 @@ plugins {
 }
 
 /**
- * Gera o Baseline Profile de abertura (T135).
+ * Duas suítes, um módulo `com.android.test` (não vira APK de produto):
  *
- * Módulo `com.android.test`: não vira APK de produto. O perfil é produzido contra o build
- * de release do `:app` e copiado para `app/src/main/baseline-prof.txt`, de onde o AGP o
- * empacota em `assets/dexopt/baseline.prof`.
+ * - `StartupBaselineProfile` gera o Baseline Profile de abertura (T135), copiado para
+ *   `app/src/main/baseline-prof.txt` e empacotado pelo AGP em `assets/dexopt/baseline.prof`;
+ * - `CatalogBenchmark` mede a abertura e a rolagem da Coleção com 500 variantes (SC-003 da
+ *   spec 003), contra o build `:app:benchmark`.
  */
 android {
     namespace = "br.com.diecastcollector.benchmark"
@@ -21,7 +22,10 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // O perfil é gerado no emulador x86_64 do projeto, não em aparelho físico.
         testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR"
-        testInstrumentationRunnerArguments["androidx.benchmark.enabledRules"] = "BaselineProfile"
+        // Perfil de abertura (StartupBaselineProfile) e medição de SC-003 (CatalogBenchmark):
+        // o MacrobenchmarkRule recusa rodar se o seu tipo não estiver nesta lista.
+        testInstrumentationRunnerArguments["androidx.benchmark.enabledRules"] =
+            "BaselineProfile,Macrobenchmark"
     }
 
     targetProjectPath = ":app"

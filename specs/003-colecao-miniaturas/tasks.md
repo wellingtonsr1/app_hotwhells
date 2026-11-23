@@ -116,8 +116,8 @@ variante com e sem foto.
 
 - [x] T021 [P] Atualizar `specs/003-colecao-miniaturas/analysis.md` com decisões, correções e resultados de teste
 - [x] T022 [P] Validar o roteiro de `specs/003-colecao-miniaturas/quickstart.md` (build, testes de dados e de UI)
-- [ ] T023 Medir SC-003 (500 variantes em < 1 s, rolagem fluida) e registrar o artefato de medição; hoje o módulo `benchmark/build.gradle.kts` não tem suíte implementada (Constituição V.8)
-- [ ] T024 [P] Registrar o resultado medido e atualizar o status de SC-003 em `specs/003-colecao-miniaturas/plan.md` e `specs/003-colecao-miniaturas/analysis.md` (depende de T023)
+- [x] T023 Medir SC-003 (500 variantes em < 1 s, rolagem fluida): `benchmark/src/main/java/br/com/diecastcollector/benchmark/CatalogBenchmark.kt` (abertura e rolagem), semente de 500 variantes em `tools/benchmark_seed.py` e instalação/semeadura em `tools/seed-benchmark-device.sh`; 2 testes verdes, abertura mediana 83 ms (Constituição V.8)
+- [x] T024 [P] Registrar o resultado medido e atualizar o status de SC-003 em `specs/003-colecao-miniaturas/plan.md` e `specs/003-colecao-miniaturas/analysis.md` (depende de T023)
 - [x] T025 [P] Verificar que cartão e miniatura usam apenas tokens do tema escuro (`InkBlack`, `SmokyGrey`, `FlameRedDark`) e tipografia Material 3, sem cor ou fonte nova, em `core/ui/src/main/kotlin/br/com/diecastcollector/ui/theme/Theme.kt` e `app/src/main/java/br/com/diecastcollector/feature/catalog/CatalogScreen.kt` (FR-013; evidência em `analysis.md`)
 - [x] T026 [P] [US1] Cobrir que uma lista longa (60 variantes) não compõe cartões fora da tela: o último título não existe até a rolagem em `app/src/androidTest/java/br/com/diecastcollector/feature/catalog/CatalogScreenTest.kt` (FR-011; 8/8 verdes no emulador API 36)
 

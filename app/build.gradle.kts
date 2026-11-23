@@ -69,6 +69,18 @@ android {
                 abiFilters += listOf("arm64-v8a", "armeabi-v7a")
             }
         }
+
+        /**
+         * Variante do macrobenchmark de SC-003 (spec 003): não minificada, como a do perfil
+         * de abertura, mas só x86_64 e assinada com a chave de debug para instalar no
+         * emulador. `src/benchmark/AndroidManifest.xml` acrescenta o `<profileable>` que o
+         * `MacrobenchmarkRule` exige — o release de entrega não leva essa marca.
+         */
+        create("benchmark") {
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            ndk.abiFilters += listOf("x86_64")
+        }
     }
 
     compileOptions {

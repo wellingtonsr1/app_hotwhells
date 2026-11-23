@@ -53,10 +53,10 @@ compartilhado
 | II — Modularidade | Regra de seleção na consulta do DAO; texto e idioma na apresentação (`CatalogScreen`); componente reutilizado `ItemThumbnail` | PASSA |
 | III — Segurança e privacidade | Nenhum segredo, nenhuma exportação de dado pessoal; foto lida do armazenamento privado | PASSA |
 | IV.5/IV.6 — Usabilidade e acessibilidade | Alvos ≥ 48 dp (cartão inteiro), descrição na foto e no marcador, tema escuro preservado, 360 dp | PASSA |
-| V — Testes e verificabilidade | Testes de dados e teste Compose dos cartões; SC-003 **não** declarado atendido sem medição | PASSA com ressalva (L1) |
+| V — Testes e verificabilidade | Testes de dados e teste Compose dos cartões; SC-003 medido por macrobenchmark em 2026-11-23 | PASSA |
 | VI.10/VI.11 — Offline e fonte de verdade local | Nenhuma chamada externa; caminho relativo + UUID existentes | PASSA |
 | R.2 — Imagens fora do banco | `photo.path` relativo; arquivo em `filesDir` | PASSA |
-| R.7 — Metas de volume/latência | Consulta única; carregamento sob demanda; medição pendente | PASSA com ressalva (L1) |
+| R.7 — Metas de volume/latência | Consulta única; carregamento sob demanda; abertura medida (83 ms medianos) | PASSA |
 | R.8 — Migrações | Nenhuma alteração de esquema | PASSA |
 | R.13/R.14 — Dependências e stack | Coil já presente; nenhuma dependência adicionada | PASSA |
 
@@ -133,13 +133,36 @@ as duas decisões de produto (foto de exemplar vendido; toque na miniatura ampli
 | Limite de linhas do cartão (D4) | `CatalogScreen.kt` | Aplicado |
 | Descrição composta modelo · cor · ano (D6) | `CatalogScreen.kt` | Aplicado |
 | Testes de dados e de cartão | `VariantRepositoryTest`, `CatalogScreenTest` | Aplicado |
-| Medição de SC-003 | — | **Pendente** |
+| Medição de SC-003 | `benchmark/.../CatalogBenchmark.kt` | Medido (2026-11-23) |
+
+### Medição de SC-003 (2026-11-23)
+
+Macrobenchmark da Coleção com 500 variantes semeadas (450 com foto, 25 com arquivo
+ausente, 25 sem foto — proporção de SC-005).
+
+| Medida | Valor |
+|---|---|
+| Abertura da Coleção — mediana (10 aberturas) | **83 ms** |
+| Abertura da Coleção — p90 | **127 ms** |
+| Abertura da Coleção — máxima (1ª abertura) | 1.230 ms |
+| Rolagem — duração de quadro P50 / P90 | 27,2 ms / 40,5 ms |
+| Rolagem — `frameOverrunMs` P50 / P90 | 15,0 ms / 31,1 ms |
+
+Ambiente: AVD `hw_test` API 36, x86_64, `-gpu swiftshader_indirect`; build `:app:benchmark`
+(não minificado, `<profileable>`, assinado com a chave de debug); `CompilationMode.Partial`
+com o perfil de abertura instalado. Comando em [quickstart.md](./quickstart.md).
+
+A metade “500 variantes em menos de 1 s” está atendida com folga (83 ms de mediana; 132 ms
+no pior caso fora da primeira abertura). “Rolagem fluida” **não** é atestada: no emulador
+o P90 de 40,5 ms por quadro (~25 fps) reflete a renderização por software, não um aparelho
+físico — segue pendente de medição em hardware real (Constituição V.8).
 
 ## Re-check pós-design
 
 Após o desenho, os gates continuam passando: nenhuma entidade nova, nenhum contrato externo
-alterado, nenhuma dependência adicionada. O único ponto aberto é a medição de desempenho
-(L1), que não bloqueia a correção funcional mas impede declarar SC-003 atendido (Art. V.8).
+alterado, nenhuma dependência adicionada (o macrobenchmark usa bibliotecas que o módulo
+`benchmark` já declarava). A medição de desempenho (L1) foi feita: a abertura atende SC-003;
+a fluidez da rolagem continua sem prova em aparelho físico (Art. V.8).
 
 ## Complexity Tracking
 

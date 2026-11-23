@@ -72,9 +72,40 @@ Esperado: 6 testes e 7 testes, respectivamente, sem falhas.
   altera registros.
 - Fotos, cadastros, backup e financeiro não são tocados; a única operação é leitura.
 
-## Pendência de desempenho (SC-003)
+## Medição de SC-003 (macrobenchmark)
 
-Não existe suíte de benchmark implementada no projeto (o módulo `benchmark` só tem
-`build.gradle.kts`). Para declarar SC-003 atendido é preciso medir com uma lista de 500
-variantes — por exemplo um macrobenchmark de abertura/rolagem da Coleção — e registrar o
-resultado. Até lá, o critério permanece meta (Constituição V.8).
+O módulo `benchmark` tem duas suítes: `StartupBaselineProfile` (perfil de abertura, T135) e
+`CatalogBenchmark` (abertura e rolagem da Coleção com 500 variantes). A lista é semeada em
+proporção de SC-005: 450 variantes com foto, 25 com arquivo ausente e 25 sem foto.
+
+```bash
+# 1. Semente: SQL + 450 miniaturas sintéticas em build/benchmark-seed/
+python tools/benchmark_seed.py
+
+# 2. Build da variante medida (não minificada, <profileable>, x86_64)
+./gradlew :app:assembleBenchmark :benchmark:assembleBenchmarkBenchmark
+
+# 3. Instala o app, abre uma vez para o Room criar o banco, insere as 500 variantes e
+#    copia as imagens (usa `adb root`, porque a variante medida não é depurável)
+ADB="$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe" bash tools/seed-benchmark-device.sh
+
+# 4. Executa os dois benchmarks
+"$ADB" install -r benchmark/build/outputs/apk/benchmarkBenchmark/benchmark-benchmarkBenchmark.apk
+"$ADB" shell am instrument -w -r \
+  -e class br.com.diecastcollector.benchmark.CatalogBenchmark \
+  -e androidx.benchmark.enabledRules Macrobenchmark \
+  -e androidx.benchmark.suppressErrors EMULATOR \
+  br.com.diecastcollector.benchmark/androidx.test.runner.AndroidJUnitRunner
+```
+
+Esperado: `OK (2 tests)` e, no logcat (`CatalogBenchmark`), a linha com mediana e p90 da
+abertura. Resultado da execução registrada em 2026-11-23: mediana **83 ms**, p90 127 ms
+(10 aberturas, emulador `hw_test` API 36 com GPU por software).
+
+`./gradlew :benchmark:connectedBenchmarkBenchmarkAndroidTest` **não** serve hoje: o AGP
+resolve a variante testada para `:app:release` (não assinada, sem x86_64) e a instalação
+falha com `INSTALL_PARSE_FAILED_NO_CERTIFICATES`, mesmo existindo o build type `benchmark`
+no `:app`. Por isso o roteiro acima instala o APK e roda a instrumentação à mão.
+
+**Limite**: a medição é de emulador; ela vale como comparação entre versões, não como
+desempenho de aparelho real. “Rolagem fluida” segue sem prova em hardware físico.

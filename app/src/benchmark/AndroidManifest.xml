@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      Variante `benchmark` do macrobenchmark de SC-003 (spec 003).
+
+      O MacrobenchmarkRule controla a compilação do processo medido, e para isso o app
+      precisa ser "profileable" — exigência que o build de entrega não tem. A marca vive
+      só nesta variante, então o APK distribuído continua sem ela.
+    -->
+    <application>
+        <profileable
+            android:shell="true"
+            tools:targetApi="29" />
+    </application>
+
+</manifest>

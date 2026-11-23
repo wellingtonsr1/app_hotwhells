@@ -5,9 +5,8 @@
 **Escopo da análise**: requisitos do spec 003 conferidos contra o código atual da tela
 **Coleção** (aba «Catálogo», título «Coleção»), do componente de miniatura e da consulta
 que fornece a foto representativa.
-**Fora de escopo**: `plan.md` e `tasks.md` ainda não existem, portanto esta análise **não**
-substitui o portão G5 completo (Constituição ↔ spec ↔ plano ↔ tarefas). Ela cobre apenas
-spec ↔ código.
+**Fora de escopo**: o portão G5 completo (Constituição ↔ spec ↔ plano ↔ tarefas). Este
+documento cobre spec ↔ código e a medição de SC-003; `plan.md` e `tasks.md` estão ao lado.
 
 ## Método
 
@@ -32,7 +31,7 @@ Leitura direta e conferência de comportamento em:
 | D4 | FR-014 (altura consistente) | Corrigido | Baixa | Código |
 | D5 | FR-007 (toque no cartão) | Aceito no spec | Média | Spec |
 | D6 | FR-015 (descrição distingue o carrinho) | Corrigido | Baixa | Código |
-| L1 | SC-003 (desempenho) | Em aberto | Média | Medição |
+| L1 | SC-003 (desempenho) | Medido em 2026-11-23 | Média | Medição |
 | L2–L4 | Testes do cartão, placeholder e subtítulo | Cobertos | Média | Testes |
 
 Conformes sem ressalva: FR-001, FR-002, FR-003 (com ressalva O1), FR-005, FR-006, FR-008,
@@ -165,11 +164,41 @@ sem tocar no domínio (a composição é da apresentação, como o subtítulo).
 
 ## Lacunas de verificação (não são divergências de código)
 
-### L1 — SC-003 sem medição
+### L1 — SC-003 medido em 2026-11-23
 
-Nenhum teste ou registro mede “500 variantes em menos de 1 segundo”. Pela Constituição V.8
-o critério não pode ser declarado atendido sem medição reproduzível; hoje ele é meta, não
-resultado.
+O módulo `benchmark` ganhou `CatalogBenchmark.kt` (macrobenchmark), que abre e rola a
+Coleção com 500 variantes semeadas. Resultado da execução registrada:
+
+| Medida | Valor |
+|---|---|
+| Abertura da Coleção — mediana (10 aberturas) | **83 ms** |
+| Abertura da Coleção — p90 | **127 ms** |
+| Abertura da Coleção — mínima / máxima | 73 ms / 1.230 ms (1ª abertura, após instalar) |
+| Troca de aba — quadros por abertura (mediana) | 4,5 quadros |
+| Troca de aba — duração de quadro P50/P90 | 28,3 ms / 131,8 ms (primeira composição dos cartões) |
+| Rolagem — duração de quadro P50/P90/P95 | 27,2 ms / 40,5 ms / 44,9 ms |
+| Rolagem — `frameOverrunMs` P50/P90 | 15,0 ms / 31,1 ms |
+
+Execução anterior, mesmo comando: mediana **90 ms**, p90 123 ms, mínima 67 ms, máxima
+1.327 ms — a abertura é estável, o máximo é sempre a primeira iteração.
+
+**O que fica provado**: a metade “500 variantes em menos de 1 segundo” do SC-003 está
+atendida com folga (mediana 83 ms, pior caso fora da primeira abertura 132 ms).
+
+**O que não fica provado**: “rolagem fluida”. O emulador renderiza por software
+(SwiftShader) e o P90 de 40,5 ms por quadro equivale a ~25 fps, acima do orçamento de
+16,7 ms de 60 Hz — isso descreve o emulador, não um aparelho. A fluidez em hardware real
+continua pendente de medição em aparelho físico (Constituição V.8).
+
+**Ambiente**: AVD `hw_test` (API 36, x86_64, `-gpu swiftshader_indirect`), build
+`:app:benchmark` (não minificado, com `<profileable>`, assinado com a chave de debug) e
+`CompilationMode.Partial` usando o perfil de abertura instalado. Lista semeada em
+proporção de SC-005: 450 variantes com foto (PNG de 256×256), 25 com arquivo ausente e 25
+sem foto — os caminhos de fallback entram na medição.
+
+**Como repetir**: `tools/benchmark_seed.py`, `tools/seed-benchmark-device.sh` e o comando
+`am instrument` de [quickstart.md](./quickstart.md). A abertura é cronometrada do toque na
+aba até o primeiro cartão existir na árvore de acessibilidade, com consulta a cada 10 ms.
 
 ### L2 — Sem teste do placeholder e do arquivo inválido
 
@@ -260,6 +289,8 @@ há alteração de comportamento no app.
 | `:app:compileDebugKotlin` + `:app:compileDebugAndroidTestKotlin` | BUILD SUCCESSFUL |
 | `:app:connectedDebugAndroidTest` — `CatalogScreenTest` | 8 testes, 0 falhas (emulador API 36) |
 | `:app:connectedDebugAndroidTest` — `CatalogFlowTest` + `SearchScreenTest` | 7 testes, 0 falhas |
+| `:benchmark:assembleBenchmarkBenchmark` + `am instrument` — `CatalogBenchmark` (500 variantes) | 2 testes, 0 falhas; abertura mediana 83 ms |
 
-**Continua em aberto**: L1 — nenhuma medição de SC-003 (500 variantes em menos de 1 s).
-Pela Constituição V.8, o critério permanece meta até haver medição reproduzível.
+**Fechado em 2026-11-23**: L1 e SC-003 medidos — ver a seção L1 acima. O que segue sem
+prova é apenas “rolagem fluida” em aparelho físico, porque a medição disponível é de
+emulador com renderização por software.
