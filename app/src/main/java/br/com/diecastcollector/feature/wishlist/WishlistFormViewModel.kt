@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.diecastcollector.R
+import br.com.diecastcollector.di.ApplicationScope
 import br.com.diecastcollector.domain.model.MoneyCents
 import br.com.diecastcollector.domain.model.VariantSummary
 import br.com.diecastcollector.domain.model.WishlistItem
@@ -16,6 +17,7 @@ import java.time.Clock
 import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,6 +57,7 @@ public class WishlistFormViewModel @Inject constructor(
     private val wishlistRepository: WishlistRepository,
     variantRepository: VariantRepository,
     private val clock: Clock,
+    @ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
 
     private val itemId: String? = savedStateHandle[ARG_ITEM_ID]
@@ -69,6 +72,15 @@ public class WishlistFormViewModel @Inject constructor(
 
     /** Arquivos que o desejo deixou de usar; só saem do disco depois de salvar com sucesso. */
     private val photosToDelete = mutableListOf<String>()
+
+    /**
+     * Fotos gravadas nesta sessão que ainda não estão no banco.
+     *
+     * A foto é gravada antes de o desejo ser salvo — é o que permite mostrar a miniatura no
+     * próprio formulário. Se a pessoa sair sem salvar, o arquivo não fica referenciado por
+     * ninguém: este conjunto é a lista do que apagar em [onCleared].
+     */
+    private val unsavedPhotos = mutableSetOf<String>()
 
     private val _state = MutableStateFlow(WishlistFormUiState(editing = itemId != null))
     public val state: StateFlow<WishlistFormUiState> = _state.asStateFlow()
@@ -146,6 +158,7 @@ public class WishlistFormViewModel @Inject constructor(
             wishlistRepository.storePhoto(wishId, source).fold(
                 onSuccess = { path ->
                     _state.value.photoPath?.let { photosToDelete.add(it) }
+                    unsavedPhotos.add(path)
                     _state.update { it.copy(photoPath = path, savingPhoto = false) }
                 },
                 onFailure = { error ->
@@ -223,6 +236,8 @@ public class WishlistFormViewModel @Inject constructor(
             }
             result.fold(
                 onSuccess = {
+                    // A foto nova passou a ser do desejo: nada dela pode ser apagado na saída.
+                    unsavedPhotos.clear()
                     // Só depois do save a foto antiga pode sumir: cancelar não apaga nada.
                     photosToDelete.forEach { path -> wishlistRepository.deletePhoto(path) }
                     photosToDelete.clear()
@@ -237,6 +252,25 @@ public class WishlistFormViewModel @Inject constructor(
                     }
                 },
             )
+        }
+    }
+
+    /**
+     * Sair do formulário sem salvar descarta a foto escolhida.
+     *
+     * O sistema chama `onCleared` quando a tela sai da pilha — pelo botão voltar, pelo gesto
+     * ou por qualquer outro caminho —, e é aqui que o arquivo de rascunho deixa de existir.
+     * A foto do desejo já salvo não entra em [unsavedPhotos], então editar e desistir não
+     * apaga a foto que o desejo continua usando.
+     */
+    override fun onCleared() {
+        super.onCleared()
+        if (unsavedPhotos.isEmpty()) return
+        val orphans = unsavedPhotos.toList()
+        unsavedPhotos.clear()
+        // O `viewModelScope` já está cancelado neste ponto: a limpeza precisa de outro escopo.
+        applicationScope.launch {
+            orphans.forEach { path -> wishlistRepository.deletePhoto(path) }
         }
     }
 
