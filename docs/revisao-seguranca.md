@@ -67,6 +67,7 @@ Nenhuma permissão intrusiva (como localização precisa, contatos, microfone ou
 2. **Localização das Fotos**:
    - `files/images/<exemplarId>/` no armazenamento interno privado do aplicativo (`context.filesDir`).
    - Remoção de metadados EXIF sensíveis (incluindo geolocalização GPS) no salvamento via `ImageStore`.
+   - A orientação do EXIF é **aplicada aos pixels** antes da recompressão (as oito orientações, incluindo os espelhamentos): a foto é regravada em pé, na posição em que foi tirada, e o arquivo final não carrega nenhuma etiqueta EXIF — a rotação fica no desenho da imagem, não em metadado. Sem isso, descartar o EXIF deixaria a foto de câmera permanentemente deitada.
 3. **Controle de Dados pelo Titular (LGPD / FR-157 / FR-163)**:
    - A tela `DataControlScreen` (T146) disponibiliza:
      - Exportação integral aberta (banco + imagens + manifesto em arquivo ZIP).

@@ -18,6 +18,13 @@ seção «Revisão de fechamento»).
 | Fotos | `files/images/<idDoExemplar>/` no armazenamento privado do app |
 | Lembrete de backup (último pacote e intervalo) | `SharedPreferences` do app, fora do banco |
 
+**Sobre as fotos:** ao salvar, o app aplica a rotação do EXIF nos próprios pixels e só
+depois recomprime em JPEG. É isso que faz a foto aparecer em pé na grade e no visualizador
+quando o celular foi usado na vertical — e o arquivo gravado continua **sem EXIF**, sem data,
+modelo da câmera ou coordenada de GPS. Fotos adicionadas antes dessa correção (novembro/2026)
+ficavam deitadas porque a etiqueta de orientação era descartada junto com o resto do EXIF;
+para endireitar uma delas, apague a foto na ficha do exemplar e adicione de novo.
+
 O pacote de release usa o pacote `br.com.diecastcollector`; o de debug,
 `br.com.diecastcollector.debug`. **São dois apps distintos** — instalar um não atualiza o
 outro e os dados de um não aparecem no outro sem backup/restauração.
