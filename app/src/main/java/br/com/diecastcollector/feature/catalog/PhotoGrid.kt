@@ -256,7 +256,10 @@ private fun PhotoItemCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(1f)
+            // Proporção retrato: as fotos são tiradas com o celular em pé, e o recorte
+            // quadrado cortava as laterais do carrinho. 3:4 ainda cabe em duas colunas
+            // numa tela de 360 dp, com os dois botões no canto.
+            .aspectRatio(3f / 4f)
             .clickable(onClick = onOpen),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
