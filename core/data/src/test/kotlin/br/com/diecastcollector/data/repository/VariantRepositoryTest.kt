@@ -288,6 +288,92 @@ public class VariantRepositoryTest {
         assertThat(summary.primaryPhotoPath).isEqualTo("images/ex-foto/back.jpg")
     }
 
+    @Test
+    public fun `resumo do catalogo sem foto traz caminho nulo`() = runBlocking {
+        val model = newModel()
+        val variant = newVariant(model.id, "fp-sem-foto")
+        variants.create(variant).getOrThrow()
+        database.exemplarDao().insert(newExemplar("ex-sem-foto", variant.id))
+
+        val summary = variants.observeSummaries().first().single { it.variantId == variant.id }
+        assertThat(summary.primaryPhotoPath).isNull()
+        assertThat(summary.exemplarCount).isEqualTo(1)
+    }
+
+    @Test
+    public fun `sem foto principal o resumo escolhe a primeira pela ordem`() = runBlocking {
+        val model = newModel()
+        val variant = newVariant(model.id, "fp-sem-principal")
+        variants.create(variant).getOrThrow()
+        database.exemplarDao().insert(newExemplar("ex-ordem", variant.id))
+        // Inseridas fora de ordem de propósito: vale sort_order, não a ordem de criação.
+        database.photoDao().insert(newPhoto("p-depois", "ex-ordem", "images/ex-ordem/b.jpg", 1))
+        database.photoDao().insert(newPhoto("p-antes", "ex-ordem", "images/ex-ordem/a.jpg", 0))
+
+        val summary = variants.observeSummaries().first().single { it.variantId == variant.id }
+        assertThat(summary.primaryPhotoPath).isEqualTo("images/ex-ordem/a.jpg")
+    }
+
+    /**
+     * Decisão de 2026-11-23: a miniatura mantém a foto de um exemplar que saiu do acervo.
+     * A contagem continua sendo só de exemplares possuídos — é ela que diz o que o
+     * colecionador tem hoje.
+     */
+    @Test
+    public fun `resumo mantem foto de exemplar vendido e conta so os possuidos`() = runBlocking {
+        val model = newModel()
+        val variant = newVariant(model.id, "fp-vendido")
+        variants.create(variant).getOrThrow()
+        database.exemplarDao().insert(
+            newExemplar("ex-vendido", variant.id, status = "SOLD"),
+        )
+        database.photoDao().insert(
+            newPhoto("p-vendido", "ex-vendido", "images/ex-vendido/front.jpg", 0, primary = true),
+        )
+
+        val summary = variants.observeSummaries().first().single { it.variantId == variant.id }
+        assertThat(summary.primaryPhotoPath).isEqualTo("images/ex-vendido/front.jpg")
+        assertThat(summary.exemplarCount).isEqualTo(0)
+    }
+
+    private fun newExemplar(
+        id: String,
+        variantId: String,
+        status: String = "OWNED",
+    ): ExemplarEntity = ExemplarEntity(
+        id = id,
+        variantId = variantId,
+        internalCode = "HW-$id",
+        condition = "SEALED",
+        packagingCondition = null,
+        locationId = null,
+        status = status,
+        notes = null,
+        rowVersion = 0L,
+        createdAt = 1L,
+        updatedAt = 1L,
+    )
+
+    private fun newPhoto(
+        id: String,
+        exemplarId: String,
+        path: String,
+        sortOrder: Int,
+        primary: Boolean = false,
+    ): PhotoEntity = PhotoEntity(
+        id = id,
+        exemplarId = exemplarId,
+        angle = "FRONT",
+        path = path,
+        checksum = "checksum-$id",
+        isPrimary = primary,
+        sortOrder = sortOrder,
+        width = null,
+        height = null,
+        bytes = null,
+        capturedAt = null,
+    )
+
     private suspend fun newModel(): br.com.diecastcollector.domain.model.CarModel {
         val manufacturer = manufacturers.add("Mattel", "EUA").getOrThrow()
         return models.add(manufacturer.id, "Twin Mill", "1:64").getOrThrow()

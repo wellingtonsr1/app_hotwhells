@@ -57,6 +57,7 @@
     <string name="catalog_add">+ Mini</string>
     <string name="catalog_empty_title">Nenhuma miniatura ainda</string>
     <string name="catalog_thumbnail_photo">Foto de %1$s</string>
+    <string name="catalog_thumbnail_no_photo">Sem foto do carrinho</string>
     <string name="catalog_incomplete_action">Incompletos (%1$d)</string>
     <string name="catalog_exemplar_none">nenhum exemplar</string>
     <plurals name="catalog_exemplar_count">

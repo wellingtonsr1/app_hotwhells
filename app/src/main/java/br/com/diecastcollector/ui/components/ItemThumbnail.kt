@@ -56,6 +56,10 @@ internal fun ItemThumbnail(
 ) {
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
+    val path = photoPath?.takeIf { it.isNotBlank() }
+    // Arquivo apagado ou corrompido não pode virar quadrado vazio: cai no marcador,
+    // igual à variante que nunca teve foto.
+    var loadFailed by remember(path) { mutableStateOf(false) }
 
     Box(
         modifier = modifier
@@ -63,27 +67,34 @@ internal fun ItemThumbnail(
             .clip(RoundedCornerShape(10.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
             // Sem foto não há o que ampliar: o cartão segue abrindo o item.
-            .then(if (photoPath.isNullOrBlank()) Modifier else Modifier.clickable { expanded = true }),
+            .then(
+                if (path == null || loadFailed) {
+                    Modifier
+                } else {
+                    Modifier.clickable { expanded = true }
+                },
+            ),
         contentAlignment = Alignment.Center,
     ) {
-        if (photoPath.isNullOrBlank()) {
-            Icon(
+        when {
+            path == null || loadFailed -> Icon(
                 imageVector = Icons.Filled.DirectionsCar,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.catalog_thumbnail_no_photo),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(size / 2),
             )
-        } else {
-            AsyncImage(
-                model = File(context.filesDir, photoPath),
+
+            else -> AsyncImage(
+                model = File(context.filesDir, path),
                 contentDescription = contentDescription,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
+                onError = { loadFailed = true },
             )
         }
     }
 
-    if (expanded && !photoPath.isNullOrBlank()) {
+    if (expanded && path != null && !loadFailed) {
         Dialog(
             onDismissRequest = { expanded = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -95,7 +106,7 @@ internal fun ItemThumbnail(
                     .clickable { expanded = false },
             ) {
                 AsyncImage(
-                    model = File(context.filesDir, photoPath),
+                    model = File(context.filesDir, path),
                     contentDescription = contentDescription,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier

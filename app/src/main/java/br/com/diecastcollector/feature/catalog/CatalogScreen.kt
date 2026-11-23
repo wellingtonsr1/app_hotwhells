@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -190,18 +191,24 @@ private fun VariantCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ItemThumbnail(
                     photoPath = variant.primaryPhotoPath,
-                    contentDescription = stringResource(
-                        R.string.catalog_thumbnail_photo,
-                        variant.modelName,
-                    ),
+                    contentDescription = variantPhotoDescription(variant),
                 )
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = variant.modelName, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = variant.modelName,
+                        style = MaterialTheme.typography.titleMedium,
+                        // Duas linhas bastam para identificar o carrinho; sem o limite, o
+                        // nome longo esticava o cartão e quebrava o ritmo da lista.
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                     Text(
                         text = variantSubtitle(variant),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -242,6 +249,21 @@ private fun variantSubtitle(variant: VariantSummary): String {
         exemplarText,
     ).joinToString(" · ")
 }
+
+/**
+ * Descrição da miniatura para o leitor de tela: nome do modelo e, quando houver, cor e
+ * ano. Só o nome deixaria duas variantes do mesmo modelo com a mesma descrição.
+ */
+@Composable
+private fun variantPhotoDescription(variant: VariantSummary): String =
+    stringResource(
+        R.string.catalog_thumbnail_photo,
+        listOfNotNull(
+            variant.modelName,
+            variant.colorName,
+            variant.releaseYear?.toString(),
+        ).joinToString(" · "),
+    )
 
 @Composable
 private fun EmptyCatalog() {
