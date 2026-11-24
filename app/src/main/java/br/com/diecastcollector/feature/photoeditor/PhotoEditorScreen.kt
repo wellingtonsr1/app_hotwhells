@@ -8,14 +8,19 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalView
@@ -24,6 +29,8 @@ import androidx.core.view.WindowInsetsCompat
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.os.Build
+import android.view.WindowManager
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -66,7 +73,9 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -130,6 +139,10 @@ public fun PhotoEditorDialog(
         },
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
+            // Sem isto a janela do diálogo não reporta insets: com edge-to-edge
+            // obrigatório (targetSdk 35+) o rodapé ficava sob a barra de navegação e os
+            // botões "Restaurar ajustes" não recebiam toque.
+            decorFitsSystemWindows = false,
         ),
     ) {
         Surface(
@@ -246,6 +259,7 @@ private fun PhotoEditorContent(
     onSave: () -> Unit,
     onRestoreOriginal: (() -> Unit)?,
 ) {
+    val panelMaxHeight = with(LocalConfiguration.current) { (screenHeightDp * 0.40f).dp }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -369,38 +383,50 @@ private fun PhotoEditorContent(
 
         ToolTabs(selected = state.tool, onTool = onTool)
 
+        // O rodapé é ancorado embaixo: apertar o espaçamento interno ganha altura para a
+        // prévia, e a folga extra no fim é o que afasta "Restaurar ajustes" da barra de
+        // navegação do sistema (encostada ali, o toque caía nos botões do aparelho).
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 2.dp, bottom = PANEL_BOTTOM_MARGIN),
         ) {
-            when (state.tool) {
-                PhotoTool.CROP -> CropPanel(
-                    aspect = state.edit.aspect,
-                    onAspect = onAspect,
-                )
+            // O painel cresce conforme a ferramenta ("Cor" tem três controles): limitado e
+            // rolável, ele nunca empurra o rodapé para debaixo da barra do sistema.
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = panelMaxHeight)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                when (state.tool) {
+                    PhotoTool.CROP -> CropPanel(
+                        aspect = state.edit.aspect,
+                        onAspect = onAspect,
+                    )
 
-                PhotoTool.ORIENT -> OrientPanel(
-                    edit = state.edit,
-                    onRotateLeft = onRotateLeft,
-                    onRotateRight = onRotateRight,
-                    onFlip = onFlip,
-                    onStraighten = onStraighten,
-                )
+                    PhotoTool.ORIENT -> OrientPanel(
+                        edit = state.edit,
+                        onRotateLeft = onRotateLeft,
+                        onRotateRight = onRotateRight,
+                        onFlip = onFlip,
+                        onStraighten = onStraighten,
+                    )
 
-                PhotoTool.ADJUST -> AdjustPanel(
-                    edit = state.edit,
-                    onBrightness = onBrightness,
-                    onContrast = onContrast,
-                    onSaturation = onSaturation,
-                )
+                    PhotoTool.ADJUST -> AdjustPanel(
+                        edit = state.edit,
+                        onBrightness = onBrightness,
+                        onContrast = onContrast,
+                        onSaturation = onSaturation,
+                    )
 
-                PhotoTool.SHARPEN -> SharpenPanel(
-                    edit = state.edit,
-                    onSharpness = onSharpness,
-                    onQuality = onQuality,
-                )
+                    PhotoTool.SHARPEN -> SharpenPanel(
+                        edit = state.edit,
+                        onSharpness = onSharpness,
+                        onQuality = onQuality,
+                    )
+                }
             }
 
             Row(
@@ -430,7 +456,7 @@ private fun ToolTabs(selected: PhotoTool, onTool: (PhotoTool) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp, vertical = 2.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         PhotoTool.entries.forEach { tool ->
@@ -881,42 +907,87 @@ private fun CropStage(
 /**
  * Insets do sistema para o diálogo.
  *
- * O `Dialog` do Compose cria uma janela própria; em telas com barra de gestos o inset
- * inferior não chega ao `systemBarsPadding` dessa janela, e o rodapé ficava por baixo da
- * barra. Aqui os insets são lidos diretamente do `decorView` do diálogo.
+ * O `Dialog` do Compose cria uma janela própria, e nem sempre essa janela reporta os
+ * insets: em alguns aparelhos o inset inferior chega como 0 (o rodapé ficava sob a barra de
+ * navegação, sem receber toque) enquanto o topo vem certo. Por isso são três leituras
+ * independentes, e vale a maior por lado:
+ *
+ * 1. `WindowInsets.safeDrawing` da janela do diálogo (`decorFitsSystemWindows = false`);
+ * 2. o `decorView` da Activity que abriu o editor;
+ * 3. `WindowManager.currentWindowMetrics`, que não depende de dispatch de insets.
+ *
+ * Se as três reportarem zero na base, usa-se a altura canônica de `navigation_bar_height`,
+ * para que o rodapé continue alcançável.
  */
 @Composable
 private fun dialogInsetsPadding(): Modifier {
     val view = LocalView.current
     val density = LocalDensity.current
-    var insets by remember { mutableStateOf(IntArray(4)) }
+    val layoutDirection = LocalLayoutDirection.current
+    val windowInsets = WindowInsets.safeDrawing.asPaddingValues()
+    var activityInsets by remember { mutableStateOf(IntArray(4)) }
+    val metricsInsets = remember(view) { systemBarInsetsFromWindowMetrics(view.context) }
+    val navigationBarFallback = remember(view) { navigationBarHeightPx(view.context) }
 
     DisposableEffect(view) {
-        // O decorView do diálogo não recebe insets do sistema (janela sem essa marca);
-        // a fonte confiável é o decorView da Activity que abriu o editor.
+        // Reserva: a Activity que abriu o editor. É dela que vem o inset quando a janela
+        // do diálogo ainda não recebeu os seus.
         val activityDecor = view.context.findActivity()?.window?.decorView
         val target = activityDecor ?: view
-        fun read(windowInsets: WindowInsetsCompat?) {
-            val bars = windowInsets?.getInsets(
+        fun read(systemInsets: WindowInsetsCompat?) {
+            val bars = systemInsets?.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout(),
             ) ?: return
             val next = intArrayOf(bars.left, bars.top, bars.right, bars.bottom)
-            if (!next.contentEquals(insets)) insets = next
+            if (!next.contentEquals(activityInsets)) activityInsets = next
         }
         read(ViewCompat.getRootWindowInsets(target))
-        ViewCompat.setOnApplyWindowInsetsListener(target) { _, windowInsets ->
-            read(windowInsets)
-            windowInsets
+        ViewCompat.setOnApplyWindowInsetsListener(target) { _, systemInsets ->
+            read(systemInsets)
+            systemInsets
         }
         ViewCompat.requestApplyInsets(target)
         onDispose { ViewCompat.setOnApplyWindowInsetsListener(target, null) }
     }
 
-    val left = with(density) { insets[0].toDp() }
-    val top = with(density) { insets[1].toDp() }
-    val right = with(density) { insets[2].toDp() }
-    val bottom = with(density) { insets[3].toDp() }
-    return Modifier.padding(start = left, top = top, end = right, bottom = bottom)
+    fun sidePx(index: Int): Int {
+        val fromWindow = when (index) {
+            0 -> with(density) { windowInsets.calculateLeftPadding(layoutDirection).roundToPx() }
+            1 -> with(density) { windowInsets.calculateTopPadding().roundToPx() }
+            2 -> with(density) { windowInsets.calculateRightPadding(layoutDirection).roundToPx() }
+            else -> with(density) { windowInsets.calculateBottomPadding().roundToPx() }
+        }
+        return maxOf(fromWindow, activityInsets[index], metricsInsets[index])
+    }
+
+    val bottomPx = sidePx(3).let { if (it > 0) it else navigationBarFallback }
+    return Modifier.padding(
+        start = with(density) { sidePx(0).toDp() },
+        top = with(density) { sidePx(1).toDp() },
+        end = with(density) { sidePx(2).toDp() },
+        bottom = with(density) { bottomPx.toDp() },
+    )
+}
+
+/**
+ * Insets dos system bars pela janela, e não pelo dispatch: `getInsetsIgnoringVisibility`
+ * devolve a área reservada mesmo que a barra esteja oculta naquele instante.
+ */
+private fun systemBarInsetsFromWindowMetrics(context: Context): IntArray {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return IntArray(4)
+    val manager = context.getSystemService(WindowManager::class.java) ?: return IntArray(4)
+    val insets = manager.currentWindowMetrics.windowInsets.getInsetsIgnoringVisibility(
+        android.view.WindowInsets.Type.systemBars() or
+            android.view.WindowInsets.Type.displayCutout(),
+    )
+    return intArrayOf(insets.left, insets.top, insets.right, insets.bottom)
+}
+
+/** Altura canônica da barra de navegação, usada só quando nenhuma fonte reporta inset. */
+private fun navigationBarHeightPx(context: Context): Int {
+    val resources = context.resources
+    val id = resources.getIdentifier("navigation_bar_height", "dimen", "android")
+    return if (id > 0) resources.getDimensionPixelSize(id) else 0
 }
 
 /** Sobe a cadeia de contextos até a Activity que hospeda o diálogo. */
@@ -970,6 +1041,8 @@ private fun EditorMessage(
 }
 
 // ---- Auxiliares ---------------------------------------------------------------------
+
+private val PANEL_BOTTOM_MARGIN = 32.dp
 
 private fun formatValue(value: Float): String {
     val percent = (value * 100).toInt()
