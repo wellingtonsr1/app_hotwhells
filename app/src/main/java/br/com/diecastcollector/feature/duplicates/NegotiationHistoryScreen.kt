@@ -1,7 +1,10 @@
 package br.com.diecastcollector.feature.duplicates
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
@@ -16,6 +19,8 @@ import br.com.diecastcollector.domain.model.Negotiation
 import br.com.diecastcollector.domain.model.NegotiationEvent
 import br.com.diecastcollector.domain.model.NegotiationStatus
 import br.com.diecastcollector.domain.model.NegotiationType
+import br.com.diecastcollector.ui.components.LocalWindowSizeClass
+import br.com.diecastcollector.ui.components.isMediumOrWider
 import br.com.diecastcollector.ui.format.formatMoneyPtBr
 import java.time.Instant
 import java.time.ZoneId
@@ -53,60 +58,87 @@ public fun NegotiationHistoryScreen(
             return@Column
         }
 
+        // Histórico em uma coluna no celular e em duas a partir da janela média: as
+        // negociações são independentes e cabem lado a lado sem apertar o texto (T321).
+        val columns = if (LocalWindowSizeClass.current.isMediumOrWider) 2 else 1
         negotiations
             .sortedByDescending { it.closedAt ?: it.startedAt }
-            .forEach { negotiation ->
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Text(
-                            text = "${typeLabel(negotiation.type)} · " +
-                                statusLabel(negotiation.status),
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                        Text(
-                            text = stringResource(
-                                R.string.negotiation_history_started,
-                                formatInstant(negotiation.startedAt),
-                            ),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        listOfNotNull(
-                            negotiation.counterparty?.let {
-                                stringResource(R.string.negotiation_counterparty_value, it)
-                            },
-                            negotiation.channel?.let {
-                                stringResource(R.string.negotiation_channel_value, it)
-                            },
-                            negotiation.amount?.let {
-                                stringResource(
-                                    R.string.negotiation_amount_value,
-                                    formatMoneyPtBr(it.cents),
-                                )
-                            },
-                        ).forEach { line ->
-                            Text(text = line, style = MaterialTheme.typography.bodySmall)
-                        }
-
-                        eventsByNegotiation[negotiation.id].orEmpty().forEach { event ->
-                            Text(
-                                text = buildString {
-                                    append(formatInstant(event.at))
-                                    event.description?.let { append(" · $it") }
-                                    event.amount?.let {
-                                        append(" · ${formatMoneyPtBr(it.cents)}")
-                                    }
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            .chunked(columns)
+            .forEach { row ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    row.forEach { negotiation ->
+                        Box(modifier = Modifier.weight(1f)) {
+                            NegotiationCard(
+                                negotiation = negotiation,
+                                events = eventsByNegotiation[negotiation.id].orEmpty(),
                             )
                         }
                     }
+                    repeat(columns - row.size) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
                 }
             }
+    }
+}
+
+@Composable
+private fun NegotiationCard(
+    negotiation: Negotiation,
+    events: List<NegotiationEvent>,
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = "${typeLabel(negotiation.type)} · " +
+                    statusLabel(negotiation.status),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
+                text = stringResource(
+                    R.string.negotiation_history_started,
+                    formatInstant(negotiation.startedAt),
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            listOfNotNull(
+                negotiation.counterparty?.let {
+                    stringResource(R.string.negotiation_counterparty_value, it)
+                },
+                negotiation.channel?.let {
+                    stringResource(R.string.negotiation_channel_value, it)
+                },
+                negotiation.amount?.let {
+                    stringResource(
+                        R.string.negotiation_amount_value,
+                        formatMoneyPtBr(it.cents),
+                    )
+                },
+            ).forEach { line ->
+                Text(text = line, style = MaterialTheme.typography.bodySmall)
+            }
+
+            events.forEach { event ->
+                Text(
+                    text = buildString {
+                        append(formatInstant(event.at))
+                        event.description?.let { append(" · $it") }
+                        event.amount?.let {
+                            append(" · ${formatMoneyPtBr(it.cents)}")
+                        }
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 

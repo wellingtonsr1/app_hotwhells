@@ -30,6 +30,7 @@ O projeto utiliza o **Android Lint** com verificação ativa de dependências em
 | `androidx.activity:activity-compose` | 1.10.0 | Nenhum | Conforme |
 | `androidx.navigation:navigation-compose` | 2.8.5 | Nenhum | Conforme |
 | `androidx.compose.*` | BOM 2025.01.00 | Nenhum | Conforme |
+| `androidx.compose.material3:material3-window-size-class` | BOM 2025.01.00 | Nenhum | Conforme |
 | `com.google.dagger:hilt-android` | 2.53.1 | Nenhum | Conforme |
 | `androidx.room:*` | 2.6.1 | Nenhum | Conforme |
 | `androidx.datastore:datastore-preferences` | 1.1.1 | Nenhum | Conforme |

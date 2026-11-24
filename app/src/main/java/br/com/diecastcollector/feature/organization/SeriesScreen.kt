@@ -3,12 +3,12 @@ package br.com.diecastcollector.feature.organization
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -29,12 +29,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.Series
+import br.com.diecastcollector.ui.components.AdaptiveGrid
+
+/** Marcas de teste das linhas de série (T323). */
+public object SeriesTags {
+    public const val ROW: String = "series-row"
+}
 
 /**
  * Séries do fabricante (T070).
@@ -132,10 +139,13 @@ internal fun SeriesContent(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                else -> LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                else -> AdaptiveGrid(
+                    // Nome da série mais duas ações: 280 dp mantém o cartão legível em
+                    // 1 coluna no celular e 2–3 no tablet (T319).
+                    minItemSize = 280.dp,
+                    contentPadding = PaddingValues(bottom = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 24.dp),
                 ) {
                     items(state.items, key = { it.id }) { series ->
                         SeriesRow(
@@ -230,7 +240,7 @@ private fun SeriesRow(
     onRename: () -> Unit,
     onArchive: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(modifier = Modifier.fillMaxWidth().testTag(SeriesTags.ROW)) {
         Column(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),

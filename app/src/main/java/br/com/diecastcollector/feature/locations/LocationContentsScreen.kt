@@ -3,12 +3,12 @@ package br.com.diecastcollector.feature.locations
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -27,6 +27,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.InventoryItem
 import br.com.diecastcollector.feature.catalog.labelRes
+import br.com.diecastcollector.ui.components.AdaptiveGrid
 
 /** Inventário da localização e das sublocalizações (T105/T106). */
 @Composable
@@ -96,10 +97,14 @@ internal fun LocationContentsContent(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize().padding(top = 8.dp),
+                    AdaptiveGrid(
+                        // Inventário cresce por localização: largura mínima de 300 dp
+                        // dá colunas a partir da janela média (T320).
+                        modifier = Modifier.padding(top = 8.dp),
+                        minItemSize = 300.dp,
+                        contentPadding = PaddingValues(bottom = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 24.dp),
                     ) {
                         items(state.items, key = { it.exemplarId }) { item ->
                             InventoryRow(item = item, onClick = { onOpenExemplar(item.exemplarId) })

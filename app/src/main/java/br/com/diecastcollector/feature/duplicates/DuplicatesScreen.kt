@@ -7,8 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -32,6 +31,7 @@ import br.com.diecastcollector.domain.model.DuplicateAvailability
 import br.com.diecastcollector.domain.model.DuplicateExemplar
 import br.com.diecastcollector.domain.model.DuplicateGroup
 import br.com.diecastcollector.feature.catalog.labelRes
+import br.com.diecastcollector.ui.components.AdaptiveGrid
 import br.com.diecastcollector.ui.format.formatMoneyPtBr
 
 /**
@@ -104,10 +104,13 @@ public fun DuplicatesScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                else -> LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                else -> AdaptiveGrid(
+                    // Cada grupo traz os exemplares e duas ações por linha: 320 dp evita
+                    // cartão apertado e ainda dá 2–3 colunas em 1.000 dp (T321).
+                    minItemSize = 320.dp,
                     contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     items(state.groups, key = { it.variantId }) { group ->
                         DuplicateGroupCard(

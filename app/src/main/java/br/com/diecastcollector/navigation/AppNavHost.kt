@@ -2,8 +2,12 @@ package br.com.diecastcollector.navigation
 
 import android.net.Uri
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -13,6 +17,8 @@ import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -63,6 +70,8 @@ import br.com.diecastcollector.feature.transfer.BackupScreen
 import br.com.diecastcollector.feature.transfer.ImportScreen
 import br.com.diecastcollector.feature.wishlist.WishlistFormScreen
 import br.com.diecastcollector.feature.wishlist.WishlistScreen
+import br.com.diecastcollector.ui.components.LocalWindowSizeClass
+import br.com.diecastcollector.ui.components.isMediumOrWider
 
 /**
  * Rotas do aplicativo.
@@ -240,6 +249,12 @@ public object RouteArgs {
     public const val INCOMPLETE_MESSAGE: String = "incompleteMessage"
 }
 
+/** Marcas de teste das duas formas de navegação (T322). */
+public object AppShellTags {
+    public const val NAVIGATION_BAR: String = "shell-navigation-bar"
+    public const val NAVIGATION_RAIL: String = "shell-navigation-rail"
+}
+
 /** Aba da barra inferior: rota, rótulo e ícone. Só rotas de primeiro nível entram aqui. */
 private data class BottomTab(
     val destination: Destination,
@@ -262,32 +277,37 @@ public fun AppNavHost(
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val windowSizeClass = LocalWindowSizeClass.current
+    // Trilho a partir da classe média (600 dp); na compacta a barra inferior continua.
+    val useRail = windowSizeClass.isMediumOrWider
+    // Telas de detalhe não têm navegação principal, nas duas formas.
+    val isTopLevel = bottomTabs.any { it.destination.route == currentRoute }
+
+    val onTabSelected: (BottomTab, Boolean) -> Unit = { tab, selected ->
+        if (!selected) {
+            navController.navigate(tab.destination.route) {
+                // Trocar de aba não empilha: volta ao início do grafo e preserva o
+                // estado de cada aba.
+                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
 
     Scaffold(
         // O padding do Scaffold externo é só o da barra: as telas de dentro já tratam as
         // barras do sistema, e somar as duas daria margem dobrada no topo.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            if (bottomTabs.any { it.destination.route == currentRoute }) {
-                NavigationBar {
+            if (!useRail && isTopLevel) {
+                NavigationBar(modifier = Modifier.testTag(AppShellTags.NAVIGATION_BAR)) {
                     bottomTabs.forEach { tab ->
                         val selected = backStackEntry?.destination?.hierarchy
                             ?.any { it.route == tab.destination.route } == true
                         NavigationBarItem(
                             selected = selected,
-                            onClick = {
-                                if (!selected) {
-                                    navController.navigate(tab.destination.route) {
-                                        // Trocar de aba não empilha: volta ao início do
-                                        // grafo e preserva o estado de cada aba.
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
-                            },
+                            onClick = { onTabSelected(tab, selected) },
                             icon = { Icon(tab.icon, contentDescription = stringResource(tab.label)) },
                             label = {
                                 Text(
@@ -303,303 +323,331 @@ public fun AppNavHost(
             }
         },
     ) { padding ->
-        NavHost(
-            navController = navController,
-            startDestination = startDestination.route,
-            modifier = Modifier.padding(padding),
-        ) {
-            composable(Destination.Dashboard.route) {
-                DashboardScreen()
-            }
-            composable(Destination.Catalog.route) {
-                CatalogScreen(
-                    onVariantClick = { variantId ->
-                        navController.navigate(Destination.AddExemplar.routeFor(variantId))
-                    },
-                    onOpenExemplars = { variantId ->
-                        navController.navigate(Destination.ExemplarList.routeFor(variantId))
-                    },
-                    onCreateEntry = { navController.navigate(Destination.CreateEntry.routeFor()) },
-                    onOpenIncomplete = { navController.navigate(Destination.Incomplete.route) },
-                    onOpenSearch = { navController.navigate(Destination.Search.route) },
-                    onOpenCollections = { navController.navigate(Destination.Collections.route) },
-                    onOpenDuplicates = { navController.navigate(Destination.Duplicates.route) },
-                    onOpenBarcode = { navController.navigate(Destination.BarcodeScan.route) },
-                )
-            }
-            composable(Destination.BarcodeScan.route) {
-                BarcodeScanScreen(
-                    onBack = { navController.popBackStack() },
-                    onUseVariant = { variantId ->
-                        navController.navigate(Destination.AddExemplar.routeFor(variantId))
-                    },
-                    onCreateManual = { code ->
-                        navController.navigate(Destination.CreateEntry.routeFor(code))
-                    },
-                )
-            }
-            composable(Destination.Duplicates.route) {
-                DuplicatesScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenNegotiation = { exemplarId ->
-                        navController.navigate(Destination.Negotiation.routeFor(exemplarId))
-                    },
-                )
-            }
-            composable(
-                route = Destination.Negotiation.route,
-                arguments = listOf(
-                    navArgument(RouteArgs.EXEMPLAR_ID) { type = NavType.StringType },
-                ),
-            ) {
-                NegotiationScreen(onBack = { navController.popBackStack() })
-            }
-            composable(Destination.Collections.route) {
-                CollectionsScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenCollection = { collectionId ->
-                        navController.navigate(Destination.CollectionDetail.routeFor(collectionId))
-                    },
-                    onCreate = { navController.navigate(Destination.CollectionForm.routeFor()) },
-                    onOpenSeries = { navController.navigate(Destination.Series.route) },
-                )
-            }
-            composable(
-                route = Destination.CollectionDetail.route,
-                arguments = listOf(
-                    navArgument(RouteArgs.COLLECTION_ID) { type = NavType.StringType },
-                ),
-            ) { entry ->
-                CollectionDetailScreen(
-                    onBack = { navController.popBackStack() },
-                    onEdit = { collectionId ->
-                        navController.navigate(Destination.CollectionForm.routeFor(collectionId))
-                    },
-                )
-            }
-            composable(
-                route = Destination.CollectionForm.route,
-                arguments = listOf(
-                    navArgument(RouteArgs.COLLECTION_ID) {
-                        type = NavType.StringType
-                        nullable = true
-                        defaultValue = null
-                    },
-                ),
-            ) {
-                CollectionFormScreen(onDone = { navController.popBackStack() })
-            }
-            composable(Destination.Series.route) {
-                SeriesScreen(onBack = { navController.popBackStack() })
-            }
-            composable(Destination.Search.route) {
-                SearchScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenExemplar = { exemplarId ->
-                        navController.navigate(Destination.ExemplarDetail.routeFor(exemplarId))
-                    },
-                )
-            }
-            // Cadastro da miniatura em dois passos: o modelo é resolvido primeiro e a
-            // variante (com o primeiro exemplar e as fotos) vem em seguida.
-            composable(Destination.Incomplete.route) { entry ->
-                // A confirmação vem da tela que editou: ela sai antes de a mensagem ser
-                // lida, então o resultado viaja pelo SavedStateHandle da própria lista.
-                val messages = remember(entry) {
-                    entry.savedStateHandle.getStateFlow<String?>(RouteArgs.INCOMPLETE_MESSAGE, null)
+        Row(modifier = Modifier.fillMaxSize().padding(padding)) {
+            if (useRail && isTopLevel) {
+                NavigationRail(
+                    modifier = Modifier
+                        .windowInsetsPadding(WindowInsets.safeDrawing)
+                        .testTag(AppShellTags.NAVIGATION_RAIL),
+                ) {
+                    bottomTabs.forEach { tab ->
+                        val selected = backStackEntry?.destination?.hierarchy
+                            ?.any { it.route == tab.destination.route } == true
+                        NavigationRailItem(
+                            selected = selected,
+                            onClick = { onTabSelected(tab, selected) },
+                            icon = {
+                                Icon(tab.icon, contentDescription = stringResource(tab.label))
+                            },
+                            label = {
+                                Text(
+                                    text = stringResource(tab.label),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            },
+                        )
+                    }
                 }
-                val message by messages.collectAsState()
-                IncompleteEntriesScreen(
-                    onSelectModel = { modelId ->
-                        navController.navigate(Destination.VariantForm.routeFor(modelId))
-                    },
-                    onEditModel = { modelId ->
-                        navController.navigate(Destination.ModelForm.routeFor(modelId))
-                    },
-                    onEditVariant = { variantId ->
-                        navController.navigate(Destination.VariantEdit.routeFor(variantId))
-                    },
-                    message = message,
-                    onMessageShown = {
-                        entry.savedStateHandle[RouteArgs.INCOMPLETE_MESSAGE] = null
-                    },
-                )
             }
-            composable(
-                route = Destination.VariantEdit.route,
-                arguments = listOf(navArgument(RouteArgs.VARIANT_ID) { type = NavType.StringType }),
+            NavHost(
+                navController = navController,
+                startDestination = startDestination.route,
+                modifier = Modifier.padding(padding),
             ) {
-                val variantUpdated = stringResource(R.string.incomplete_variant_updated)
-                VariantEditScreen(
-                    variantId = it.arguments?.getString(RouteArgs.VARIANT_ID).orEmpty(),
-                    onSaved = {
-                        navController.previousBackStackEntry?.savedStateHandle?.set(
-                            RouteArgs.INCOMPLETE_MESSAGE,
-                            variantUpdated,
-                        )
-                        navController.popBackStack()
-                    },
-                )
-            }
-            composable(
-                route = Destination.ModelForm.route,
-                arguments = listOf(
-                    navArgument(RouteArgs.MODEL_ID) { type = NavType.StringType },
-                ),
-            ) {
-                val modelUpdated = stringResource(R.string.incomplete_model_updated)
-                ModelFormScreen(
-                    onBack = { navController.popBackStack() },
-                    onSaved = {
-                        navController.previousBackStackEntry?.savedStateHandle?.set(
-                            RouteArgs.INCOMPLETE_MESSAGE,
-                            modelUpdated,
-                        )
-                        navController.popBackStack()
-                    },
-                )
-            }
-            composable(
-                route = Destination.CreateEntry.route,
-                arguments = listOf(
-                    navArgument(RouteArgs.CODE) {
-                        type = NavType.StringType
-                        nullable = true
-                        defaultValue = null
-                    },
-                ),
-            ) { entry ->
-                val code = entry.arguments?.getString(RouteArgs.CODE)
-                CreateCatalogEntryScreen(
-                    onModelCreated = { modelId ->
-                        // Cadastrar a miniatura é uma intenção só: o modelo resolvido segue
-                        // direto para a variante, que cria o exemplar e recebe as fotos — e
-                        // leva adiante o código lido, se houver (FR-112).
-                        navController.popBackStack()
-                        navController.navigate(Destination.VariantForm.routeFor(modelId, code))
-                    },
-                )
-            }
-            composable(
-                route = Destination.VariantForm.route,
-                arguments = listOf(
-                    navArgument(RouteArgs.MODEL_ID) { type = NavType.StringType },
-                    navArgument(RouteArgs.CODE) {
-                        type = NavType.StringType
-                        nullable = true
-                        defaultValue = null
-                    },
-                ),
-            ) { entry ->
-                VariantFormScreen(
-                    modelId = entry.arguments?.getString(RouteArgs.MODEL_ID).orEmpty(),
-                    initialManufacturerCode = entry.arguments?.getString(RouteArgs.CODE),
-                    // Volta para quem abriu: catálogo no cadastro novo, lista de incompletos
-                    // quando a variante está sendo criada para completar um modelo órfão.
-                    onVariantSaved = { navController.popBackStack() },
-                )
-            }
-            composable(
-                route = Destination.AddExemplar.route,
-                arguments = listOf(navArgument(RouteArgs.VARIANT_ID) { type = NavType.StringType }),
-            ) {
-                AddExemplarScreen(
-                    onSaved = { navController.popBackStack() },
-                )
-            }
-            composable(
-                route = Destination.ExemplarList.route,
-                arguments = listOf(navArgument(RouteArgs.VARIANT_ID) { type = NavType.StringType }),
-            ) {
-                ExemplarListScreen(
-                    onAddExemplar = { variantId ->
-                        navController.navigate(Destination.AddExemplar.routeFor(variantId))
-                    },
-                    onOpenExemplar = { exemplarId ->
-                        navController.navigate(Destination.ExemplarDetail.routeFor(exemplarId))
-                    },
-                )
-            }
-            composable(
-                route = Destination.ExemplarDetail.route,
-                arguments = listOf(navArgument(RouteArgs.EXEMPLAR_ID) { type = NavType.StringType }),
-            ) {
-                ExemplarDetailScreen(
-                    onDone = { navController.popBackStack() },
-                )
-            }
-            composable(Destination.Wishlist.route) {
-                WishlistScreen(
-                    onAdd = { navController.navigate(Destination.WishlistForm.routeFor()) },
-                    onEdit = { itemId ->
-                        navController.navigate(Destination.WishlistForm.routeFor(itemId))
-                    },
-                )
-            }
-            composable(
-                route = Destination.WishlistForm.route,
-                arguments = listOf(
-                    navArgument(RouteArgs.WISHLIST_ITEM_ID) {
-                        type = NavType.StringType
-                        nullable = true
-                        defaultValue = null
-                    },
-                ),
-            ) {
-                WishlistFormScreen(onSaved = { navController.popBackStack() })
-            }
-            composable(Destination.Finance.route) {
-                FinanceScreen()
-            }
-            composable(Destination.Locations.route) {
-                LocationsScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenContents = { locationId ->
-                        navController.navigate(Destination.LocationContents.routeFor(locationId))
-                    },
-                )
-            }
-            composable(
-                route = Destination.LocationContents.route,
-                arguments = listOf(
-                    navArgument(RouteArgs.LOCATION_ID) { type = NavType.StringType },
-                ),
-            ) {
-                LocationContentsScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenExemplar = { exemplarId ->
-                        navController.navigate(Destination.ExemplarDetail.routeFor(exemplarId))
-                    },
-                )
-            }
-            composable(Destination.Settings.route) {
-                SettingsRoute(
-                    onAbout = { navController.navigate(Destination.SettingsAbout.route) },
-                    onPrivacy = { navController.navigate(Destination.SettingsPrivacy.route) },
-                    onLocations = { navController.navigate(Destination.Locations.route) },
-                    onBackup = { navController.navigate(Destination.Backup.route) },
-                    onDataControl = { navController.navigate(Destination.DataControl.route) },
-                    onReports = { navController.navigate(Destination.Reports.route) },
-                    onImport = { navController.navigate(Destination.Import.route) },
-                )
-            }
-            composable(Destination.Backup.route) {
-                BackupScreen(onBack = { navController.popBackStack() })
-            }
-            composable(Destination.Reports.route) {
-                ReportsScreen(onBack = { navController.popBackStack() })
-            }
-            composable(Destination.Import.route) {
-                ImportScreen(onBack = { navController.popBackStack() })
-            }
-            composable(Destination.DataControl.route) {
-                DataControlRoute(onBack = { navController.popBackStack() })
-            }
-            composable(Destination.SettingsAbout.route) {
-                AboutScreen()
-            }
-            composable(Destination.SettingsPrivacy.route) {
-                PrivacyPolicyScreen()
+                composable(Destination.Dashboard.route) {
+                    DashboardScreen()
+                }
+                composable(Destination.Catalog.route) {
+                    CatalogScreen(
+                        onVariantClick = { variantId ->
+                            navController.navigate(Destination.AddExemplar.routeFor(variantId))
+                        },
+                        onOpenExemplars = { variantId ->
+                            navController.navigate(Destination.ExemplarList.routeFor(variantId))
+                        },
+                        onCreateEntry = { navController.navigate(Destination.CreateEntry.routeFor()) },
+                        onOpenIncomplete = { navController.navigate(Destination.Incomplete.route) },
+                        onOpenSearch = { navController.navigate(Destination.Search.route) },
+                        onOpenCollections = { navController.navigate(Destination.Collections.route) },
+                        onOpenDuplicates = { navController.navigate(Destination.Duplicates.route) },
+                        onOpenBarcode = { navController.navigate(Destination.BarcodeScan.route) },
+                    )
+                }
+                composable(Destination.BarcodeScan.route) {
+                    BarcodeScanScreen(
+                        onBack = { navController.popBackStack() },
+                        onUseVariant = { variantId ->
+                            navController.navigate(Destination.AddExemplar.routeFor(variantId))
+                        },
+                        onCreateManual = { code ->
+                            navController.navigate(Destination.CreateEntry.routeFor(code))
+                        },
+                    )
+                }
+                composable(Destination.Duplicates.route) {
+                    DuplicatesScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenNegotiation = { exemplarId ->
+                            navController.navigate(Destination.Negotiation.routeFor(exemplarId))
+                        },
+                    )
+                }
+                composable(
+                    route = Destination.Negotiation.route,
+                    arguments = listOf(
+                        navArgument(RouteArgs.EXEMPLAR_ID) { type = NavType.StringType },
+                    ),
+                ) {
+                    NegotiationScreen(onBack = { navController.popBackStack() })
+                }
+                composable(Destination.Collections.route) {
+                    CollectionsScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenCollection = { collectionId ->
+                            navController.navigate(Destination.CollectionDetail.routeFor(collectionId))
+                        },
+                        onCreate = { navController.navigate(Destination.CollectionForm.routeFor()) },
+                        onOpenSeries = { navController.navigate(Destination.Series.route) },
+                    )
+                }
+                composable(
+                    route = Destination.CollectionDetail.route,
+                    arguments = listOf(
+                        navArgument(RouteArgs.COLLECTION_ID) { type = NavType.StringType },
+                    ),
+                ) { entry ->
+                    CollectionDetailScreen(
+                        onBack = { navController.popBackStack() },
+                        onEdit = { collectionId ->
+                            navController.navigate(Destination.CollectionForm.routeFor(collectionId))
+                        },
+                    )
+                }
+                composable(
+                    route = Destination.CollectionForm.route,
+                    arguments = listOf(
+                        navArgument(RouteArgs.COLLECTION_ID) {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        },
+                    ),
+                ) {
+                    CollectionFormScreen(onDone = { navController.popBackStack() })
+                }
+                composable(Destination.Series.route) {
+                    SeriesScreen(onBack = { navController.popBackStack() })
+                }
+                composable(Destination.Search.route) {
+                    SearchScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenExemplar = { exemplarId ->
+                            navController.navigate(Destination.ExemplarDetail.routeFor(exemplarId))
+                        },
+                    )
+                }
+                // Cadastro da miniatura em dois passos: o modelo é resolvido primeiro e a
+                // variante (com o primeiro exemplar e as fotos) vem em seguida.
+                composable(Destination.Incomplete.route) { entry ->
+                    // A confirmação vem da tela que editou: ela sai antes de a mensagem ser
+                    // lida, então o resultado viaja pelo SavedStateHandle da própria lista.
+                    val messages = remember(entry) {
+                        entry.savedStateHandle.getStateFlow<String?>(RouteArgs.INCOMPLETE_MESSAGE, null)
+                    }
+                    val message by messages.collectAsState()
+                    IncompleteEntriesScreen(
+                        onSelectModel = { modelId ->
+                            navController.navigate(Destination.VariantForm.routeFor(modelId))
+                        },
+                        onEditModel = { modelId ->
+                            navController.navigate(Destination.ModelForm.routeFor(modelId))
+                        },
+                        onEditVariant = { variantId ->
+                            navController.navigate(Destination.VariantEdit.routeFor(variantId))
+                        },
+                        message = message,
+                        onMessageShown = {
+                            entry.savedStateHandle[RouteArgs.INCOMPLETE_MESSAGE] = null
+                        },
+                    )
+                }
+                composable(
+                    route = Destination.VariantEdit.route,
+                    arguments = listOf(navArgument(RouteArgs.VARIANT_ID) { type = NavType.StringType }),
+                ) {
+                    val variantUpdated = stringResource(R.string.incomplete_variant_updated)
+                    VariantEditScreen(
+                        variantId = it.arguments?.getString(RouteArgs.VARIANT_ID).orEmpty(),
+                        onSaved = {
+                            navController.previousBackStackEntry?.savedStateHandle?.set(
+                                RouteArgs.INCOMPLETE_MESSAGE,
+                                variantUpdated,
+                            )
+                            navController.popBackStack()
+                        },
+                    )
+                }
+                composable(
+                    route = Destination.ModelForm.route,
+                    arguments = listOf(
+                        navArgument(RouteArgs.MODEL_ID) { type = NavType.StringType },
+                    ),
+                ) {
+                    val modelUpdated = stringResource(R.string.incomplete_model_updated)
+                    ModelFormScreen(
+                        onBack = { navController.popBackStack() },
+                        onSaved = {
+                            navController.previousBackStackEntry?.savedStateHandle?.set(
+                                RouteArgs.INCOMPLETE_MESSAGE,
+                                modelUpdated,
+                            )
+                            navController.popBackStack()
+                        },
+                    )
+                }
+                composable(
+                    route = Destination.CreateEntry.route,
+                    arguments = listOf(
+                        navArgument(RouteArgs.CODE) {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        },
+                    ),
+                ) { entry ->
+                    val code = entry.arguments?.getString(RouteArgs.CODE)
+                    CreateCatalogEntryScreen(
+                        onModelCreated = { modelId ->
+                            // Cadastrar a miniatura é uma intenção só: o modelo resolvido segue
+                            // direto para a variante, que cria o exemplar e recebe as fotos — e
+                            // leva adiante o código lido, se houver (FR-112).
+                            navController.popBackStack()
+                            navController.navigate(Destination.VariantForm.routeFor(modelId, code))
+                        },
+                    )
+                }
+                composable(
+                    route = Destination.VariantForm.route,
+                    arguments = listOf(
+                        navArgument(RouteArgs.MODEL_ID) { type = NavType.StringType },
+                        navArgument(RouteArgs.CODE) {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        },
+                    ),
+                ) { entry ->
+                    VariantFormScreen(
+                        modelId = entry.arguments?.getString(RouteArgs.MODEL_ID).orEmpty(),
+                        initialManufacturerCode = entry.arguments?.getString(RouteArgs.CODE),
+                        // Volta para quem abriu: catálogo no cadastro novo, lista de incompletos
+                        // quando a variante está sendo criada para completar um modelo órfão.
+                        onVariantSaved = { navController.popBackStack() },
+                    )
+                }
+                composable(
+                    route = Destination.AddExemplar.route,
+                    arguments = listOf(navArgument(RouteArgs.VARIANT_ID) { type = NavType.StringType }),
+                ) {
+                    AddExemplarScreen(
+                        onSaved = { navController.popBackStack() },
+                    )
+                }
+                composable(
+                    route = Destination.ExemplarList.route,
+                    arguments = listOf(navArgument(RouteArgs.VARIANT_ID) { type = NavType.StringType }),
+                ) {
+                    ExemplarListScreen(
+                        onAddExemplar = { variantId ->
+                            navController.navigate(Destination.AddExemplar.routeFor(variantId))
+                        },
+                        onOpenExemplar = { exemplarId ->
+                            navController.navigate(Destination.ExemplarDetail.routeFor(exemplarId))
+                        },
+                    )
+                }
+                composable(
+                    route = Destination.ExemplarDetail.route,
+                    arguments = listOf(navArgument(RouteArgs.EXEMPLAR_ID) { type = NavType.StringType }),
+                ) {
+                    ExemplarDetailScreen(
+                        onDone = { navController.popBackStack() },
+                    )
+                }
+                composable(Destination.Wishlist.route) {
+                    WishlistScreen(
+                        onAdd = { navController.navigate(Destination.WishlistForm.routeFor()) },
+                        onEdit = { itemId ->
+                            navController.navigate(Destination.WishlistForm.routeFor(itemId))
+                        },
+                    )
+                }
+                composable(
+                    route = Destination.WishlistForm.route,
+                    arguments = listOf(
+                        navArgument(RouteArgs.WISHLIST_ITEM_ID) {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        },
+                    ),
+                ) {
+                    WishlistFormScreen(onSaved = { navController.popBackStack() })
+                }
+                composable(Destination.Finance.route) {
+                    FinanceScreen()
+                }
+                composable(Destination.Locations.route) {
+                    LocationsScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenContents = { locationId ->
+                            navController.navigate(Destination.LocationContents.routeFor(locationId))
+                        },
+                    )
+                }
+                composable(
+                    route = Destination.LocationContents.route,
+                    arguments = listOf(
+                        navArgument(RouteArgs.LOCATION_ID) { type = NavType.StringType },
+                    ),
+                ) {
+                    LocationContentsScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenExemplar = { exemplarId ->
+                            navController.navigate(Destination.ExemplarDetail.routeFor(exemplarId))
+                        },
+                    )
+                }
+                composable(Destination.Settings.route) {
+                    SettingsRoute(
+                        onAbout = { navController.navigate(Destination.SettingsAbout.route) },
+                        onPrivacy = { navController.navigate(Destination.SettingsPrivacy.route) },
+                        onLocations = { navController.navigate(Destination.Locations.route) },
+                        onBackup = { navController.navigate(Destination.Backup.route) },
+                        onDataControl = { navController.navigate(Destination.DataControl.route) },
+                        onReports = { navController.navigate(Destination.Reports.route) },
+                        onImport = { navController.navigate(Destination.Import.route) },
+                    )
+                }
+                composable(Destination.Backup.route) {
+                    BackupScreen(onBack = { navController.popBackStack() })
+                }
+                composable(Destination.Reports.route) {
+                    ReportsScreen(onBack = { navController.popBackStack() })
+                }
+                composable(Destination.Import.route) {
+                    ImportScreen(onBack = { navController.popBackStack() })
+                }
+                composable(Destination.DataControl.route) {
+                    DataControlRoute(onBack = { navController.popBackStack() })
+                }
+                composable(Destination.SettingsAbout.route) {
+                    AboutScreen()
+                }
+                composable(Destination.SettingsPrivacy.route) {
+                    PrivacyPolicyScreen()
+                }
             }
         }
     }

@@ -4,12 +4,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -40,6 +40,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.LocationArchivePolicy
 import br.com.diecastcollector.domain.model.LocationType
+import br.com.diecastcollector.ui.components.AdaptiveGrid
 
 /**
  * Árvore de localizações (T102) e o diálogo de exclusão com decisão explícita (T104).
@@ -145,13 +146,13 @@ internal fun LocationsContent(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                else -> LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                else -> AdaptiveGrid(
+                    // Localização tem recuo de hierarquia e três ações: 300 dp mantém
+                    // 1 coluna no celular e 2–3 no tablet sem apertar os botões (T320).
+                    minItemSize = 300.dp,
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 96.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        top = 8.dp,
-                        bottom = 96.dp,
-                    ),
                 ) {
                     items(state.rows, key = { it.id }) { row ->
                         LocationRow(

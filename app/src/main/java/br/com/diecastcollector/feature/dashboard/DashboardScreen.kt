@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,8 +39,16 @@ import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.CollectionProgress
 import br.com.diecastcollector.domain.model.DashboardEntry
 import br.com.diecastcollector.domain.model.DashboardSnapshot
+import br.com.diecastcollector.ui.components.LocalWindowSizeClass
+import br.com.diecastcollector.ui.components.isExpanded
+import br.com.diecastcollector.ui.components.isMediumOrWider
 import br.com.diecastcollector.ui.format.formatCentsPtBr
 import kotlin.math.abs
+
+/** Marcas de teste dos indicadores do painel (T323). */
+public object DashboardTags {
+    public const val METRIC: String = "dashboard-metric"
+}
 
 /**
  * Painel do estado da coleção (US3, FR-001–FR-011).
@@ -142,7 +151,13 @@ private fun DashboardBody(modifier: Modifier, snapshot: DashboardSnapshot) {
     }
 }
 
-/** Os onze indicadores, três por linha, na ordem em que o colecionador confere o acervo. */
+/**
+ * Os onze indicadores na ordem em que o colecionador confere o acervo.
+ *
+ * As colunas vêm da largura da janela (T314): três no celular, quatro na janela média e
+ * cinco na expandida. A fonte ampliada continua mandando mais que a largura — com 200% de
+ * escala três cartões por linha truncariam o valor, então nesse caso ficam dois.
+ */
 @Composable
 private fun IndicatorGrid(snapshot: DashboardSnapshot) {
     val moneyInvested = moneyText(snapshot.investedCents)
@@ -162,8 +177,14 @@ private fun IndicatorGrid(snapshot: DashboardSnapshot) {
         stringResource(R.string.dashboard_metric_difference) to moneyDifference,
     )
 
+    val windowSizeClass = LocalWindowSizeClass.current
     val fontScale = LocalConfiguration.current.fontScale
-    val columns = if (fontScale >= 1.3f) 2 else COLUMNS
+    val widthColumns = when {
+        windowSizeClass.isExpanded -> 5
+        windowSizeClass.isMediumOrWider -> 4
+        else -> COLUMNS
+    }
+    val columns = if (fontScale >= 1.3f) 2 else widthColumns
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         indicators.chunked(columns).forEach { row ->
@@ -179,7 +200,7 @@ private fun IndicatorGrid(snapshot: DashboardSnapshot) {
 
 @Composable
 private fun MetricCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(modifier = modifier) {
+    Card(modifier = modifier.testTag(DashboardTags.METRIC)) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

@@ -292,6 +292,7 @@
     <string name="exemplar_delete_blocked_hint">Exclusão bloqueada: este exemplar tem vínculos. Use arquivar para retirá-lo do acervo sem perder o histórico.</string>
     <string name="common_cancel">Cancelar</string>
     <string name="common_close">Fechar</string>
+    <string name="common_more_actions">Mais ações</string>
     <string name="packaging_sealed">Lacrada</string>
     <string name="packaging_opened">Aberta</string>
     <string name="packaging_damaged">Danificada</string>

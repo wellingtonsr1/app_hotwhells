@@ -2,14 +2,15 @@ package br.com.diecastcollector.feature.organization
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
@@ -28,13 +29,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.CollectionItemStatus
+import br.com.diecastcollector.ui.components.AdaptableCardActions
+import br.com.diecastcollector.ui.components.AdaptiveGrid
+import br.com.diecastcollector.ui.components.CardAction
 import br.com.diecastcollector.ui.components.ItemThumbnail
+
+/** Marcas de teste dos itens da coleção (T323). */
+public object CollectionDetailTags {
+    public const val ITEM: String = "collection-item"
+}
 
 /**
  * Detalhe da coleção (T071, T072).
@@ -123,20 +133,21 @@ internal fun CollectionDetailContent(
                     Text(stringResource(R.string.collections_back))
                 }
             }
-            else -> LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 16.dp),
+            else -> AdaptiveGrid(
+                modifier = Modifier.padding(padding),
+                // O cabeçalho ocupa a linha toda; os itens da coleção ganham a segunda
+                // coluna a partir da janela média e param nela mesmo em 1.000 dp, porque
+                // o cartão tem foto, nome, contagem e duas ações (T318, FR-307).
+                minItemSize = 320.dp,
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    top = 12.dp,
-                    bottom = 96.dp,
-                ),
             ) {
-                item { Header(state, onBack, onEdit, onArchive = { confirmArchive = true }) }
-                item { ProgressCard(state) }
-                item {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Header(state, onBack, onEdit, onArchive = { confirmArchive = true })
+                }
+                item(span = { GridItemSpan(maxLineSpan) }) { ProgressCard(state) }
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Text(
                         text = stringResource(
                             R.string.collection_detail_missing_title,
@@ -147,7 +158,7 @@ internal fun CollectionDetailContent(
                     )
                 }
                 if (state.missing.isEmpty()) {
-                    item {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
                         Text(
                             text = stringResource(R.string.collection_detail_missing_empty),
                             style = MaterialTheme.typography.bodySmall,
@@ -159,7 +170,7 @@ internal fun CollectionDetailContent(
                         MissingRow(item)
                     }
                 }
-                item {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Text(
                         text = stringResource(R.string.collection_detail_items_title),
                         style = MaterialTheme.typography.titleMedium,
@@ -167,7 +178,7 @@ internal fun CollectionDetailContent(
                     )
                 }
                 if (state.items.isEmpty()) {
-                    item {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
                         Text(
                             text = stringResource(R.string.collection_detail_items_empty),
                             style = MaterialTheme.typography.bodySmall,
@@ -250,17 +261,16 @@ private fun Header(
                 color = MaterialTheme.colorScheme.primary,
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            TextButton(onClick = onBack) {
-                Text(stringResource(R.string.collections_back))
-            }
-            TextButton(onClick = onEdit) {
-                Text(stringResource(R.string.collection_detail_edit))
-            }
-            TextButton(onClick = onArchive) {
-                Text(stringResource(R.string.collection_detail_archive))
-            }
-        }
+        // Três ações no cabeçalho: em 360 dp com fonte ampliada elas passam a menu em
+        // vez de sair da tela, e o título fica com a largura que sobra (T318, FR-309).
+        AdaptableCardActions(
+            modifier = Modifier.fillMaxWidth(),
+            actions = listOf(
+                CardAction(stringResource(R.string.collections_back), onBack),
+                CardAction(stringResource(R.string.collection_detail_edit), onEdit),
+                CardAction(stringResource(R.string.collection_detail_archive), onArchive),
+            ),
+        )
     }
 }
 
@@ -327,7 +337,7 @@ private fun ItemRow(
     onToggleNonCollectible: () -> Unit,
     onRemove: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(modifier = Modifier.fillMaxWidth().testTag(CollectionDetailTags.ITEM)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()

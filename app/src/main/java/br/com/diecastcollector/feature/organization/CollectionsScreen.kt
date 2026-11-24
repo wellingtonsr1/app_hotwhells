@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -13,8 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
@@ -28,13 +28,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.CollectionProgress
+import br.com.diecastcollector.ui.components.AdaptiveGrid
 import br.com.diecastcollector.ui.components.ItemThumbnail
+
+/** Marcas de teste dos cartões de coleção (T323). */
+public object CollectionTags {
+    public const val CARD: String = "collection-card"
+}
 
 /**
  * Coleções (T070).
@@ -111,13 +118,13 @@ internal fun CollectionsContent(
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 state.isEmpty -> EmptyCollections()
-                else -> LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                else -> AdaptiveGrid(
+                    // Percentual, nome e barra de progresso pedem cartão largo:
+                    // 280 dp dá 1 coluna em 360, 2 em 700 e 3 em 1.000 dp (T317).
+                    minItemSize = 280.dp,
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 96.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        top = 8.dp,
-                        bottom = 96.dp,
-                    ),
                 ) {
                     items(state.items, key = { it.id }) { collection ->
                         CollectionCard(
@@ -139,6 +146,7 @@ private fun CollectionCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .testTag(CollectionTags.CARD)
             .clickable(onClick = onClick),
     ) {
         Column(
