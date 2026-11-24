@@ -84,15 +84,56 @@ class PhotoEditorScreenTest {
         composeRule.onNodeWithText("Cor").assertExists()
         composeRule.onNodeWithText("Nitidez").assertExists()
         composeRule.onNodeWithText("Salvar").assertExists()
-        // As ações do rodapé precisam caber acima da barra de navegação do sistema.
+        assertFooterAboveNavigationBar("Enquadrar")
+    }
+
+    /**
+     * Regressão: "Cor" e "Nitidez" têm mais controles que as outras ferramentas; sem o painel
+     * limitado e a folga do rodapé, a linha de "Restaurar ajustes" descia até a barra de
+     * navegação e o toque caía nos botões do aparelho.
+     */
+    @Test
+    fun rodapeFicaAcimaDaBarraEmTodasAsFerramentas() {
+        setContent()
+
+        composeRule.waitUntil(TIMEOUT_MS) {
+            composeRule.onAllNodesWithText("Enquadrar").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // O painel mais alto de cada ferramenta é o que aparece logo ao trocar de aba.
+        listOf("Enquadrar", "Girar", "Cor", "Nitidez").forEach { tool ->
+            composeRule.onNodeWithText(tool).performClick()
+            composeRule.waitForIdle()
+            assertFooterAboveNavigationBar(tool)
+        }
+
+        // Confirma que os painéis mais altos abriram de fato antes da asserção de "Nitidez".
+        composeRule.onNodeWithText("Brilho").assertDoesNotExist()
+        composeRule.onNodeWithText("Qualidade da imagem").assertExists()
+    }
+
+    /**
+     * O rodapé precisa terminar acima da barra de navegação do sistema e com folga: encostado
+     * na barra, o toque em "Restaurar ajustes" cai nos botões do aparelho.
+     */
+    private fun assertFooterAboveNavigationBar(tool: String) {
         val footer = composeRule.onNodeWithText("Restaurar ajustes").fetchSemanticsNode()
         val screenBottom = composeRule.onAllNodes(isRoot()).fetchSemanticsNodes()
             .maxOf { it.boundsInRoot.bottom }
         val navigationBar = navigationBarInsetPx()
+        val clearance = screenBottom - navigationBar - footer.boundsInRoot.bottom
         assertTrue(
-            "rodapé=${footer.boundsInRoot} tela=$screenBottom barra=$navigationBar",
-            footer.size.height > 0 && footer.boundsInRoot.bottom <= screenBottom - navigationBar + 1f,
+            "$tool: folgaPx=$clearance mínimaPx=${minClearancePx()} " +
+                "rodapé=${footer.boundsInRoot} tela=$screenBottom barra=$navigationBar",
+            footer.size.height > 0 && clearance >= minClearancePx(),
         )
+    }
+
+    /** Folga mínima aceitável entre o rodapé e a barra de navegação, em pixels (8 dp). */
+    private fun minClearancePx(): Float {
+        val density = InstrumentationRegistry.getInstrumentation()
+            .targetContext.resources.displayMetrics.density
+        return 8f * density
     }
 
     @Test
