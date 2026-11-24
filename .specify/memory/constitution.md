@@ -4,12 +4,13 @@
 
 | Campo | Valor |
 |---|---|
-| Versão da constituição | 1.2.0 |
+| Versão da constituição | 1.3.0 |
 | Data de criação | 2026-11-16 |
 | Data de ratificação | **2026-11-16** |
-| Última emenda | 2026-11-16 — Emenda 2: stack nativa **Kotlin + Jetpack Compose** e distribuição por **sideload preparada para o Play** (resolve A11 e A12) |
-| Status | **RATIFICADA** (v1.2.0) — portões G0 e G1 autorizados; plano (G3) liberado |
-| Plataforma alvo | **Android** (uso primário em celular, offline-first) |
+| Última emenda | 2026-11-24 — Emenda 3: **responsividade e adaptabilidade de interface** como princípio permanente (Artigo VII; R.17, R.18; V.10; IV.5 ajustado) e identidade do produto **Diecast Collector** |
+| Status | **RATIFICADA** (v1.3.0) — portões G0 e G1 autorizados; plano (G3) liberado |
+| Plataforma alvo | **Android** (offline-first), em **smartphones, tablets e dobráveis** |
+| Dispositivos de referência | Celular compacto a partir de 360 dp de largura; tablet e dobrável nas classes média e expandida; retrato e paisagem |
 | Escopo | Todo o sistema: catálogo, coleção pessoal, gestão financeira, relatórios, importação/exportação, reconhecimento assistido — entregue como aplicativo Android nativo instalável |
 | Idioma do produto e da documentação | Português brasileiro (código e identificadores em inglês) |
 
@@ -22,6 +23,18 @@ Esta constituição é o documento de maior autoridade do projeto. Ela prevalece
 O Diecast Collector não é um CRUD de carrinhos. É um sistema de registro patrimonial e histórico de uma coleção, no qual a **precisão do dado** importa mais do que a velocidade de cadastro, e no qual a distinção entre *modelo*, *variante* e *exemplar físico* é a base de toda a modelagem. Um erro de agrupamento (tratar duas variantes como duplicata, ou dois exemplares como um só) destrói informação que o colecionador não consegue reconstruir depois.
 
 Toda decisão subsequente de requisito, arquitetura, banco de dados, interface, teste e implantação deve ser rastreável a um princípio desta constituição.
+
+---
+
+## Identidade do produto
+
+IP.1. O nome comercial do produto é **Diecast Collector**, em toda interface, documentação, material de divulgação e metadados de distribuição. Variações de nome ("Diecast Collector Hot Wheels", "Hot Wheels Collector" e semelhantes) são proibidas, inclusive em títulos de tela, splash, ícone e textos do manual.
+
+IP.2. O produto MUST ser tratado como **catalogador universal de miniaturas**: o escopo abrange qualquer fabricante, série e escala (1:64 e demais), sem limitação, dependência conceitual ou premissa de dados da marca Hot Wheels ou da Mattel. Referências a marcas específicas são exemplos de catálogo, nunca restrição de domínio (ver VI.2 e VI.3).
+
+IP.3. Nenhum nome de marca de terceiro MUST aparecer como parte do nome do produto, do nome do pacote ou da identidade visual do aplicativo (ver A9).
+
+IP.4. `package name`, `applicationId`, identificadores internos, nomes de tabelas/colunas, chaves de preferências e demais nomes técnicos MUST NOT ser alterados para acomodar nome comercial ou marketing. Mudança de identificador técnico exige justificativa comprovada, plano de migração de dados e aprovação registrada (G.2); sem isso, é proibida.
 
 ---
 
@@ -123,7 +136,7 @@ IV.3. A interface MUST diferenciar visualmente "exemplares" de "modelos distinto
 
 IV.4. Toda operação que altera dados MUST produzir feedback explícito de sucesso ou falha, com causa acionável em caso de erro.
 
-IV.5. O produto MUST ser um aplicativo **Android** instalável, projetado para uso primário em celular: alvos de toque de no mínimo 48 dp, uso confortável com uma mão, telas a partir de 360 dp de largura, e funcionamento correto em orientação retrato e paisagem. Layout de tablet/desktop é opcional e não MUST bloquear a v1.
+IV.5. O produto MUST ser um aplicativo **Android** instalável, utilizável em uma mão no celular: alvos de toque de no mínimo 48 dp, telas a partir de 360 dp de largura e funcionamento correto em orientação retrato e paisagem. Tablets e dobráveis MUST ser suportados conforme o Artigo VII (esta obrigação substitui a dispensa anterior de layout para telas grandes); layout de desktop/ChromeOS permanece opcional e não bloqueia a v1.
 
 IV.6. A interface MUST atender, no mínimo, o equivalente a WCAG 2.1 nível AA na plataforma Android: suporte a TalkBack, respeito ao tamanho de fonte do sistema, contraste ≥ 4.5:1, rótulos semânticos em campos e imagens, foco visível e navegação por D-pad/teclado externo.
 
@@ -156,6 +169,8 @@ V.8. Nenhum número de desempenho MUST ser afirmado sem medição reproduzível 
 
 V.9. Os limites não funcionais (latência, volume, disponibilidade) MUST ser quantificados em especificação antes de serem declarados atendidos; até lá, são metas provisórias, não garantias.
 
+V.10. Toda entrega que altere interface MUST incluir verificação de adaptação às classes de janela suportadas — no mínimo a compacta e uma classe maior (média ou expandida) —, por teste instrumentado (Compose UI Test com configuração de janela, rotação ou tamanho de tela) ou por evidência de execução registrada com o tamanho usado. A verificação MUST cobrir regressão: a correção de uma tela em uma classe MUST NOT quebrar as demais.
+
 ---
 
 ## Artigo VI — Evolução, extensibilidade e independência de terceiros
@@ -184,6 +199,48 @@ VI.11. O armazenamento local MUST ser tratado como fonte de verdade da coleção
 
 ---
 
+## Artigo VII — Responsividade e adaptabilidade de interface
+
+A interface do Diecast Collector MUST se adaptar ao espaço disponível. Responsividade é princípio permanente de projeto, não polimento posterior: uma tela que funciona em uma resolução e falha em outra é entrega incompleta, ainda que os testes de domínio passem.
+
+### Classes de janela e dispositivos
+
+VII.1. A interface MUST ser responsiva e adaptável a diferentes tamanhos de janela, e MUST funcionar corretamente em **smartphones, tablets e dispositivos dobráveis** (abertos, fechados, em modo tenda ou com duas janelas), em **retrato e paisagem**, sem impor orientação por meio de bloqueio.
+
+VII.2. As faixas de largura MUST ser tratadas pelas **classes de janela** do Material 3: **compacta** (largura < 600 dp), **média** (600–839 dp) e **expandida** (≥ 840 dp). Toda tela nova MUST declarar, na especificação, como se comporta em cada classe de janela que a alcança; a classe de altura MUST ser considerada quando o conteúdo for verticalmente restrito (paisagem em celular).
+
+VII.3. A classificação de tamanho MUST vir das APIs de tamanho de janela do Compose/Material 3 (`WindowSizeClass` e afins), derivadas do contêiner da tela. `DisplayMetrics` global, `screenWidthDp` do recurso de configuração ou largura fixa em código MUST NOT ser usada como fonte da decisão de layout.
+
+### Adaptação de layout
+
+VII.4. Layout, espaçamento, densidade de conteúdo, tipografia, componentes e navegação MUST se adaptar ao espaço disponível, por exemplo: barra de navegação inferior em janela compacta e trilho/rail ou gaveta em janelas maiores; lista em coluna única que passa a grade; painel de filtros embutido em telas largas e em folha modal em telas estreitas; diálogo em tela compacta e painel lateral/página dedicada em tela expandida; lista-detalhe em duas colunas quando houver largura.
+
+VII.5. Nenhuma tela MUST apresentar conteúdo cortado, elementos sobrepostos, rolagem horizontal desnecessária, texto truncado que perca informação essencial ou elementos inacessíveis em qualquer classe de janela suportada. Rolagem horizontal só é admitida quando é semântica ao conteúdo (por exemplo, faixa de opções/chips) e MUST ser indicada visualmente.
+
+VII.6. Componentes adaptáveis do **Jetpack Compose e Material 3** MUST ser usados para essas decisões (classes de janela, `Scaffold`, `NavigationSuiteScaffold`, layouts adaptativos de lista-detalhe, `FlowRow`, `LazyVerticalGrid`, folhas modais, painéis laterais), em vez de variações ad hoc por tela. Componentes reutilizáveis MUST ser priorizados: a mesma solução de adaptação MUST ser compartilhada por telas equivalentes, não reescrita em cada uma (ver II.5).
+
+VII.7. Formulários, listas, grades, diálogos, menus e telas de detalhe MUST se adaptar ao espaço disponível. Em janelas médias e expandidas, formulários e blocos de texto MUST limitar a largura de leitura em vez de esticar campos e linhas pela tela inteira; ações primárias MUST permanecer visíveis e alcançáveis sem rolagem confusa.
+
+VII.8. Insets do sistema MUST ser respeitados: barra de status, barra de navegação, navegação por gestos, recorte de câmera e **dobradiça/separador da dobra**. Nenhuma ação, campo ou informação obrigatória MUST ficar sob um inset, sob a dobra ou fora da área tocável do contêiner da janela.
+
+### Consistência, acessibilidade e regras de negócio
+
+VII.9. A identidade visual MUST ser preservada entre telas e tamanhos: os mesmos tokens de tema, paleta, tipografia base, iconografia e padrões de interação. Adaptação de layout MUST NOT criar uma segunda linguagem visual nem alterar rótulos e terminologia definidos em IV.1 e IV.3.
+
+VII.10. Acessibilidade e legibilidade MUST ser mantidas em todas as classes de janela: contraste ≥ 4.5:1, alvos de toque ≥ 48 dp, respeito ao tamanho de fonte do sistema (inclusive com fonte ampliada), rótulos semânticos e ordem de foco coerente com a ordem visual.
+
+VII.11. A adaptação de layout MUST NOT alterar regra de negócio, modelo de dados, persistência, funcionamento offline (VI.10) ou contratos de domínio. Estados, validações e fluxos MUST ser os mesmos em qualquer tamanho de tela; a diferença permitida é de apresentação.
+
+### Planejamento, arquitetura e qualidade
+
+VII.12. A responsividade MUST ser considerada desde o planejamento de novas funcionalidades — na especificação (G1) e no plano (G3) —, não apenas na implementação. Nenhuma tela MUST ser desenvolvida exclusivamente para uma resolução ou um dispositivo de referência.
+
+VII.13. Alterações de interface MUST respeitar a arquitetura existente: módulos, separação de camadas (II.1–II.4) e pontos de verdade únicos permanecem; adaptação visual não justifica reestruturar domínio, banco ou navegação sem necessidade comprovada.
+
+VII.14. Toda implementação de interface MUST ter teste adequado e verificação de regressão nas classes de janela suportadas (V.1, V.10), incluindo pelo menos um fluxo crítico em janela compacta e um em janela maior quando a tela tiver layout adaptativo.
+
+---
+
 ## Restrições técnicas adicionais
 
 R.1. Banco de dados relacional normalizado (3FN), com esquema versionado por migrações. Desnormalização MUST ser justificada por medição e documentada.
@@ -203,6 +260,10 @@ R.14. A implementação MUST ser **nativa Android**: Kotlin com Jetpack Compose 
 R.15. Na v1 a distribuição MUST ser por arquivo assinado (APK, sideload), sem conta em loja. O projeto MUST manter prontos, sem publicar automaticamente: pacote de publicação (AAB), assinatura de release fora do versionamento, `targetSdk` atualizado, política de privacidade acessível no aplicativo e informações para o formulário de segurança de dados do Google Play.
 R.16. A stack tecnológica não é decisão de implementação discricionária: está fixada nesta constituição por decisão do responsável pelo produto em 2026-11-16, e substituições MUST ser registradas como emenda, não como ADR isolado.
 
+R.17. A adaptação responsiva MUST usar as APIs de classes de janela e os componentes adaptáveis do Material 3 para Compose (`androidx.compose.material3.windowsizeclass`, `androidx.compose.material3.adaptive` e equivalentes da versão em uso). Dependência nova para isso MUST passar por R.4 e R.5, cabendo ADR quando houver alternativa relevante.
+
+R.18. Nenhuma `Activity` MUST fixar `android:screenOrientation` nem restringir redimensionamento (`resizeableActivity`, `minWidth`/`minHeight` de janela) para contornar problema de layout. Exceção exige justificativa técnica registrada em ADR e aprovação (G.5).
+
 ---
 
 ## Fluxo de desenvolvimento e portões de qualidade
@@ -212,12 +273,12 @@ O desenvolvimento MUST seguir a ordem abaixo. Nenhum portão MUST ser saltado.
 | Portão | Artefato | Critério de saída |
 |---|---|---|
 | **G0 — Constituição** | `constitution.md` ratificada | Aprovação explícita; ambiguidades bloqueantes resolvidas ou registradas com decisão padrão aceita |
-| **G1 — Especificação** | `spec.md` (requisitos funcionais e não funcionais, critérios de aceitação, casos de borda) | Requisitos rastreáveis, sem "TBD" em item de escopo aprovado |
+| **G1 — Especificação** | `spec.md` (requisitos funcionais e não funcionais, critérios de aceitação, casos de borda) | Requisitos rastreáveis, sem "TBD" em item de escopo aprovado; comportamento declarado para as classes de janela compacta, média e expandida (VII.2) |
 | **G2 — Esclarecimentos** | `clarifications` incorporadas à spec | Toda ambiguidade de escopo, dado ou regra de negócio resolvida |
 | **G3 — Plano e modelo de dados** | `plan.md`, ADRs, DER, dicionário de dados, estratégia de testes | Arquitetura justificada; DER sem entidade órfã; restrições documentadas |
 | **G4 — Tarefas** | `tasks.md` por módulo e dependência | Cada tarefa com critério de aceite e teste associado |
 | **G5 — Análise de consistência** | `analysis.md` | Constituição ↔ spec ↔ plano ↔ tarefas sem contradição; lacunas de teste identificadas |
-| **G6 — Implementação por fase** | Código + testes + documentação | Suíte verde, migrações aplicadas, documentação atualizada, limitações declaradas |
+| **G6 — Implementação por fase** | Código + testes + documentação | Suíte verde, migrações aplicadas, adaptação verificada nas classes de janela suportadas (V.10), documentação atualizada, limitações declaradas |
 
 ### Disciplina de alteração (obrigatória antes de qualquer mudança relevante)
 
@@ -241,7 +302,7 @@ O desenvolvimento MUST seguir a ordem abaixo. Nenhum portão MUST ser saltado.
 
 ### Definição de concluído (por incremento)
 
-Um incremento é considerado concluído quando, cumulativamente: comportamento implementado conforme spec aprovada; testes automatizados cobrindo o caminho feliz e os casos de borda relevantes, verdes; migrações versionadas e exercitadas; validação de entrada no servidor; autorização verificada; documentação do módulo e da API atualizada; limitações conhecidas registradas; ausência de regressão nos testes existentes.
+Um incremento é considerado concluído quando, cumulativamente: comportamento implementado conforme spec aprovada; testes automatizados cobrindo o caminho feliz e os casos de borda relevantes, verdes; migrações versionadas e exercitadas; validação de entrada no servidor; autorização verificada; telas alteradas verificadas nas classes de janela suportadas, sem conteúdo cortado, sobreposto ou inacessível; documentação do módulo e da API atualizada; limitações conhecidas registradas; ausência de regressão nos testes existentes.
 
 ---
 
@@ -263,6 +324,7 @@ G.6. Conflito entre constituição e solicitação pontual resolve-se em favor d
 
 | Versão | Data | Mudança | Classificação |
 |---|---|---|---|
+| 1.3.0 | 2026-11-24 | Responsividade e adaptabilidade promovidas a princípio permanente: novo Artigo VII (classes de janela compacta/média/expandida, smartphones, tablets e dobráveis, orientação livre, componentes adaptáveis do Material 3, insets e dobra, consistência visual, testes por classe de janela); V.10 (verificação adaptativa e de regressão); R.17 e R.18 (APIs de classes de janela; proibição de bloqueio de orientação/redimensionamento como contorno); IV.5 passa a exigir suporte a telas grandes; identidade do produto "Diecast Collector" e catalogador universal (IP.1–IP.4) | MINOR — novo artigo, novas restrições e uma dispensa substituída por obrigação; nenhum princípio removido ou redefinido |
 | 1.2.0 | 2026-11-16 | Stack nativa fixada em Kotlin + Jetpack Compose + Room + ML Kit on-device (R.14, R.16), distribuição por sideload com preparo para Play (R.15); A11 e A12 resolvidos em `/speckit-clarify` e registrados na especificação | MINOR — novas restrições técnicas, nenhuma obrigação de qualidade removida |
 | 1.1.0 | 2026-11-16 | Plataforma alvo definida como aplicativo Android; offline promovido a requisito (VI.10); identidade local e preparação para sincronização (VI.11); usabilidade reexpressa para Android (IV.5–IV.9); testes instrumentados (V.2); restrições R.8–R.13; Anexo A revisado (A1, A2, A6, A10 resolvidos/repropostos; A11–A13 novos) | MINOR — nenhuma obrigação foi removida; obrigações de plataforma foram acrescentadas |
 | 1.0.0 | 2026-11-16 | Criação da constituição | — |
@@ -297,4 +359,4 @@ Toda especificação, decisão de arquitetura, tarefa e teste MUST referenciar o
 
 ---
 
-*Documento criado em 2026-11-16, ratificado no mesmo dia (v1.1.0) e emendado duas vezes: v1.1.0 fixou Android como plataforma e v1.2.0 fixou stack e distribuição. Portões G0 e G1 fechados; nenhum código escrito até aqui.*
+*Documento criado em 2026-11-16, ratificado no mesmo dia e emendado três vezes: v1.1.0 fixou Android como plataforma, v1.2.0 fixou stack e distribuição e v1.3.0 estabeleceu responsividade como princípio permanente e a identidade "Diecast Collector". Portões G0 e G1 fechados; nenhum código escrito até aqui.*
