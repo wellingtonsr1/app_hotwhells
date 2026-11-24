@@ -94,7 +94,7 @@ public class BackupServiceTest {
 
         val manifest = JSONObject(readEntry(packageFile, "manifest.json").toString(Charsets.UTF_8))
         assertThat(manifest.getInt("format_version")).isEqualTo(1)
-        assertThat(manifest.getInt("schema_version")).isEqualTo(2)
+        assertThat(manifest.getInt("schema_version")).isEqualTo(4)
         assertThat(manifest.getString("app_version")).isEqualTo("0.1.0 (1)")
         assertThat(manifest.getJSONObject("counts").getInt("exemplar")).isEqualTo(1)
         assertThat(manifest.getJSONObject("counts").getInt("photo")).isEqualTo(1)
@@ -258,6 +258,30 @@ public class BackupServiceTest {
         assertThat(startsWithRestoreCopy(context.filesDir)).isTrue()
     }
 
+    /**
+     * Edição não destrutiva (FR-214, FR-225): o pacote precisa levar **as duas** imagens,
+     * senão a restauração devolve um app sem a foto original.
+     */
+    @Test
+    public fun pacoteIncluiOriginalEDerivadaDaFotoEditada() = runBlocking {
+        val originalPath = "images/e1/front-original.jpg"
+        val originalFile = context.filesDir.resolve(originalPath)
+        originalFile.parentFile?.mkdirs()
+        originalFile.writeBytes(ORIGINAL_IMAGE)
+        database.openHelper.writableDatabase.execSQL(
+            "UPDATE photo SET original_path = ? WHERE id = 'p1'",
+            arrayOf(originalPath),
+        )
+
+        val packageFile = createPackage()
+        val entries = entryNames(packageFile)
+        val manifest = JSONObject(readEntry(packageFile, "manifest.json").toString(Charsets.UTF_8))
+
+        assertThat(entries).containsAtLeast(imagePath, originalPath)
+        assertThat(manifest.getJSONObject("counts").getInt("images")).isEqualTo(2)
+        assertThat(manifest.getInt("missing_images")).isEqualTo(0)
+    }
+
     private fun createPackage(): File {
         val file = temp.newFile("backup.zip")
         file.outputStream().use { output ->
@@ -269,7 +293,11 @@ public class BackupServiceTest {
     private fun openDatabase(): AppDatabase = Room
         .databaseBuilder(context, AppDatabase::class.java, DB_NAME)
         .addCallback(AppDatabase.CALLBACK)
-        .addMigrations(AppDatabase.MIGRATION_1_2)
+        .addMigrations(
+            AppDatabase.MIGRATION_1_2,
+            AppDatabase.MIGRATION_2_3,
+            AppDatabase.MIGRATION_3_4,
+        )
         .build()
 
     private suspend fun seed() {

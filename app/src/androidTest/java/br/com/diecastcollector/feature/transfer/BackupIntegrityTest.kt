@@ -61,7 +61,7 @@ public class BackupIntegrityTest {
         val validated = service.inspect(packageFile)
 
         assertEquals(1, validated.summary.counts["manufacturer"])
-        assertEquals(2, validated.summary.schemaVersion)
+        assertEquals(4, validated.summary.schemaVersion)
     }
 
     private companion object {

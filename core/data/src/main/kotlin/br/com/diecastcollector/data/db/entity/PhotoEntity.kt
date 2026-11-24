@@ -46,4 +46,16 @@ public data class PhotoEntity(
     val bytes: Long?,
     @ColumnInfo(name = "captured_at")
     val capturedAt: Long?,
+    /**
+     * Arquivo original preservado (migração 3→4). `NULL` = foto nunca editada; nesse caso
+     * `path` é o próprio original.
+     */
+    @ColumnInfo(name = "original_path")
+    val originalPath: String? = null,
+    /** Parâmetros da última edição, no formato compacto de `PhotoEdit.toParameters()`. */
+    @ColumnInfo(name = "edit_params")
+    val editParams: String? = null,
+    /** Epoch millis da última edição; `NULL` = nunca editada. */
+    @ColumnInfo(name = "edited_at")
+    val editedAt: Long? = null,
 )

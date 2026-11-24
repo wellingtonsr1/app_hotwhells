@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Card
@@ -62,6 +63,8 @@ public data class PhotoTile(
     val isPrimary: Boolean,
     val source: Any,
     val pending: Boolean = false,
+    /** A foto exibida já é uma versão editada; o original continua recuperável (FR-217). */
+    val isEdited: Boolean = false,
 )
 
 /**
@@ -80,6 +83,8 @@ public fun PhotoGrid(
     onRemovePhoto: (photoId: String) -> Unit,
     onPermissionDenied: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Abre o editor para uma foto já gravada; ausente em formulários com capturas pendentes. */
+    onEditPhoto: ((PhotoTile) -> Unit)? = null,
 ) {
     var selectedAngle by remember { mutableStateOf(PhotoAngle.FRONT) }
     // Tocar na miniatura abre a foto inteira; o visualizador é local à grade para
@@ -133,6 +138,9 @@ public fun PhotoGrid(
                                 },
                                 onSetPrimary = { onSetPrimary(tile.id) },
                                 onRemove = { onRemovePhoto(tile.id) },
+                                onEdit = onEditPhoto
+                                    ?.takeIf { !tile.pending }
+                                    ?.let { handler -> { handler(tile) } },
                                 modifier = Modifier.weight(1f),
                             )
                         }
@@ -249,6 +257,7 @@ private fun PhotoItemCard(
     onOpen: () -> Unit,
     onSetPrimary: () -> Unit,
     onRemove: () -> Unit,
+    onEdit: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -289,18 +298,41 @@ private fun PhotoItemCard(
                 )
             }
 
-            if (tile.pending) {
+            if (tile.pending || tile.isEdited) {
                 Surface(
                     color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f),
                     shape = RoundedCornerShape(topEnd = 6.dp),
                     modifier = Modifier.align(Alignment.BottomStart),
                 ) {
                     Text(
-                        text = stringResource(R.string.photo_pending),
+                        text = stringResource(
+                            if (tile.pending) R.string.photo_pending else R.string.photo_edit_edited_badge,
+                        ),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.inverseOnSurface,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                     )
+                }
+            }
+
+            // Editar foto já gravada (FR-219); capturas pendentes ainda não têm id salvo.
+            if (onEdit != null) {
+                Surface(
+                    color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(bottomStart = 6.dp),
+                    modifier = Modifier.align(Alignment.TopEnd),
+                ) {
+                    IconButton(
+                        onClick = onEdit,
+                        modifier = Modifier.size(36.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Edit,
+                            contentDescription = stringResource(R.string.photo_edit_action),
+                            tint = MaterialTheme.colorScheme.inverseOnSurface,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
                 }
             }
 

@@ -17,6 +17,8 @@ import br.com.diecastcollector.data.repository.ManufacturerRepositoryImpl
 import br.com.diecastcollector.data.repository.LocationRepositoryImpl
 import br.com.diecastcollector.data.repository.NegotiationRepositoryImpl
 import br.com.diecastcollector.data.repository.PhotoRepositoryImpl
+import br.com.diecastcollector.data.storage.AndroidPhotoProcessor
+import br.com.diecastcollector.data.storage.PhotoProcessor
 import br.com.diecastcollector.data.recognition.MlKitBarcodeProvider
 import br.com.diecastcollector.data.recognition.MlKitTextProvider
 import br.com.diecastcollector.data.repository.RealVehicleRepositoryImpl
@@ -76,7 +78,11 @@ public object DatabaseModule {
     public fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
             .addCallback(AppDatabase.CALLBACK)
-            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
+            .addMigrations(
+                AppDatabase.MIGRATION_1_2,
+                AppDatabase.MIGRATION_2_3,
+                AppDatabase.MIGRATION_3_4,
+            )
             .build()
 
     /** Relógio injetável: os testes trocam por um fixo e o comportamento fica determinístico. */
@@ -133,6 +139,10 @@ public abstract class RepositoryModule {
     @Binds
     @Singleton
     public abstract fun bindBackupService(impl: FileBackupService): BackupService
+
+    @Binds
+    @Singleton
+    public abstract fun bindPhotoProcessor(impl: AndroidPhotoProcessor): PhotoProcessor
 
     @Binds
     @Singleton

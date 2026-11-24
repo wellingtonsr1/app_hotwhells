@@ -15,6 +15,7 @@ import br.com.diecastcollector.domain.model.Movement
 import br.com.diecastcollector.domain.model.PackagingCondition
 import br.com.diecastcollector.domain.model.Photo
 import br.com.diecastcollector.domain.model.PhotoAngle
+import br.com.diecastcollector.domain.model.PhotoEdit
 import br.com.diecastcollector.domain.model.Valuation
 import br.com.diecastcollector.domain.repository.AcquisitionRepository
 import br.com.diecastcollector.domain.repository.ExemplarDependents
@@ -170,6 +171,62 @@ public class ExemplarDetailViewModel @Inject constructor(
         viewModelScope.launch {
             photoRepository.setPrimary(exemplarId, photoId).fold(
                 onSuccess = { _state.update { it.copy(workingPhoto = false) } },
+                onFailure = { error ->
+                    _state.update { it.copy(workingPhoto = false, message = error.toMessage()) }
+                },
+            )
+        }
+    }
+
+    /**
+     * Salva a versão editada de uma foto já cadastrada (FR-218, FR-219).
+     *
+     * Sem nenhuma alteração efetiva ("restaurou tudo e salvou"), a ação correta é voltar ao
+     * original em vez de gravar uma derivada idêntica.
+     */
+    public fun onSavePhotoEdit(photoId: String, bytes: ByteArray, edit: PhotoEdit) {
+        if (_state.value.workingPhoto) return
+        _state.update { it.copy(workingPhoto = true) }
+        viewModelScope.launch {
+            val wasEdited = _state.value.photos.firstOrNull { it.id == photoId }?.isEdited == true
+            val outcome = when {
+                !edit.isNeutral -> photoRepository.saveEdit(photoId, bytes, edit.toParameters())
+                    .map { UiMessage(R.string.photo_editor_saved) }
+
+                // Restaurar tudo e salvar numa foto editada equivale a voltar ao original.
+                wasEdited -> photoRepository.restoreOriginal(photoId)
+                    .map { UiMessage(R.string.photo_editor_restored) }
+
+                // Foto nunca editada e nada alterado: não grava derivada idêntica.
+                else -> Result.success(UiMessage(R.string.photo_editor_unchanged))
+            }
+            outcome.fold(
+                onSuccess = { message ->
+                    _state.update { it.copy(workingPhoto = false, message = message) }
+                    refresh(showLoading = false)
+                },
+                onFailure = { error ->
+                    _state.update { it.copy(workingPhoto = false, message = error.toMessage()) }
+                },
+            )
+        }
+    }
+
+    /** Remove a derivada e volta a foto original, mantendo categoria, exemplar e principal. */
+    public fun onRestorePhotoOriginal(photoId: String) {
+        if (_state.value.workingPhoto) return
+        _state.update { it.copy(workingPhoto = true) }
+        viewModelScope.launch {
+            photoRepository.restoreOriginal(photoId).fold(
+                onSuccess = {
+                    _state.update {
+                        it.copy(
+                            workingPhoto = false,
+                            message = UiMessage(R.string.photo_editor_restored),
+                        )
+                    }
+                    refresh(showLoading = false)
+                },
                 onFailure = { error ->
                     _state.update { it.copy(workingPhoto = false, message = error.toMessage()) }
                 },

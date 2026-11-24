@@ -11,6 +11,7 @@ import android.provider.MediaStore
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -96,6 +97,18 @@ class CreateCatalogEntryScreenTest {
         // 7. A foto entra pelo seletor do sistema, stubbado com um JPEG de verdade.
         stubPhotoPickerWith(jpegFixture())
         composeRule.onNodeWithText("Galeria").performScrollTo().performClick()
+
+        // 7a. A revisão é obrigatória (FR-201) e o editor abre por ela (FR-203).
+        waitForText("Usar esta fotografia?")
+        composeRule.onNodeWithText("Editar fotografia").performClick()
+        waitForText("Editar fotografia")
+        composeRule.onNodeWithContentDescription("Fechar editor").performClick()
+
+        // 7b. Fechar sem salvar descarta a captura; pegamos a mesma imagem de novo e
+        // confirmamos sem editar, que é o caminho rápido de quem só quer registrar.
+        composeRule.onNodeWithText("Galeria").performScrollTo().performClick()
+        waitForText("Usar esta fotografia?")
+        composeRule.onNodeWithText("Salvar sem editar").performClick()
 
         // A captura fica pendente na grade até a variante e o exemplar existirem.
         waitForText("Ainda não salva")

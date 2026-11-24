@@ -662,12 +662,23 @@ public class FileBackupService @Inject constructor(
             this
         }
 
+    /**
+     * Caminhos das imagens que o pacote precisa levar.
+     *
+     * Desde a edição não destrutiva existem dois arquivos por foto editada: `path` (a
+     * derivada exibida) e `original_path` (o original preservado). Backup que levasse só
+     * `path` restauraria o app sem a foto original, contrariando FR-214/FR-225.
+     */
     private fun readPhotoPaths(snapshot: File): List<String> =
         SQLiteDatabase.openDatabase(snapshot.path, null, SQLiteDatabase.OPEN_READONLY).use { db ->
-            db.rawQuery("SELECT path FROM photo", null).use { cursor ->
+            db.rawQuery("SELECT path, original_path FROM photo", null).use { cursor ->
                 buildList {
-                    while (cursor.moveToNext()) add(cursor.getString(0))
-                }
+                    while (cursor.moveToNext()) {
+                        add(cursor.getString(0))
+                        val original = if (cursor.isNull(1)) null else cursor.getString(1)
+                        if (original != null && original != cursor.getString(0)) add(original)
+                    }
+                }.distinct()
             }
         }
 

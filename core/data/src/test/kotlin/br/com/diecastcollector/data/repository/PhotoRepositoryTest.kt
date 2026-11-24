@@ -1,5 +1,6 @@
 package br.com.diecastcollector.data.repository
 
+import android.content.Context
 import android.graphics.Bitmap
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
@@ -10,6 +11,7 @@ import br.com.diecastcollector.data.storage.FileImageStore
 import br.com.diecastcollector.domain.model.PhotoAngle
 import com.google.common.truth.Truth.assertThat
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -69,12 +71,20 @@ public class PhotoRepositoryTest {
         database.close()
     }
 
-    private fun createTestImageBytes(): ByteArray {
-        val bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
+    private fun createTestImageBytes(width: Int = 100, height: Int = 100): ByteArray {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val stream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
+        bitmap.recycle()
         return stream.toByteArray()
     }
+
+    private fun filesDir(): File = ApplicationProvider.getApplicationContext<Context>().filesDir
+
+    private fun photoFiles(): List<File> =
+        File(filesDir(), "images/ex1").listFiles()
+            ?.filter { it.extension == "jpg" }
+            .orEmpty()
 
     @Test
     fun `adicionar primeira foto define como isPrimary true automaticamente`() = runBlocking {
@@ -144,5 +154,129 @@ public class PhotoRepositoryTest {
         val list = repository.observeByExemplar("ex1").first()
         assertThat(list).isEmpty()
         assertThat(imageStore.exists(photo.path)).isFalse()
+    }
+
+    // ---- Edição não destrutiva (FR-214–FR-219) -------------------------------------
+
+    @Test
+    fun `saveEdit preserva original e mantem categoria principal e vinculo`() = runBlocking {
+        val original = repository
+            .add(exemplarId = "ex1", angle = PhotoAngle.FRONT, source = createTestImageBytes())
+            .getOrThrow()
+        val editedBytes = createTestImageBytes(width = 60, height = 90)
+
+        val edited = repository
+            .saveEdit(original.id, editedBytes, "v1;aspect=SQUARE")
+            .getOrThrow()
+
+        assertThat(edited.isEdited).isTrue()
+        assertThat(edited.path).isNotEqualTo(original.path)
+        assertThat(edited.originalPath).isEqualTo(original.path)
+        assertThat(edited.exemplarId).isEqualTo("ex1")
+        assertThat(edited.angle).isEqualTo(PhotoAngle.FRONT)
+        assertThat(edited.isPrimary).isTrue()
+        assertThat(edited.sortOrder).isEqualTo(0)
+        assertThat(edited.editParams).isEqualTo("v1;aspect=SQUARE")
+        assertThat(edited.editedAt).isNotNull()
+        assertThat(edited.width).isEqualTo(60)
+        assertThat(edited.height).isEqualTo(90)
+
+        // Original intocado e a foto continua sendo uma só.
+        assertThat(imageStore.exists(original.path)).isTrue()
+        assertThat(imageStore.inspect(original.path)!!.checksum).isEqualTo(original.checksum)
+        assertThat(repository.observeByExemplar("ex1").first()).hasSize(1)
+        assertThat(photoFiles()).hasSize(2)
+    }
+
+    @Test
+    fun `segunda edicao substitui a derivada sem recomprimir o original`() = runBlocking {
+        val original = repository
+            .add(exemplarId = "ex1", angle = PhotoAngle.FRONT, source = createTestImageBytes())
+            .getOrThrow()
+        val first = repository
+            .saveEdit(original.id, createTestImageBytes(80, 80), "v1;brightness=0.2")
+            .getOrThrow()
+        val firstDerivative = first.path
+
+        val second = repository
+            .saveEdit(original.id, createTestImageBytes(70, 70), "v1;contrast=0.4")
+            .getOrThrow()
+
+        assertThat(second.originalPath).isEqualTo(original.path)
+        assertThat(second.path).isNotEqualTo(firstDerivative)
+        assertThat(imageStore.exists(firstDerivative)).isFalse()
+        assertThat(imageStore.exists(original.path)).isTrue()
+        // No máximo dois arquivos: o original e a derivada ativa (FR-215).
+        assertThat(photoFiles()).hasSize(2)
+    }
+
+    @Test
+    fun `restoreOriginal volta ao arquivo original e apaga a derivada`() = runBlocking {
+        val original = repository
+            .add(exemplarId = "ex1", angle = PhotoAngle.BACK, source = createTestImageBytes())
+            .getOrThrow()
+        val edited = repository
+            .saveEdit(original.id, createTestImageBytes(50, 50), "v1;rotation=1")
+            .getOrThrow()
+        val derivative = edited.path
+
+        val restored = repository.restoreOriginal(original.id).getOrThrow()
+
+        assertThat(restored.path).isEqualTo(original.path)
+        assertThat(restored.originalPath).isNull()
+        assertThat(restored.isEdited).isFalse()
+        assertThat(restored.editParams).isNull()
+        assertThat(restored.editedAt).isNull()
+        assertThat(restored.checksum).isEqualTo(original.checksum)
+        assertThat(restored.width).isEqualTo(original.width)
+        assertThat(imageStore.exists(derivative)).isFalse()
+        assertThat(imageStore.exists(original.path)).isTrue()
+        assertThat(repository.observeByExemplar("ex1").first()).hasSize(1)
+    }
+
+    @Test
+    fun `restoreOriginal sem edicao falha sem alterar nada`() = runBlocking {
+        val photo = repository
+            .add(exemplarId = "ex1", angle = PhotoAngle.LEFT, source = createTestImageBytes())
+            .getOrThrow()
+
+        val result = repository.restoreOriginal(photo.id)
+
+        assertThat(result.isFailure).isTrue()
+        val current = repository.observeByExemplar("ex1").first().single()
+        assertThat(current.path).isEqualTo(photo.path)
+        assertThat(current.checksum).isEqualTo(photo.checksum)
+        assertThat(imageStore.exists(photo.path)).isTrue()
+    }
+
+    @Test
+    fun `remove apaga tambem o original preservado`() = runBlocking {
+        val original = repository
+            .add(exemplarId = "ex1", angle = PhotoAngle.RIGHT, source = createTestImageBytes())
+            .getOrThrow()
+        val edited = repository
+            .saveEdit(original.id, createTestImageBytes(60, 60), "v1;sharpness=0.3")
+            .getOrThrow()
+
+        repository.remove(original.id).getOrThrow()
+
+        assertThat(imageStore.exists(edited.path)).isFalse()
+        assertThat(imageStore.exists(original.path)).isFalse()
+        assertThat(repository.observeByExemplar("ex1").first()).isEmpty()
+    }
+
+    @Test
+    fun `saveEdit sem original no disco falha e mantem o registro`() = runBlocking {
+        val original = repository
+            .add(exemplarId = "ex1", angle = PhotoAngle.FRONT, source = createTestImageBytes())
+            .getOrThrow()
+        File(filesDir(), original.path).delete()
+
+        val result = repository.saveEdit(original.id, createTestImageBytes(40, 40), "v1")
+
+        assertThat(result.isFailure).isTrue()
+        val current = repository.observeByExemplar("ex1").first().single()
+        assertThat(current.path).isEqualTo(original.path)
+        assertThat(current.isEdited).isFalse()
     }
 }

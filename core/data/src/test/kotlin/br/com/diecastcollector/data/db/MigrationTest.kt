@@ -125,6 +125,48 @@ public class MigrationTest {
     }
 
     /**
+     * v3 → v4: edição não destrutiva de fotografia. As três colunas são nulas e a foto que
+     * já existia continua válida — ou seja, `path` segue sendo o arquivo exibido.
+     */
+    @Test
+    public fun migracaoV3ParaV4AcrescentaCamposDeEdicao() {
+        helper.createDatabase(TEST_DB_V4, 3).use { db ->
+            db.execSQL(
+                "INSERT INTO photo (id, exemplar_id, angle, path, checksum, is_primary, sort_order) " +
+                    "VALUES ('p1', 'e1', 'FRONT', 'images/e1/front.jpg', 'abc', 1, 0)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(
+            TEST_DB_V4,
+            4,
+            true,
+            AppDatabase.MIGRATION_3_4,
+        ).use { db ->
+            val columns = db.query("PRAGMA table_info(photo)").use { cursor ->
+                buildList {
+                    while (cursor.moveToNext()) add(cursor.getString(1))
+                }
+            }
+            val kept = db.query("SELECT path, original_path, edit_params, edited_at FROM photo WHERE id = 'p1'")
+                .use { cursor ->
+                    if (cursor.moveToNext()) {
+                        listOf(cursor.getString(0), cursor.getString(1), cursor.getString(2), cursor.getString(3))
+                    } else {
+                        null
+                    }
+                }
+
+            assertThat(columns).containsAtLeast("original_path", "edit_params", "edited_at")
+            assertThat(kept).isNotNull()
+            assertThat(kept!![0]).isEqualTo("images/e1/front.jpg")
+            assertThat(kept[1]).isNull()
+            assertThat(kept[2]).isNull()
+            assertThat(kept[3]).isNull()
+        }
+    }
+
+    /**
      * Regressão do aparelho: no banco real, `variant` tem o índice parcial criado pelo
      * callback e o Room o inclui na validação da migração. Sem removê-lo antes de validar,
      * a abertura falha com «Migration didn't properly handle: variant».
@@ -289,12 +331,13 @@ public class MigrationTest {
 
     /** Toda migração registrada no banco; a ordem vem de `startVersion`. */
     private val migrations: List<Migration> =
-        listOf(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
+        listOf(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4)
 
     private companion object {
         const val TEST_DB = "migration-test.db"
         const val TEST_DB_V2 = "migration-v2-test.db"
         const val TEST_DB_V3 = "migration-v3-test.db"
+        const val TEST_DB_V4 = "migration-v4-test.db"
         const val RUNTIME_DB = "runtime-test.db"
         const val MIGRATED_DB = "migrated-runtime-test.db"
         const val PARTIAL_INDEX_SQL =

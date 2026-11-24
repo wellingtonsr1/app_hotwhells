@@ -58,10 +58,12 @@ import br.com.diecastcollector.data.db.entity.VariantSecondaryColorEntity
 import br.com.diecastcollector.data.db.entity.WishlistItemEntity
 
 /**
- * Banco local, versão 2, com todas as tabelas de `data-model.md`.
+ * Banco local, versão 4, com todas as tabelas de `data-model.md`.
  *
  * A v2 acrescenta `duplicate_offer` (disponibilidade para troca/venda, FR-066–FR-067)
  * e `negotiation.received_exemplar_id` (exemplar recebido na troca, FR-071).
+ * A v3 acrescenta a foto do item de desejo. A v4 acrescenta a edição não destrutiva de
+ * fotografia (`original_path`, `edit_params`, `edited_at`) — tudo nulo por padrão.
  *
  * Regras que valem para toda abertura:
  * - `PRAGMA foreign_keys = ON` — sem isso o SQLite ignora as FKs declaradas (Art. I.5);
@@ -99,7 +101,7 @@ import br.com.diecastcollector.data.db.entity.WishlistItemEntity
         SearchIndexEntity::class,
         DuplicateOfferEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 public abstract class AppDatabase : RoomDatabase() {
@@ -223,6 +225,24 @@ public abstract class AppDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("DROP INDEX IF EXISTS `index_variant_fingerprint_active`")
                 db.execSQL("ALTER TABLE `wishlist_item` ADD COLUMN `photo_path` TEXT")
+            }
+        }
+
+        /**
+         * v3 → v4: edição não destrutiva de fotografia (FR-214–FR-217).
+         *
+         * Colunas novas são nulas: fotos existentes continuam válidas e passam a tratar o
+         * próprio `path` como original na primeira edição. Nada é reescrito.
+         *
+         * Como em 1→2 e 2→3, o índice parcial de `variant` sai antes da validação do Room
+         * e volta no callback de abertura.
+         */
+        public val MIGRATION_3_4: Migration = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP INDEX IF EXISTS `index_variant_fingerprint_active`")
+                db.execSQL("ALTER TABLE `photo` ADD COLUMN `original_path` TEXT")
+                db.execSQL("ALTER TABLE `photo` ADD COLUMN `edit_params` TEXT")
+                db.execSQL("ALTER TABLE `photo` ADD COLUMN `edited_at` INTEGER")
             }
         }
 

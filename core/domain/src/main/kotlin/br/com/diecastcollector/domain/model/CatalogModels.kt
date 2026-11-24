@@ -162,7 +162,13 @@ public data class Exemplar(
     }
 }
 
-/** Fotografia guardada em arquivo privado; o banco só conhece o caminho e o checksum (R.2). */
+/**
+ * Fotografia guardada em arquivo privado; o banco só conhece o caminho e o checksum (R.2).
+ *
+ * [path] é sempre o arquivo **exibido** — a derivada quando a foto foi editada, o próprio
+ * original quando não foi. [originalPath] guarda o arquivo intocado para restauração: é o
+ * que torna a edição não destrutiva sem acumular versões (FR-214, FR-215).
+ */
 public data class Photo(
     val id: String,
     val exemplarId: String,
@@ -175,12 +181,18 @@ public data class Photo(
     val height: Int? = null,
     val bytes: Long? = null,
     val capturedAt: Instant? = null,
+    val originalPath: String? = null,
+    val editedAt: Instant? = null,
+    val editParams: String? = null,
 ) {
     init {
         require(path.isNotBlank()) { "Caminho da foto é obrigatório." }
         require(checksum.isNotBlank()) { "Checksum da foto é obrigatório." }
         require(sortOrder >= 0) { "Ordem da foto não pode ser negativa." }
     }
+
+    /** Houve edição: existe original preservado e o caminho exibido é a derivada. */
+    public val isEdited: Boolean get() = originalPath != null
 }
 
 internal const val MAX_NAME_LENGTH: Int = 120

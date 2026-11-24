@@ -56,7 +56,9 @@ import br.com.diecastcollector.domain.model.LocationType
 import br.com.diecastcollector.domain.model.MoneyCents
 import br.com.diecastcollector.domain.model.Movement
 import br.com.diecastcollector.domain.model.PackagingCondition
+import br.com.diecastcollector.domain.model.Photo
 import br.com.diecastcollector.domain.model.PhotoAngle
+import br.com.diecastcollector.domain.model.PhotoEdit
 import br.com.diecastcollector.domain.model.Valuation
 import br.com.diecastcollector.domain.repository.ExemplarDependents
 import br.com.diecastcollector.ui.theme.DiecastTheme
@@ -128,6 +130,8 @@ public fun ExemplarDetailScreen(
             onAddPhoto = viewModel::onAddPhoto,
             onSetPrimaryPhoto = viewModel::onSetPrimaryPhoto,
             onRemovePhoto = viewModel::onRemovePhoto,
+            onSavePhotoEdit = viewModel::onSavePhotoEdit,
+            onRestorePhotoOriginal = viewModel::onRestorePhotoOriginal,
             onPhotoPermissionDenied = {
                 scope.launch { snackbarHostState.showSnackbar(permissionDeniedMessage) }
             },
@@ -166,6 +170,8 @@ internal fun ExemplarDetailContent(
     onAddPhoto: (ByteArray, PhotoAngle) -> Unit = { _, _ -> },
     onSetPrimaryPhoto: (String) -> Unit = {},
     onRemovePhoto: (String) -> Unit = {},
+    onSavePhotoEdit: (photoId: String, bytes: ByteArray, edit: PhotoEdit) -> Unit = { _, _, _ -> },
+    onRestorePhotoOriginal: (String) -> Unit = {},
     onPhotoPermissionDenied: () -> Unit = {},
     onValuationValueChange: (String) -> Unit = {},
     onValuationDateChange: (String) -> Unit = {},
@@ -176,6 +182,7 @@ internal fun ExemplarDetailContent(
     var showArchiveDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var photoToRemove by remember { mutableStateOf<String?>(null) }
+    var photoBeingEdited by remember { mutableStateOf<Photo?>(null) }
     val context = LocalContext.current
 
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -309,13 +316,32 @@ internal fun ExemplarDetailContent(
                             angle = photo.angle,
                             isPrimary = photo.isPrimary,
                             source = File(context.filesDir, photo.path),
+                            isEdited = photo.isEdited,
                         )
                     },
                     onAddPhotoBytes = onAddPhoto,
                     onSetPrimary = onSetPrimaryPhoto,
                     onRemovePhoto = { photoId -> photoToRemove = photoId },
                     onPermissionDenied = onPhotoPermissionDenied,
+                    onEditPhoto = { tile ->
+                        photoBeingEdited = state.photos.firstOrNull { it.id == tile.id }
+                    },
                 )
+
+                photoBeingEdited?.let { photo ->
+                    PhotoEditDialog(
+                        photo = photo,
+                        onDismiss = { photoBeingEdited = null },
+                        onSave = { bytes, edit ->
+                            photoBeingEdited = null
+                            onSavePhotoEdit(photo.id, bytes, edit)
+                        },
+                        onRestoreOriginal = {
+                            photoBeingEdited = null
+                            onRestorePhotoOriginal(photo.id)
+                        },
+                    )
+                }
 
                 HorizontalDivider()
 

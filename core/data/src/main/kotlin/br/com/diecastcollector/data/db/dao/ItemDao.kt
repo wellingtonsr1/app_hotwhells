@@ -288,6 +288,60 @@ public interface PhotoDao {
     @Query("SELECT COUNT(*) FROM photo WHERE exemplar_id = :exemplarId")
     public suspend fun countByExemplar(exemplarId: String): Int
 
+    /**
+     * Torna a derivada o arquivo exibido e preserva o original (FR-214–FR-217).
+     * Categoria, ordem, principal e vínculo não entram no UPDATE de propósito (FR-218).
+     */
+    @Query(
+        """
+        UPDATE photo SET
+            path = :path,
+            checksum = :checksum,
+            width = :width,
+            height = :height,
+            bytes = :bytes,
+            original_path = :originalPath,
+            edit_params = :editParams,
+            edited_at = :editedAt
+        WHERE id = :photoId
+        """,
+    )
+    public suspend fun updateEdited(
+        photoId: String,
+        path: String,
+        checksum: String,
+        width: Int?,
+        height: Int?,
+        bytes: Long?,
+        originalPath: String,
+        editParams: String,
+        editedAt: Long,
+    )
+
+    /** Restauração do original: o arquivo exibido volta a ser o original (FR-216). */
+    @Query(
+        """
+        UPDATE photo SET
+            path = :path,
+            checksum = :checksum,
+            width = :width,
+            height = :height,
+            bytes = :bytes,
+            original_path = NULL,
+            edit_params = NULL,
+            edited_at = NULL
+        WHERE id = :photoId
+        """,
+    )
+    public suspend fun updateRestored(
+        photoId: String,
+        path: String,
+        checksum: String,
+        width: Int?,
+        height: Int?,
+        bytes: Long?,
+    )
+
     @Query("DELETE FROM photo WHERE id = :photoId")
     public suspend fun delete(photoId: String)
 }

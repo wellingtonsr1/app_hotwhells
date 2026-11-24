@@ -105,8 +105,121 @@ public class PhotoRepositoryImpl @Inject constructor(
             auditLogWriter.record("photo", photoId, "deleted", photo.path, null, "app")
         }
         imageStore.delete(photo.path)
+        // Original preservado também sai junto: sem o registro ele ficaria órfão (FR-214).
+        photo.originalPath?.takeIf { it != photo.path }?.let { imageStore.delete(it) }
         Result.success(Unit)
     } catch (error: Throwable) {
         Result.failure(if (error is DomainError) error else DomainError.Storage(error.message ?: "Falha ao excluir foto."))
+    }
+
+    /**
+     * Edição não destrutiva (FR-214–FR-218).
+     *
+     * O arquivo em `original_path` nunca é tocado; a derivada é gravada em arquivo novo e
+     * só depois o registro passa a apontá-la. Isso garante que uma falha no meio do
+     * caminho deixe a foto anterior exatamente como estava.
+     */
+    override suspend fun saveEdit(
+        photoId: String,
+        edited: ByteArray,
+        editParams: String,
+    ): DomainResult<Photo> {
+        return try {
+            val photo = database.photoDao().findById(photoId)
+                ?: return Result.failure(DomainError.NotFound)
+            if (edited.isEmpty()) {
+                return Result.failure(DomainError.Storage("A imagem editada está vazia."))
+            }
+
+            val originalPath = photo.originalPath ?: photo.path
+            // Sem o original no disco não há como prometer restauração: recusa em vez de
+            // transformar a derivada em novo "original".
+            val originalAvailable = imageStore.exists(originalPath)
+            if (!originalAvailable) {
+                return Result.failure(
+                    DomainError.Storage("O arquivo original desta foto não está mais disponível."),
+                )
+            }
+
+            val stored = imageStore.saveDerived(
+                exemplarId = photo.exemplarId,
+                source = ByteArrayInputStream(edited),
+                angle = photo.angle,
+            )
+
+            try {
+                transactionRunner.inTransaction {
+                    database.photoDao().updateEdited(
+                        photoId = photoId,
+                        path = stored.relativePath,
+                        checksum = stored.checksum,
+                        width = stored.width,
+                        height = stored.height,
+                        bytes = stored.bytes,
+                        originalPath = originalPath,
+                        editParams = editParams,
+                        editedAt = Instant.now(clock).toEpochMilli(),
+                    )
+                    auditLogWriter.record(
+                        "photo",
+                        photoId,
+                        "edited",
+                        photo.path,
+                        stored.relativePath,
+                        "app",
+                    )
+                }
+        } catch (error: Throwable) {
+            // Nada foi commitado: a derivada recém-gravada não deve sobrar no aparelho.
+            runCatching { imageStore.delete(stored.relativePath) }
+            throw error
+        }
+
+        // Derivada anterior só sai depois do commit. O original nunca entra aqui.
+        if (photo.path != originalPath) {
+            runCatching { imageStore.delete(photo.path) }
+        }
+
+        val updated = database.photoDao().findById(photoId) ?: photo
+        Result.success(updated.toDomain())
+        } catch (error: Throwable) {
+            Result.failure(if (error is DomainError) error else DomainError.Storage(error.message ?: "Falha ao salvar a foto editada."))
+        }
+    }
+
+    /** Restauração do original (FR-216): apaga a derivada e volta o caminho exibido. */
+    override suspend fun restoreOriginal(photoId: String): DomainResult<Photo> {
+        return try {
+            val photo = database.photoDao().findById(photoId)
+                ?: return Result.failure(DomainError.NotFound)
+            val originalPath = photo.originalPath
+                ?: return Result.failure(DomainError.NotFound)
+
+            val original = imageStore.inspect(originalPath)
+                ?: return Result.failure(
+                    DomainError.Storage("O arquivo original desta foto não está mais disponível."),
+                )
+
+            transactionRunner.inTransaction {
+                database.photoDao().updateRestored(
+                    photoId = photoId,
+                    path = originalPath,
+                    checksum = original.checksum,
+                    width = original.width,
+                    height = original.height,
+                    bytes = original.bytes,
+                )
+                auditLogWriter.record("photo", photoId, "restored", photo.path, originalPath, "app")
+            }
+
+            if (photo.path != originalPath) {
+                runCatching { imageStore.delete(photo.path) }
+            }
+
+            val updated = database.photoDao().findById(photoId) ?: photo
+            Result.success(updated.toDomain())
+        } catch (error: Throwable) {
+            Result.failure(if (error is DomainError) error else DomainError.Storage(error.message ?: "Falha ao restaurar a foto original."))
+        }
     }
 }

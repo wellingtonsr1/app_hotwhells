@@ -15,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.core.app.ActivityOptionsCompat
@@ -83,9 +84,37 @@ class PhotoCaptureTest {
 
         composeRule.onNodeWithText("Câmera").performClick()
 
+        // A revisão é obrigatória: só depois de uma escolha a foto é associada (FR-201).
+        composeRule.waitUntil(TIMEOUT_MS) {
+            composeRule.onAllNodesWithText("Salvar sem editar").fetchSemanticsNodes().isNotEmpty()
+        }
+        assertEquals(0, received.get())
+        composeRule.onNodeWithText("Salvar sem editar").performClick()
+
         composeRule.waitUntil(TIMEOUT_MS) { received.get() == 1 }
         assertTrue("A captura chegou vazia", bytes.isNotEmpty())
         assertEquals(PhotoAngle.BACK, angle)
+    }
+
+    @Test
+    fun cancelarNaRevisaoDescartaACaptura() {
+        val received = AtomicInteger()
+
+        setContent(
+            permissionGranted = true,
+            registry = FakeCameraRegistry(granted = true),
+            onBytes = { _, _ -> received.incrementAndGet() },
+            onDenied = {},
+        )
+
+        composeRule.onNodeWithText("Câmera").performClick()
+        composeRule.waitUntil(TIMEOUT_MS) {
+            composeRule.onAllNodesWithText("Cancelar").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Cancelar").performClick()
+
+        composeRule.waitForIdle()
+        assertEquals(0, received.get())
     }
 
     private fun setContent(

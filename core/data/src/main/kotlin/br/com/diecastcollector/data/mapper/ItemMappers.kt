@@ -62,6 +62,9 @@ internal fun PhotoEntity.toDomain(): Photo = Photo(
     height = height,
     bytes = bytes,
     capturedAt = capturedAt?.let(Instant::ofEpochMilli),
+    originalPath = originalPath,
+    editedAt = editedAt?.let(Instant::ofEpochMilli),
+    editParams = editParams,
 )
 
 internal fun Photo.toEntity(): PhotoEntity = PhotoEntity(
@@ -76,6 +79,9 @@ internal fun Photo.toEntity(): PhotoEntity = PhotoEntity(
     height = height,
     bytes = bytes,
     capturedAt = capturedAt?.toEpochMilli(),
+    originalPath = originalPath,
+    editParams = editParams,
+    editedAt = editedAt?.toEpochMilli(),
 )
 
 internal fun LocationEntity.toDomain(): Location = Location(

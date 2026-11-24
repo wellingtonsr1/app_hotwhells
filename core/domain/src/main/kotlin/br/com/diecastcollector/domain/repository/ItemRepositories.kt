@@ -121,6 +121,26 @@ public interface PhotoRepository {
     public suspend fun add(exemplarId: String, angle: PhotoAngle, source: ByteArray): DomainResult<Photo>
     public suspend fun setPrimary(exemplarId: String, photoId: String): DomainResult<Unit>
     public suspend fun remove(photoId: String): DomainResult<Unit>
+
+    /**
+     * Salva uma versão editada sem destruir o original (FR-214–FR-217).
+     *
+     * A base é sempre `original_path` (ou o próprio `path`, quando a foto nunca foi
+     * editada) — quem processa é a tela, que trabalha sobre o original. A derivada
+     * anterior, se houver, é apagada depois do commit: no máximo dois arquivos por foto.
+     * Categoria, ordem, principal e vínculo com o exemplar não mudam (FR-218).
+     */
+    public suspend fun saveEdit(
+        photoId: String,
+        edited: ByteArray,
+        editParams: String,
+    ): DomainResult<Photo>
+
+    /**
+     * Apaga a derivada e volta a exibir o original (FR-216).
+     * Sem original preservado devolve [br.com.diecastcollector.domain.error.DomainError.NotFound].
+     */
+    public suspend fun restoreOriginal(photoId: String): DomainResult<Photo>
 }
 
 /**

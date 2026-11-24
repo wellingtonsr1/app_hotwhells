@@ -554,6 +554,15 @@ private class FakePhotoRepository : PhotoRepository {
     }
 
     override suspend fun remove(photoId: String): DomainResult<Unit> = Result.success(Unit)
+
+    override suspend fun saveEdit(
+        photoId: String,
+        edited: ByteArray,
+        editParams: String,
+    ): DomainResult<Photo> = Result.failure(DomainError.NotFound)
+
+    override suspend fun restoreOriginal(photoId: String): DomainResult<Photo> =
+        Result.failure(DomainError.NotFound)
 }
 
 private class FakeColorRepository : ColorRepository {
