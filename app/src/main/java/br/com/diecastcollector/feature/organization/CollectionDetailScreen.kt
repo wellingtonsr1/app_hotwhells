@@ -40,6 +40,7 @@ import br.com.diecastcollector.ui.components.AdaptableCardActions
 import br.com.diecastcollector.ui.components.AdaptiveGrid
 import br.com.diecastcollector.ui.components.CardAction
 import br.com.diecastcollector.ui.components.ItemThumbnail
+import br.com.diecastcollector.ui.components.ProgressBar
 
 /** Marcas de teste dos itens da coleção (T323). */
 public object CollectionDetailTags {
@@ -282,7 +283,7 @@ private fun ProgressCard(state: CollectionDetailUiState) {
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            ProgressBar(percent = progress.percent)
+            ProgressBar(fraction = progress.percent / 100f)
             Text(
                 text = stringResource(
                     R.string.collections_progress,

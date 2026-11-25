@@ -3,14 +3,13 @@ package br.com.diecastcollector.feature.wishlist
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -38,6 +37,7 @@ import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.PhotoAngle
 import br.com.diecastcollector.domain.model.VariantSummary
 import br.com.diecastcollector.feature.catalog.PhotoCaptureActions
+import br.com.diecastcollector.ui.components.FormColumn
 import br.com.diecastcollector.ui.components.ItemThumbnail
 
 /** Formulário de desejo (T076): o que se procura, por quanto e onde. */
@@ -112,11 +112,11 @@ internal fun WishlistFormContent(
     actions: WishlistFormActions,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+    // T336: desejo e coleção compartilham a mesma coluna de leitura.
+    FormColumn(
+        modifier = modifier,
+        scrollable = true,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(

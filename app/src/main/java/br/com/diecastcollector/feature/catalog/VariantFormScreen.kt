@@ -3,12 +3,11 @@ package br.com.diecastcollector.feature.catalog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -38,6 +37,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.Condition
 import br.com.diecastcollector.domain.model.PhotoAngle
+import br.com.diecastcollector.ui.components.AdaptiveFieldPair
+import br.com.diecastcollector.ui.components.DialogList
+import br.com.diecastcollector.ui.components.FlowChipGroup
+import br.com.diecastcollector.ui.components.FormColumn
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -200,12 +203,11 @@ internal fun VariantFormContent(
         modifier = modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+        // T335: campos e `PhotoGrid` na coluna de leitura de 720 dp.
+        FormColumn(
+            modifier = Modifier.padding(padding),
+            scrollable = true,
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
@@ -230,23 +232,29 @@ internal fun VariantFormContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = state.primaryColor,
-                    onValueChange = onPrimaryColorChange,
-                    label = { Text(stringResource(R.string.create_entry_color)) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                )
-                OutlinedTextField(
-                    value = state.releaseYearText,
-                    onValueChange = onReleaseYearChange,
-                    label = { Text(stringResource(R.string.create_entry_year)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                )
-            }
+            // Pares lado a lado a partir da janela média; empilham em 360 dp/F (T338).
+            AdaptiveFieldPair(
+                spacing = 8.dp,
+                first = { fieldModifier ->
+                    OutlinedTextField(
+                        value = state.primaryColor,
+                        onValueChange = onPrimaryColorChange,
+                        label = { Text(stringResource(R.string.create_entry_color)) },
+                        singleLine = true,
+                        modifier = fieldModifier,
+                    )
+                },
+                second = { fieldModifier ->
+                    OutlinedTextField(
+                        value = state.releaseYearText,
+                        onValueChange = onReleaseYearChange,
+                        label = { Text(stringResource(R.string.create_entry_year)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = fieldModifier,
+                    )
+                },
+            )
 
             OutlinedTextField(
                 value = state.secondaryColors,
@@ -281,37 +289,42 @@ internal fun VariantFormContent(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = state.seriesName,
-                    onValueChange = onSeriesChange,
-                    label = { Text(stringResource(R.string.variant_series)) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                )
-                OutlinedTextField(
-                    value = state.manufacturerCode,
-                    onValueChange = onManufacturerCodeChange,
-                    label = { Text(stringResource(R.string.create_entry_code)) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                )
-            }
+            AdaptiveFieldPair(
+                spacing = 8.dp,
+                first = { fieldModifier ->
+                    OutlinedTextField(
+                        value = state.seriesName,
+                        onValueChange = onSeriesChange,
+                        label = { Text(stringResource(R.string.variant_series)) },
+                        singleLine = true,
+                        modifier = fieldModifier,
+                    )
+                },
+                second = { fieldModifier ->
+                    OutlinedTextField(
+                        value = state.manufacturerCode,
+                        onValueChange = onManufacturerCodeChange,
+                        label = { Text(stringResource(R.string.create_entry_code)) },
+                        singleLine = true,
+                        modifier = fieldModifier,
+                    )
+                },
+            )
 
             if (showExemplarSection) {
                 Text(
                     text = stringResource(R.string.variant_condition),
                     style = MaterialTheme.typography.labelLarge,
                 )
-                Condition.entries.chunked(3).forEach { rowConditions ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        rowConditions.forEach { condition ->
-                            FilterChip(
-                                selected = state.condition == condition,
-                                onClick = { onConditionChange(condition) },
-                                label = { Text(stringResource(condition.labelRes())) },
-                            )
-                        }
+                // Em vez de blocos fixos de três, o grupo quebra conforme a largura e a
+                // fonte: em 360 dp com 200% as cinco condições continuam visíveis (T329).
+                FlowChipGroup {
+                    Condition.entries.forEach { condition ->
+                        FilterChip(
+                            selected = state.condition == condition,
+                            onClick = { onConditionChange(condition) },
+                            label = { Text(stringResource(condition.labelRes())) },
+                        )
                     }
                 }
 
@@ -489,7 +502,8 @@ private fun VariantTargetDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            // T367: lista de variantes rola dentro do espaço do diálogo.
+            DialogList {
                 Text(message)
                 if (options.isEmpty()) {
                     Text(emptyMessage)
@@ -538,7 +552,8 @@ private fun SplitExemplarsDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.variant_split_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            // T367: exemplares e variantes de destino rolam; confirmar fica visível.
+            DialogList {
                 Text(stringResource(R.string.variant_split_message))
                 Text(
                     text = stringResource(R.string.variant_split_select),

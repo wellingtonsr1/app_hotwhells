@@ -36,6 +36,8 @@ import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.WishlistItem
 import br.com.diecastcollector.domain.model.WishlistStatus
 import br.com.diecastcollector.domain.repository.WishlistEntry
+import br.com.diecastcollector.ui.components.AdaptableCardActions
+import br.com.diecastcollector.ui.components.CardAction
 import br.com.diecastcollector.ui.components.ItemThumbnail
 import br.com.diecastcollector.ui.format.formatMoneyPtBr
 
@@ -95,13 +97,18 @@ internal fun WishlistContent(
             .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        // Título com `weight`: a ação "Adicionar" fica inteira em 360 dp/F (T341).
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = stringResource(R.string.wishlist_title),
                 style = MaterialTheme.typography.headlineSmall,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
             )
             Button(onClick = onAdd) {
                 Text(stringResource(R.string.wishlist_add))
@@ -216,22 +223,21 @@ private fun WishlistCard(
                 }
 
                 if (open) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        TextButton(onClick = onBuy, enabled = !working) {
-                            Text(stringResource(R.string.wishlist_buy))
-                        }
+                    // Três ações com rótulo inteiro ou em menu quando não couberem
+                    // (T342, FR-309). Durante o salvamento o toque é ignorado, o que
+                    // preserva o `enabled = false` dos botões anteriores.
+                    val actions = buildList {
+                        add(CardAction(stringResource(R.string.wishlist_buy)) { if (!working) onBuy() })
                         item.referenceUrl?.let { url ->
-                            TextButton(onClick = { openReferenceLink(context, url) }) {
-                                Text(stringResource(R.string.wishlist_open_link))
-                            }
+                            add(
+                                CardAction(stringResource(R.string.wishlist_open_link)) {
+                                    openReferenceLink(context, url)
+                                },
+                            )
                         }
-                        TextButton(onClick = onDismiss, enabled = !working) {
-                            Text(stringResource(R.string.wishlist_dismiss))
-                        }
+                        add(CardAction(stringResource(R.string.wishlist_dismiss)) { if (!working) onDismiss() })
                     }
+                    AdaptableCardActions(actions = actions)
                 }
             }
         }

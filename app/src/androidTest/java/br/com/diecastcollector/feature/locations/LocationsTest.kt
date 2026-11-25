@@ -1,16 +1,27 @@
 package br.com.diecastcollector.feature.locations
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import br.com.diecastcollector.domain.model.Condition
+import br.com.diecastcollector.domain.model.InventoryItem
 import br.com.diecastcollector.domain.model.LocationArchivePolicy
 import br.com.diecastcollector.domain.model.LocationType
+import br.com.diecastcollector.testing.WindowSizeFrame
+import br.com.diecastcollector.testing.WindowSizeFrameTags
 import br.com.diecastcollector.ui.theme.DiecastTheme
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -116,6 +127,91 @@ public class LocationsTest {
         compose.onAllNodesWithText("Excluir").onLast().performClick()
 
         assertEquals(LocationArchivePolicy.ArchiveExemplars, policy)
+    }
+
+    /**
+     * T361 (VII.14): a árvore acompanha a classe sem cortar nomes longos nem criar rolagem
+     * horizontal — em 360, 700 e 1.000 dp o nome fica dentro da moldura.
+     */
+    @Test
+    public fun arvoreRespeitaAsClassesDeJanela() {
+        var width by mutableStateOf(360.dp)
+        compose.setContent {
+            DiecastTheme {
+                WindowSizeFrame(width = width) {
+                    LocationsContent(
+                        state = state(
+                            rows = listOf(
+                                row(
+                                    "rack",
+                                    "Estante da parede da sala de coleção A",
+                                    LocationType.RACK,
+                                    depth = 0,
+                                    own = 12,
+                                ),
+                            ),
+                        ),
+                        onBack = {},
+                        onOpenContents = {},
+                        onAdd = { _, _, _ -> },
+                        onRename = { _, _ -> },
+                        onArchive = { _, _ -> },
+                        onMessageShown = {},
+                    )
+                }
+            }
+        }
+
+        listOf(360.dp, 700.dp, 1000.dp).forEach { target ->
+            compose.runOnUiThread { width = target }
+            compose.waitForIdle()
+            val frame = compose.onNodeWithTag(WindowSizeFrameTags.FRAME)
+                .getUnclippedBoundsInRoot()
+            val nome = compose.onNodeWithText("Estante da parede da sala de coleção A")
+                .getUnclippedBoundsInRoot()
+            assertTrue(
+                "Nome saiu da moldura em $target: ${nome.left}..${nome.right}",
+                nome.left.value >= frame.left.value - 1f &&
+                    nome.right.value <= frame.right.value + 1f,
+            )
+        }
+    }
+
+    /** T361: a grade do inventário usa a largura da janela e não rola na horizontal. */
+    @Test
+    public fun conteudosDaLocalizacaoRespeitamAsClasses() {
+        var width by mutableStateOf(360.dp)
+        compose.setContent {
+            DiecastTheme {
+                WindowSizeFrame(width = width) {
+                    LocationContentsContent(
+                        state = LocationContentsUiState(
+                            loading = false,
+                            locationId = "rack",
+                            name = "Estante A",
+                            items = (1..4).map { index ->
+                                InventoryItem(
+                                    exemplarId = "e$index",
+                                    variantId = "v$index",
+                                    title = "Modelo $index",
+                                    internalCode = "HW-00000$index",
+                                    condition = Condition.LOOSE,
+                                    locationName = "Estante A",
+                                )
+                            },
+                        ),
+                        onBack = {},
+                        onOpenExemplar = {},
+                    )
+                }
+            }
+        }
+
+        listOf(360.dp, 700.dp, 1000.dp).forEach { target ->
+            compose.runOnUiThread { width = target }
+            compose.waitForIdle()
+            compose.onNodeWithText("Estante A").assertIsDisplayed()
+        }
     }
 
     private fun state(rows: List<LocationRowModel>): LocationsUiState =

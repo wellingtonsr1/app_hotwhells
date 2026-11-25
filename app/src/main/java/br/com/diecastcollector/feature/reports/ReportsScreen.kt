@@ -4,6 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,6 +33,8 @@ import br.com.diecastcollector.R
 import br.com.diecastcollector.data.importexport.ReportFormat
 import br.com.diecastcollector.data.importexport.ReportWriters
 import br.com.diecastcollector.data.repository.InventoryReport
+import br.com.diecastcollector.ui.components.FlowChipGroup
+import br.com.diecastcollector.ui.components.FormColumn
 import java.time.Instant
 
 /**
@@ -89,11 +92,11 @@ internal fun ReportsContent(
     onDismissMessage: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+    // T369: largura de leitura e rolagem próprias em E.
+    FormColumn(
+        modifier = modifier,
+        scrollable = true,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(
@@ -119,7 +122,7 @@ internal fun ReportsContent(
             text = stringResource(R.string.reports_format_label),
             style = MaterialTheme.typography.titleSmall,
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowChipGroup {
             ReportFormat.entries.forEach { format ->
                 FilterChip(
                     selected = format == selectedFormat,

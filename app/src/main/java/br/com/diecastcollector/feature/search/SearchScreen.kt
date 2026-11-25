@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
@@ -29,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -38,6 +41,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -51,7 +55,19 @@ import br.com.diecastcollector.domain.model.ExemplarStatus
 import br.com.diecastcollector.domain.model.FilterOption
 import br.com.diecastcollector.domain.model.SearchFilters
 import br.com.diecastcollector.feature.catalog.labelRes
+import br.com.diecastcollector.ui.components.FlowChipGroup
+import br.com.diecastcollector.ui.components.LocalWindowSizeClass
+import br.com.diecastcollector.ui.components.isExpanded
 import br.com.diecastcollector.ui.format.formatMoneyPtBr
+
+/** Marcas de teste da busca (T348). */
+internal object SearchTags {
+    /** Painel lateral de filtros, usado só na janela expandida. */
+    const val FILTER_PANEL: String = "search-filter-panel"
+}
+
+/** Largura do painel lateral de filtros em janelas expandidas. */
+private val FILTER_PANEL_WIDTH = 320.dp
 
 /** Ações da tela agrupadas para os testes de UI não dependerem do Hilt. */
 internal class SearchActions(
@@ -122,6 +138,8 @@ internal fun SearchContent(
     onOpenExemplar: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val expanded = LocalWindowSizeClass.current.isExpanded
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -146,12 +164,26 @@ internal fun SearchContent(
             )
         },
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp),
-        ) {
+        Row(modifier = Modifier.fillMaxSize().padding(padding)) {
+            // Em janela expandida os filtros dividem a tela com os resultados em vez de
+            // cobri-los com uma folha modal (T346, FR-318).
+            if (expanded && state.filtersOpen) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(FILTER_PANEL_WIDTH)
+                        .testTag(SearchTags.FILTER_PANEL),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                ) {
+                    FiltersSheet(state = state, actions = actions)
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(horizontal = 16.dp),
+            ) {
             OutlinedTextField(
                 value = state.query,
                 onValueChange = actions.onQueryChange,
@@ -215,15 +247,15 @@ internal fun SearchContent(
                 }
             }
 
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                item(key = "sort-label") {
-                    Text(
-                        text = stringResource(R.string.search_sort),
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.padding(top = 14.dp),
-                    )
-                }
-                items(CatalogSort.entries.toList(), key = { it.name }) { sort ->
+            // Ordenação e visão quebram linha em vez de rolar na horizontal: em 360 dp
+            // com fonte ampliada a rolagem escondia opções (T347, FR-313).
+            FlowChipGroup {
+                Text(
+                    text = stringResource(R.string.search_sort),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(top = 14.dp),
+                )
+                CatalogSort.entries.forEach { sort ->
                     FilterChip(
                         selected = state.filters.sort == sort,
                         onClick = { actions.onSortChange(sort) },
@@ -233,8 +265,8 @@ internal fun SearchContent(
                 }
             }
 
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(CatalogViewMode.entries.toList(), key = { it.name }) { mode ->
+            FlowChipGroup {
+                CatalogViewMode.entries.forEach { mode ->
                     FilterChip(
                         selected = state.viewMode == mode,
                         onClick = { actions.onViewModeChange(mode) },
@@ -287,10 +319,11 @@ internal fun SearchContent(
                     )
                 }
             }
+            }
         }
     }
 
-    if (state.filtersOpen) {
+    if (state.filtersOpen && !expanded) {
         // São muitos filtros: abrir já expandido evita que a folha pareça cortada.
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
@@ -535,8 +568,8 @@ private fun OptionChips(
         )
         return
     }
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(options, key = { it.id }) { option ->
+    FlowChipGroup {
+        options.forEach { option ->
             FilterChip(
                 selected = option.id in selected,
                 onClick = { onToggle(option.id) },

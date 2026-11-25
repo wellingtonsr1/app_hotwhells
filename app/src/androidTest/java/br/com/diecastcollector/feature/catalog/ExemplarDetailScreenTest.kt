@@ -2,9 +2,11 @@ package br.com.diecastcollector.feature.catalog
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import br.com.diecastcollector.domain.model.Acquisition
 import br.com.diecastcollector.domain.model.Condition
@@ -12,9 +14,11 @@ import br.com.diecastcollector.domain.model.ExemplarStatus
 import br.com.diecastcollector.domain.model.IsoDate
 import br.com.diecastcollector.domain.model.MoneyCents
 import br.com.diecastcollector.domain.model.Valuation
+import br.com.diecastcollector.testing.WindowSizeFrame
 import br.com.diecastcollector.ui.theme.DiecastTheme
 import java.time.Instant
 import java.time.LocalDate
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -86,5 +90,66 @@ class ExemplarDetailScreenTest {
         composeRule.onNodeWithText("Valor estimado atual: R$ 85,00")
             .performScrollTo()
             .assertIsDisplayed()
+    }
+
+    /**
+     * T326/T332 (FR-313, SC-303): em 360 dp com fonte 200% as cinco condições e as cinco
+     * opções de embalagem — incluindo «não informada» — continuam inteiras e alcançáveis.
+     */
+    @Test
+    fun condicaoEEmbalagemCabemInteirasEm360ComFonteDobrada() {
+        renderResponsive(width = 360.dp, fontScale = 2f)
+
+        CHIPS.forEach { label ->
+            composeRule.onNodeWithText(label).performScrollTo().assertIsDisplayed()
+            val bounds = composeRule.onNodeWithText(label).getUnclippedBoundsInRoot()
+            assertTrue(
+                "$label saiu da tela: ${bounds.left}..${bounds.right}",
+                bounds.left.value >= 0f && bounds.right.value <= 360f,
+            )
+        }
+    }
+
+    private fun renderResponsive(width: Dp, fontScale: Float = 1f) {
+        composeRule.setContent {
+            DiecastTheme {
+                WindowSizeFrame(width = width, fontScale = fontScale) {
+                    ExemplarDetailContent(
+                        state = ExemplarDetailUiState(
+                            exemplarId = "e1",
+                            internalCode = "HW-000001",
+                            status = ExemplarStatus.OWNED,
+                            condition = Condition.SEALED,
+                            loading = false,
+                        ),
+                        contentPadding = PaddingValues(0.dp),
+                        onConditionChange = {},
+                        onPackagingChange = {},
+                        onNotesChange = {},
+                        onTargetLocationChange = {},
+                        onMoveNoteChange = {},
+                        onSaveDetails = {},
+                        onMove = {},
+                        onArchive = {},
+                        onDelete = {},
+                    )
+                }
+            }
+        }
+    }
+
+    private companion object {
+        val CHIPS = listOf(
+            "Lacrado",
+            "Solto",
+            "Danificado",
+            "Restaurado",
+            "Incompleto",
+            "Lacrada",
+            "Aberta",
+            "Danificada",
+            "Sem embalagem",
+            "Não informada",
+        )
     }
 }

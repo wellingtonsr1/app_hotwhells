@@ -16,10 +16,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
@@ -47,8 +47,17 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.PhotoAngle
+import br.com.diecastcollector.ui.components.LocalWindowSizeClass
+import br.com.diecastcollector.ui.components.MediaDialogScaffold
+import br.com.diecastcollector.ui.components.isExpanded
+import br.com.diecastcollector.ui.components.isMediumOrWider
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+
+/** Marcas de teste da grade de fotos (T352). */
+public object PhotoGridTags {
+    public const val TILE: String = "photo-tile"
+}
 
 /**
  * Uma miniatura da grade.
@@ -91,6 +100,14 @@ public fun PhotoGrid(
     // servir tanto às capturas pendentes quanto às fotos já gravadas.
     var fullScreenIndex by remember { mutableStateOf<Int?>(null) }
 
+    // T349: colunas por classe de janela — 2 no celular, 3 na média e 4 na expandida.
+    val windowSizeClass = LocalWindowSizeClass.current
+    val photoColumns = when {
+        windowSizeClass.isExpanded -> 4
+        windowSizeClass.isMediumOrWider -> 3
+        else -> 2
+    }
+
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -100,7 +117,9 @@ public fun PhotoGrid(
             style = MaterialTheme.typography.titleMedium,
         )
 
-        // Seletor de ângulo para a próxima foto (FR-020)
+        // Seletor de ângulo para a próxima foto (FR-020). Exceção justificada à quebra de
+        // chips: são 9 ângulos e, quebrando em linhas, o seletor ocuparia mais altura que
+        // a própria miniatura; a rolagem horizontal mantém um único gesto.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,7 +144,7 @@ public fun PhotoGrid(
 
         if (photos.isNotEmpty()) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                photos.chunked(2).forEach { rowPhotos ->
+                photos.chunked(photoColumns).forEach { rowPhotos ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -181,15 +200,10 @@ private fun PhotoViewerDialog(
         pageCount = { photos.size },
     )
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.95f)),
-        ) {
+    // O visualizador usa o contêiner de mídia com `safeDrawing`: em paisagem com recorte
+    // de câmera a imagem e o fechar não ficam sob as barras (T350, FR-323).
+    MediaDialogScaffold(onDismiss = onDismiss) {
+        Box(modifier = Modifier.fillMaxSize()) {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
@@ -235,18 +249,6 @@ private fun PhotoViewerDialog(
                 }
             }
 
-            IconButton(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Close,
-                    contentDescription = stringResource(R.string.common_close),
-                    tint = MaterialTheme.colorScheme.inverseOnSurface,
-                )
-            }
         }
     }
 }
@@ -265,9 +267,10 @@ private fun PhotoItemCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .testTag(PhotoGridTags.TILE)
             // Proporção retrato: as fotos são tiradas com o celular em pé, e o recorte
-            // quadrado cortava as laterais do carrinho. 3:4 ainda cabe em duas colunas
-            // numa tela de 360 dp, com os dois botões no canto.
+            // quadrado cortava as laterais do carrinho. 3:4 se mantém em qualquer
+            // número de colunas (FR-321/FR-322).
             .aspectRatio(3f / 4f)
             .clickable(onClick = onOpen),
         shape = RoundedCornerShape(8.dp),
@@ -322,9 +325,12 @@ private fun PhotoItemCard(
                     shape = RoundedCornerShape(bottomStart = 6.dp),
                     modifier = Modifier.align(Alignment.TopEnd),
                 ) {
+                    // Área de toque de 48 dp com o ícone pequeno (T330, FR-324):
+                    // o botão de 36 dp ficava abaixo do mínimo e o dedo errava o alvo
+                    // sobre a miniatura.
                     IconButton(
                         onClick = onEdit,
-                        modifier = Modifier.size(36.dp),
+                        modifier = Modifier.size(48.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Edit,
@@ -349,7 +355,7 @@ private fun PhotoItemCard(
             ) {
                 IconButton(
                     onClick = onSetPrimary,
-                    modifier = Modifier.size(32.dp),
+                    modifier = Modifier.size(48.dp),
                 ) {
                     Icon(
                         imageVector = if (tile.isPrimary) Icons.Filled.Star else Icons.Outlined.StarOutline,
@@ -365,7 +371,7 @@ private fun PhotoItemCard(
 
                 IconButton(
                     onClick = onRemove,
-                    modifier = Modifier.size(32.dp),
+                    modifier = Modifier.size(48.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Delete,

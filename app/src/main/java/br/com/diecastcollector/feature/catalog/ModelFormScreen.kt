@@ -3,11 +3,9 @@ package br.com.diecastcollector.feature.catalog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,6 +25,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
+import br.com.diecastcollector.ui.components.FlowChipGroup
+import br.com.diecastcollector.ui.components.FormColumn
 
 /**
  * Modelo e veículo real (T043, FR-014).
@@ -84,11 +84,11 @@ internal fun ModelFormContent(
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+    // T334: campos ≤ 720 dp centralizados; autocompletes acompanham a coluna.
+    FormColumn(
+        modifier = modifier,
+        scrollable = true,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(
@@ -107,7 +107,7 @@ internal fun ModelFormContent(
 
         if (state.loading) {
             CircularProgressIndicator()
-            return@Column
+            return@FormColumn
         }
 
         OutlinedTextField(
@@ -162,10 +162,9 @@ internal fun ModelFormContent(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        // Com vários veículos cadastrados a linha crescia para a direita e cortava os
+        // últimos chips em 360 dp; o grupo passa a quebrar linha (T328, FR-313).
+        FlowChipGroup {
             FilterChip(
                 selected = state.realVehicleId == null,
                 onClick = { onSelectVehicle(null) },

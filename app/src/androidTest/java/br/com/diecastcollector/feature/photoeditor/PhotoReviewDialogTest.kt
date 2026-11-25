@@ -1,9 +1,14 @@
 package br.com.diecastcollector.feature.photoeditor
 
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
+import br.com.diecastcollector.testing.DeviceWindow
+import br.com.diecastcollector.testing.WindowSizeFrame
 import br.com.diecastcollector.ui.theme.DiecastTheme
+import org.junit.After
 import java.util.concurrent.atomic.AtomicInteger
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -47,6 +52,46 @@ class PhotoReviewDialogTest {
         composeRule.onNodeWithText("Salvar sem editar").assertExists()
         composeRule.onNodeWithText("Tirar novamente").assertExists()
         composeRule.onNodeWithText("Cancelar").assertExists()
+    }
+
+    /**
+     * T364 (FR-316): em paisagem compacta a prévia tem teto de altura e as quatro ações
+     * continuam inteiras e tocáveis.
+     */
+    @Test
+    fun quatroAcoesFicamVisiveisEmPaisagem() {
+        DeviceWindow.use(widthDp = 640, heightDp = 360)
+        setContent()
+
+        listOf("Editar fotografia", "Salvar sem editar", "Tirar novamente", "Cancelar")
+            .forEach { label -> composeRule.onNodeWithText(label).assertIsDisplayed() }
+    }
+
+    /** T364: em 360 dp com fonte 200% as ações não se sobrepõem. */
+    @Test
+    fun quatroAcoesFicamVisiveisComFonteDobrada() {
+        composeRule.setContent {
+            DiecastTheme {
+                WindowSizeFrame(width = 360.dp, fontScale = 2f) {
+                    PhotoReviewDialog(
+                        imageBytes = ByteArray(32),
+                        fromCamera = true,
+                        onEdit = {},
+                        onSave = {},
+                        onRetake = {},
+                        onCancel = {},
+                    )
+                }
+            }
+        }
+
+        listOf("Editar fotografia", "Salvar sem editar", "Tirar novamente", "Cancelar")
+            .forEach { label -> composeRule.onNodeWithText(label).assertIsDisplayed() }
+    }
+
+    @After
+    fun restaurarJanela() {
+        DeviceWindow.reset()
     }
 
     @Test

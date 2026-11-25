@@ -8,10 +8,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,8 +27,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import br.com.diecastcollector.R
 import coil.compose.AsyncImage
 import java.io.File
@@ -95,14 +91,12 @@ internal fun ItemThumbnail(
     }
 
     if (expanded && path != null && !loadFailed) {
-        Dialog(
-            onDismissRequest = { expanded = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
+        // Mesmo contêiner do visualizador da grade: `safeDrawing` mantém imagem e
+        // fechar fora das barras do sistema (T350, FR-323).
+        MediaDialogScaffold(onDismiss = { expanded = false }) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.95f))
                     .clickable { expanded = false },
             ) {
                 AsyncImage(
@@ -113,18 +107,6 @@ internal fun ItemThumbnail(
                         .fillMaxSize()
                         .padding(12.dp),
                 )
-                IconButton(
-                    onClick = { expanded = false },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = stringResource(R.string.common_close),
-                        tint = MaterialTheme.colorScheme.inverseOnSurface,
-                    )
-                }
 
                 if (onOpenGallery != null) {
                     Surface(

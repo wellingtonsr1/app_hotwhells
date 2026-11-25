@@ -40,6 +40,8 @@ import br.com.diecastcollector.domain.model.CollectionProgress
 import br.com.diecastcollector.domain.model.DashboardEntry
 import br.com.diecastcollector.domain.model.DashboardSnapshot
 import br.com.diecastcollector.ui.components.LocalWindowSizeClass
+import br.com.diecastcollector.ui.components.MetricCard
+import br.com.diecastcollector.ui.components.ProgressBar
 import br.com.diecastcollector.ui.components.isExpanded
 import br.com.diecastcollector.ui.components.isMediumOrWider
 import br.com.diecastcollector.ui.format.formatCentsPtBr
@@ -190,34 +192,16 @@ private fun IndicatorGrid(snapshot: DashboardSnapshot) {
         indicators.chunked(columns).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 row.forEach { (label, value) ->
-                    MetricCard(label = label, value = value, modifier = Modifier.weight(1f))
+                    MetricCard(
+                        label = label,
+                        value = value,
+                        modifier = Modifier.weight(1f),
+                        valueFirst = true,
+                        tag = DashboardTags.METRIC,
+                    )
                 }
                 repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
             }
-        }
-    }
-}
-
-@Composable
-private fun MetricCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.testTag(DashboardTags.METRIC)) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-        ) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }
@@ -345,25 +329,7 @@ private fun CollectionRow(progress: CollectionProgress) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        ProgressBar(fraction = progress.percent / 100f)
-    }
-}
-
-@Composable
-private fun ProgressBar(fraction: Float) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(6.dp)
-            .clip(RoundedCornerShape(3.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(fraction.coerceIn(0f, 1f))
-                .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.primary),
-        )
+        ProgressBar(fraction = progress.percent / 100f, barHeight = 6.dp)
     }
 }
 

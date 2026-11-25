@@ -1,11 +1,19 @@
 package br.com.diecastcollector.feature.search
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import br.com.diecastcollector.domain.model.Condition
 import br.com.diecastcollector.domain.model.ExemplarStatus
 import br.com.diecastcollector.domain.model.FilterOption
@@ -15,8 +23,12 @@ import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.SearchFilters
 import br.com.diecastcollector.ui.UiMessage
 import br.com.diecastcollector.domain.model.SearchResultItem
+import br.com.diecastcollector.testing.DeviceWindow
+import br.com.diecastcollector.testing.WindowSizeFrame
+import br.com.diecastcollector.ui.components.ProvideWindowSizeClass
 import br.com.diecastcollector.ui.theme.DiecastTheme
 import java.time.LocalDate
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -163,14 +175,148 @@ class SearchScreenTest {
         assertEquals("e7", opened)
     }
 
+    /**
+     * T345/T348 (FR-306, SC-302): a grade mostra 2 colunas em 360 dp, 4 em 700 e 5 em
+     * 1.000 dp — antes eram sempre duas.
+     */
+    @Test
+    fun gradeEm360TemDuasColunas() = assertGridColumns(360.dp, 2)
+
+    @Test
+    fun gradeEm700TemQuatroColunas() = assertGridColumns(700.dp, 4)
+
+    @Test
+    fun gradeEm1000TemCincoColunas() = assertGridColumns(1000.dp, 5)
+
+    /**
+     * T346/T348 (FR-318): em janela expandida os filtros ficam em painel lateral com os
+     * resultados visíveis ao lado, em vez de uma folha que cobre tudo.
+     */
+    @Test
+    fun filtrosEmJanelaExpandidaAparecemEmPainelLateral() {
+        // Janela real de 1.000 dp: o painel lateral precisa caber na tela, não apenas na
+        // moldura de teste (T346/T348).
+        DeviceWindow.use(widthDp = 1000)
+        composeRule.setContent {
+            DiecastTheme {
+                ProvideWindowSizeClass {
+                    SearchContent(
+                        state = state(
+                            results = (1..4).map { item("e$it", "Modelo $it") },
+                            filtersOpen = true,
+                        ),
+                        actions = SearchActions(),
+                        onBack = {},
+                        onOpenExemplar = {},
+                    )
+                }
+            }
+        }
+
+        val panel = composeRule.onNodeWithTag(SearchTags.FILTER_PANEL)
+            .assertIsDisplayed()
+            .getUnclippedBoundsInRoot()
+        composeRule.onNodeWithText("Faixa de preço").performScrollTo().assertIsDisplayed()
+
+        val card = composeRule.onNodeWithText("Mattel · Modelo 1")
+            .assertIsDisplayed()
+            .getUnclippedBoundsInRoot()
+        assertTrue(
+            "Resultado começou em ${card.left}, painel termina em ${panel.right}",
+            card.left.value >= panel.right.value,
+        )
+    }
+
+    @After
+    fun restaurarJanela() {
+        DeviceWindow.reset()
+    }
+
+    @Test
+    fun filtrosEmJanelaCompactaContinuamEmFolhaModal() {
+        renderSearch(width = 360.dp, filtersOpen = true)
+
+        composeRule.onNodeWithTag(SearchTags.FILTER_PANEL).assertDoesNotExist()
+        composeRule.onNodeWithText("Faixa de preço").assertExists()
+    }
+
+    /**
+     * FR-304/T348: mudar a janela de expandida para compacta troca o painel pela folha
+     * sem perder a consulta nem os filtros (o estado vem do ViewModel).
+     */
+    @Test
+    fun filtrosEQuerySobrevivemAoRedimensionar() {
+        var width by mutableStateOf(1000.dp)
+        composeRule.setContent {
+            DiecastTheme {
+                WindowSizeFrame(width = width) {
+                    SearchContent(
+                        state = state(
+                            results = (1..4).map { item("e$it", "Modelo $it") },
+                            query = "Skyline",
+                            filtersOpen = true,
+                        ),
+                        actions = SearchActions(),
+                        onBack = {},
+                        onOpenExemplar = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag(SearchTags.FILTER_PANEL).assertIsDisplayed()
+        composeRule.onNodeWithText("Skyline").assertExists()
+
+        composeRule.runOnIdle { width = 360.dp }
+
+        composeRule.onNodeWithTag(SearchTags.FILTER_PANEL).assertDoesNotExist()
+        composeRule.onNodeWithText("Skyline").assertExists()
+        composeRule.onNodeWithText("Faixa de preço").assertExists()
+    }
+
+    private fun assertGridColumns(width: Dp, expected: Int) {
+        renderSearch(width = width)
+
+        val columns = composeRule.onAllNodesWithText("Modelo", substring = true)
+            .fetchSemanticsNodes()
+            .map { it.boundsInRoot.left }
+            .distinct()
+            .size
+
+        assertEquals("Colunas em $width", expected, columns)
+    }
+
+    private fun renderSearch(
+        width: Dp,
+        filtersOpen: Boolean = false,
+    ) {
+        composeRule.setContent {
+            DiecastTheme {
+                WindowSizeFrame(width = width) {
+                    SearchContent(
+                        state = state(
+                            results = (1..12).map { item("e$it", "Modelo $it") },
+                            filtersOpen = filtersOpen,
+                        ),
+                        actions = SearchActions(),
+                        onBack = {},
+                        onOpenExemplar = {},
+                    )
+                }
+            }
+        }
+    }
+
     private fun state(
         results: List<SearchResultItem> = emptyList(),
+        query: String = "",
         filters: SearchFilters = SearchFilters(),
         viewMode: CatalogViewMode = CatalogViewMode.GRID,
         filtersOpen: Boolean = false,
         priceMinText: String = "",
         priceError: UiMessage? = null,
     ) = SearchUiState(
+        query = query,
         filters = filters,
         options = SearchFilterOptions(
             manufacturers = listOf(FilterOption("m1", "Mattel")),

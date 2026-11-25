@@ -2,10 +2,14 @@ package br.com.diecastcollector.feature.catalog
 
 import android.graphics.Bitmap
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -17,8 +21,10 @@ import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import br.com.diecastcollector.domain.model.VariantSummary
+import br.com.diecastcollector.testing.WindowSizeFrame
 import br.com.diecastcollector.ui.theme.DiecastTheme
 import java.io.File
 import org.junit.Assert.assertEquals
@@ -239,6 +245,41 @@ class CatalogScreenTest {
         composeRule.onNodeWithText("Twin Mill").performClick()
 
         assertEquals("v1", clicked)
+    }
+
+    /**
+     * FR-304/T323: o acervo não tem filtro próprio (a busca é outra tela), então o estado a
+     * preservar aqui é o ponto da grade. Redimensionar 360 → 700 dp e recriar a activity
+     * (giro) mantêm o cartão em que o usuário estava.
+     */
+    @Test
+    fun rolagemDoCatalogoSobreviveAoRedimensionarEAoGirar() {
+        var width by mutableStateOf(360.dp)
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent {
+            DiecastTheme {
+                WindowSizeFrame(width = width) {
+                    CatalogContent(
+                        state = CatalogUiState(
+                            variants = (0 until 40).map { variant("v$it", "Modelo $it", photo = null) },
+                            loading = false,
+                        ),
+                        onVariantClick = {},
+                        onOpenExemplars = {},
+                        onCreateEntry = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.onNode(hasScrollToIndexAction()).performScrollToIndex(30)
+        composeRule.onNodeWithText("Modelo 30").assertIsDisplayed()
+
+        composeRule.runOnIdle { width = 700.dp }
+        composeRule.onNodeWithText("Modelo 30").assertExists()
+
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.onNodeWithText("Modelo 30").assertExists()
     }
 
     private fun show(

@@ -2,6 +2,7 @@ package br.com.diecastcollector.feature.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -17,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import br.com.diecastcollector.R
+import br.com.diecastcollector.ui.components.FormColumn
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -41,11 +43,11 @@ public fun AboutScreen(modifier: Modifier = Modifier) {
     }
     val buildInstant = remember { Instant.parse(BuildConfig.BUILD_TIME) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+    // T369: largura de leitura em E; nada estica a 1.000 dp.
+    FormColumn(
+        modifier = modifier,
+        scrollable = true,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(

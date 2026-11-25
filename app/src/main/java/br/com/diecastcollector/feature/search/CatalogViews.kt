@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -35,6 +33,7 @@ import br.com.diecastcollector.domain.model.Condition
 import br.com.diecastcollector.domain.model.ExemplarStatus
 import br.com.diecastcollector.domain.model.SearchResultItem
 import br.com.diecastcollector.feature.catalog.labelRes
+import br.com.diecastcollector.ui.components.AdaptiveGrid
 import br.com.diecastcollector.ui.components.ItemThumbnail
 import br.com.diecastcollector.ui.format.formatMoneyPtBr
 import coil.compose.AsyncImage
@@ -47,12 +46,13 @@ internal fun SearchResultsGrid(
     onOpenExemplar: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+    // Grade responsiva: 2 colunas em 360 dp, 4 em 700 e 5 em 1.000 dp (T345).
+    AdaptiveGrid(
         modifier = modifier.fillMaxWidth(),
+        minItemSize = 160.dp,
+        contentPadding = PaddingValues(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(bottom = 24.dp),
     ) {
         items(items, key = { it.exemplarId }) { item ->
             // A grade já é a visão compacta: sem foto, o texto caberia em duas colunas.
@@ -95,12 +95,13 @@ internal fun SearchResultsGallery(
     onOpenExemplar: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+    // A galeria acompanha a grade: colunas por largura, proporção 1:1 preservada (T345).
+    AdaptiveGrid(
         modifier = modifier.fillMaxWidth(),
+        minItemSize = 160.dp,
+        contentPadding = PaddingValues(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(bottom = 24.dp),
     ) {
         items(items, key = { it.exemplarId }) { item ->
             GalleryTile(item = item, onOpen = { onOpenExemplar(item.exemplarId) })

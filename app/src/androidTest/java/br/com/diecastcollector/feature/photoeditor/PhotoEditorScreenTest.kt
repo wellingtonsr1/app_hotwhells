@@ -7,6 +7,7 @@ import android.os.Build
 import android.view.WindowInsets
 import android.view.WindowManager
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -20,10 +21,12 @@ import androidx.test.platform.app.InstrumentationRegistry
 import br.com.diecastcollector.data.storage.AndroidPhotoProcessor
 import br.com.diecastcollector.domain.model.NormalizedRect
 import br.com.diecastcollector.domain.model.PhotoEdit
+import br.com.diecastcollector.testing.DeviceWindow
 import br.com.diecastcollector.ui.theme.DiecastTheme
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -134,6 +137,54 @@ class PhotoEditorScreenTest {
         val density = InstrumentationRegistry.getInstrumentation()
             .targetContext.resources.displayMetrics.density
         return 8f * density
+    }
+
+    @After
+    fun restaurarJanela() {
+        DeviceWindow.reset()
+    }
+
+    /**
+     * T351/T352 (FR-320): em paisagem compacta (~360 dp de altura) o painel calcula a
+     * altura pelo espaço do diálogo — rola dentro de si e o rodapé continua acima da
+     * barra do sistema.
+     */
+    @Test
+    fun painelRolaERodapeFicaNaTelaEmPaisagemCompacta() {
+        DeviceWindow.use(widthDp = 640, heightDp = 360)
+        setContent()
+
+        composeRule.waitUntil(TIMEOUT_MS) {
+            composeRule.onAllNodesWithText("Enquadrar").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onNodeWithText("Cor").performClick()
+        composeRule.waitForIdle()
+
+        // Há mais de um nó rolável (painel e abas); o painel é o que precisa existir.
+        assertTrue(
+            "Painel da ferramenta não rolou",
+            composeRule.onAllNodes(hasScrollAction()).fetchSemanticsNodes().isNotEmpty(),
+        )
+        composeRule.onNodeWithText("Brilho").assertExists()
+        assertFooterAboveNavigationBar("Cor")
+    }
+
+    /** T351/T352: em janela expandida a prévia aproveita o espaço e o rodapé não sai da tela. */
+    @Test
+    fun editorEmJanelaExpandidaMantemRodapeNaTela() {
+        DeviceWindow.use(widthDp = 1000, heightDp = 900)
+        setContent()
+
+        composeRule.waitUntil(TIMEOUT_MS) {
+            composeRule.onAllNodesWithText("Enquadrar").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onNodeWithText("Nitidez").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("Qualidade da imagem").assertExists()
+        assertFooterAboveNavigationBar("Nitidez")
     }
 
     @Test

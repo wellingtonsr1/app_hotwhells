@@ -4,6 +4,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -12,8 +14,12 @@ import br.com.diecastcollector.domain.recognition.RecognitionField
 import br.com.diecastcollector.domain.recognition.RecognitionProposal
 import br.com.diecastcollector.domain.recognition.RecognitionSuggestion
 import br.com.diecastcollector.domain.usecase.CatalogMatch
+import br.com.diecastcollector.testing.WindowSizeFrame
+import br.com.diecastcollector.testing.WindowSizeFrameTags
 import br.com.diecastcollector.ui.theme.DiecastTheme
+import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -93,6 +99,56 @@ class BarcodeScanScreenTest {
         composeRule.onNodeWithText("Adicionar exemplar desta variante").performClick()
 
         assertEquals("var-2", usedVariant)
+    }
+
+    /**
+     * T363 (VII.14): em 360 dp com fonte 200% o valor longo não espreme o rótulo nem sai da
+     * moldura; as ações de revisão continuam inteiras.
+     */
+    @Test
+    fun correspondenciaLongaCabeEm360ComFonteDobrada() {
+        composeRule.setContent {
+            DiecastTheme {
+                WindowSizeFrame(width = 360.dp, fontScale = 2f) {
+                    BarcodeScanContent(
+                        state = RecognitionViewModel.State(
+                            typedCode = "7891234567890123456789",
+                            proposal = proposal,
+                            matches = matches,
+                            selectedExemplarId = "ex-1",
+                        ),
+                        cameraDenied = false,
+                        onBack = {},
+                        onTypedCodeChange = {},
+                        onReadTypedCode = {},
+                        onUseCamera = {},
+                        onReview = {},
+                        onSaveReading = {},
+                        onSelectMatch = {},
+                        onUseVariant = {},
+                        onCreateManual = {},
+                        onDismissFailure = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Adicionar exemplar desta variante").assertExists()
+        val frame = composeRule.onNodeWithTag(WindowSizeFrameTags.FRAME)
+            .getUnclippedBoundsInRoot()
+        val valor = composeRule.onNodeWithText("7891234567890123456789", substring = true)
+            .getUnclippedBoundsInRoot()
+        assertTrue(
+            "Valor saiu da moldura: ${valor.left}..${valor.right}",
+            valor.left.value >= frame.left.value - 1f &&
+                valor.right.value <= frame.right.value + 1f,
+        )
+        val rotulo = composeRule.onNodeWithText("Hot Wheels · Twin Mill").getUnclippedBoundsInRoot()
+        assertTrue(
+            "Rótulo saiu da moldura: ${rotulo.left}..${rotulo.right}",
+            rotulo.left.value >= frame.left.value - 1f &&
+                rotulo.right.value <= frame.right.value + 1f,
+        )
     }
 
     @Test

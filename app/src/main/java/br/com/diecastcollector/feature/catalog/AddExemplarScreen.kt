@@ -4,12 +4,9 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +38,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.Condition
 import br.com.diecastcollector.ui.UiMessage
+import br.com.diecastcollector.ui.components.AdaptiveFieldPair
+import br.com.diecastcollector.ui.components.FlowChipGroup
+import br.com.diecastcollector.ui.components.FormColumn
 import br.com.diecastcollector.ui.theme.DiecastTheme
 
 /**
@@ -106,12 +106,11 @@ internal fun AddExemplarContent(
     onSave: () -> Unit,
 ) {
     Surface(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(contentPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+        // T335: a `PhotoGrid` e os campos acompanham a coluna de leitura de 720 dp.
+        FormColumn(
+            modifier = Modifier.padding(contentPadding),
+            scrollable = true,
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
@@ -132,17 +131,11 @@ internal fun AddExemplarContent(
                 text = stringResource(R.string.add_exemplar_condition),
                 style = MaterialTheme.typography.labelLarge,
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Condition.entries.take(3).forEach { condition ->
-                    FilterChip(
-                        selected = state.condition == condition,
-                        onClick = { onConditionChange(condition) },
-                        label = { Text(stringResource(condition.labelRes())) },
-                    )
-                }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Condition.entries.drop(3).forEach { condition ->
+            // As cinco condições num grupo que quebra linha: em 360 dp com fonte
+            // ampliada os dois `Row` fixos empurravam a última condição para fora da
+            // tela (T325, FR-313).
+            FlowChipGroup {
+                Condition.entries.forEach { condition ->
                     FilterChip(
                         selected = state.condition == condition,
                         onClick = { onConditionChange(condition) },
@@ -212,39 +205,48 @@ internal fun AddExemplarContent(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = state.shippingText,
-                    onValueChange = onShippingChange,
-                    label = { Text(stringResource(R.string.add_exemplar_shipping)) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                )
-                OutlinedTextField(
-                    value = state.discountText,
-                    onValueChange = onDiscountChange,
-                    label = { Text(stringResource(R.string.add_exemplar_discount)) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                )
-            }
+            // Pares lado a lado a partir da janela média; em 360 dp/F empilham (T338).
+            AdaptiveFieldPair(
+                first = { fieldModifier ->
+                    OutlinedTextField(
+                        value = state.shippingText,
+                        onValueChange = onShippingChange,
+                        label = { Text(stringResource(R.string.add_exemplar_shipping)) },
+                        singleLine = true,
+                        modifier = fieldModifier,
+                    )
+                },
+                second = { fieldModifier ->
+                    OutlinedTextField(
+                        value = state.discountText,
+                        onValueChange = onDiscountChange,
+                        label = { Text(stringResource(R.string.add_exemplar_discount)) },
+                        singleLine = true,
+                        modifier = fieldModifier,
+                    )
+                },
+            )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = state.dateText,
-                    onValueChange = onDateChange,
-                    label = { Text(stringResource(R.string.add_exemplar_date)) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                )
-                OutlinedTextField(
-                    value = state.store,
-                    onValueChange = onStoreChange,
-                    label = { Text(stringResource(R.string.add_exemplar_store)) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                )
-            }
+            AdaptiveFieldPair(
+                first = { fieldModifier ->
+                    OutlinedTextField(
+                        value = state.dateText,
+                        onValueChange = onDateChange,
+                        label = { Text(stringResource(R.string.add_exemplar_date)) },
+                        singleLine = true,
+                        modifier = fieldModifier,
+                    )
+                },
+                second = { fieldModifier ->
+                    OutlinedTextField(
+                        value = state.store,
+                        onValueChange = onStoreChange,
+                        label = { Text(stringResource(R.string.add_exemplar_store)) },
+                        singleLine = true,
+                        modifier = fieldModifier,
+                    )
+                },
+            )
 
             OutlinedTextField(
                 value = state.notes,

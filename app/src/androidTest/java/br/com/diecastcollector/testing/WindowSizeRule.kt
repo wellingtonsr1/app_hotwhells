@@ -9,6 +9,9 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import br.com.diecastcollector.ui.components.LocalWindowSizeClass
@@ -25,6 +28,11 @@ import br.com.diecastcollector.ui.components.windowSizeClassFor
 public fun windowSizeClassOf(width: Dp, height: Dp = 800.dp): WindowSizeClass =
     windowSizeClassFor(width, height)
 
+/** Marca da caixa de [WindowSizeFrame], para medir posições relativas a ela. */
+public object WindowSizeFrameTags {
+    public const val FRAME: String = "window-size-frame"
+}
+
 /**
  * Renderiza [content] em uma caixa de [width] × [height] dp com a classe correspondente.
  *
@@ -32,15 +40,29 @@ public fun windowSizeClassOf(width: Dp, height: Dp = 800.dp): WindowSizeClass =
  * emulador, e uma caixa de 1.000 dp dentro de 411 dp seria encolhida — o teste passaria a
  * medir a tela, que é exatamente o erro que a feature corrige. Com a exigência, o conteúdo
  * é medido no tamanho pedido mesmo que ultrapasse a raiz.
+ *
+ * [fontScale] amplia a fonte dentro da caixa sem mexer na densidade: é o caso da fonte do
+ * sistema em 200% (FR-314, FR-326), que muda a largura ocupada pelos rótulos sem mudar a
+ * classe de janela.
  */
 @Composable
 public fun WindowSizeFrame(
     width: Dp,
     height: Dp = 800.dp,
+    fontScale: Float = 1f,
     content: @Composable () -> Unit,
 ) {
-    CompositionLocalProvider(LocalWindowSizeClass provides windowSizeClassOf(width, height)) {
-        Box(modifier = Modifier.requiredWidth(width).requiredHeight(height)) {
+    val density = LocalDensity.current
+    CompositionLocalProvider(
+        LocalDensity provides Density(density = density.density, fontScale = fontScale),
+        LocalWindowSizeClass provides windowSizeClassOf(width, height),
+    ) {
+        Box(
+            modifier = Modifier
+                .requiredWidth(width)
+                .requiredHeight(height)
+                .testTag(WindowSizeFrameTags.FRAME),
+        ) {
             content()
         }
     }

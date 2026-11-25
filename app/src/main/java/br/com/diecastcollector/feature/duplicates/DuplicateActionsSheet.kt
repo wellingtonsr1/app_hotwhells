@@ -29,6 +29,7 @@ import br.com.diecastcollector.domain.model.Condition
 import br.com.diecastcollector.domain.model.DuplicateAvailability
 import br.com.diecastcollector.domain.model.DuplicateExemplar
 import br.com.diecastcollector.feature.catalog.labelRes
+import br.com.diecastcollector.ui.components.FlowChipGroup
 
 /**
  * Marcação de disponibilidade (T084, FR-066–FR-067).
@@ -104,7 +105,9 @@ public fun DuplicateActionsSheet(
                 text = stringResource(R.string.duplicates_sheet_condition),
                 style = MaterialTheme.typography.labelLarge,
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Cinco condições: em janela compacta com fonte ampliada a linha única
+            // deixava a última fora da tela; o grupo passa a quebrar (T327, FR-313).
+            FlowChipGroup {
                 Condition.entries.forEach { option ->
                     FilterChip(
                         selected = condition == option,

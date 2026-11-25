@@ -2,12 +2,11 @@ package br.com.diecastcollector.feature.duplicates
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -42,6 +41,8 @@ import br.com.diecastcollector.domain.model.Exemplar
 import br.com.diecastcollector.domain.model.Negotiation
 import br.com.diecastcollector.domain.model.NegotiationStatus
 import br.com.diecastcollector.domain.model.NegotiationType
+import br.com.diecastcollector.ui.components.FlowChipGroup
+import br.com.diecastcollector.ui.components.FormColumn
 import br.com.diecastcollector.ui.format.formatMoneyPtBr
 
 /**
@@ -74,13 +75,11 @@ public fun NegotiationScreen(
         modifier = modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 24.dp),
+        // T337: valores longos não espremem o rótulo e o formulário mantém leitura.
+        FormColumn(
+            modifier = Modifier.padding(padding),
+            scrollable = true,
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Row(
@@ -171,7 +170,7 @@ private fun OpenNegotiationForm(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowChipGroup {
                 NegotiationType.entries.forEach { type ->
                     FilterChip(
                         selected = state.type == type,

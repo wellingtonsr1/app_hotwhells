@@ -5,7 +5,9 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
+import br.com.diecastcollector.ui.components.FormColumn
 import br.com.diecastcollector.domain.backup.BackupFailure
 import br.com.diecastcollector.domain.backup.BackupSummary
 import java.time.ZoneId
@@ -88,11 +91,11 @@ internal fun BackupContent(
     onRestart: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+    // T362/T369: mesma largura de leitura e rolagem própria das demais telas de ajuste.
+    FormColumn(
+        modifier = modifier,
+        scrollable = true,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(
@@ -278,12 +281,30 @@ internal fun BackupContent(
                 }
             },
             confirmButton = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = onConfirmMerge) {
-                        Text(stringResource(R.string.backup_merge_action))
+                // Duas ações: em 360 dp com fonte ampliada elas empilham em vez de sair
+                // do diálogo (T340, FR-316).
+                BoxWithConstraints {
+                    val stacked = maxWidth < 200.dp
+                    val merge = @Composable {
+                        TextButton(onClick = onConfirmMerge) {
+                            Text(stringResource(R.string.backup_merge_action))
+                        }
                     }
-                    TextButton(onClick = onConfirmRestore) {
-                        Text(stringResource(R.string.backup_confirm_action))
+                    val restore = @Composable {
+                        TextButton(onClick = onConfirmRestore) {
+                            Text(stringResource(R.string.backup_confirm_action))
+                        }
+                    }
+                    if (stacked) {
+                        Column(horizontalAlignment = Alignment.End) {
+                            merge()
+                            restore()
+                        }
+                    } else {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            merge()
+                            restore()
+                        }
                     }
                 }
             },

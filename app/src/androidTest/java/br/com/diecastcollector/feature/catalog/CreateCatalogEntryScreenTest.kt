@@ -8,6 +8,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.net.Uri
 import android.provider.MediaStore
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -22,10 +23,13 @@ import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import br.com.diecastcollector.MainActivity
+import br.com.diecastcollector.testing.DeviceWindow
 import br.com.diecastcollector.testing.freshInstallRule
 import java.io.File
 import java.io.FileOutputStream
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -67,6 +71,7 @@ class CreateCatalogEntryScreenTest {
     @After
     fun tearDown() {
         Intents.release()
+        DeviceWindow.reset()
     }
 
     @Test
@@ -121,6 +126,32 @@ class CreateCatalogEntryScreenTest {
         // 9. A foto não ficou só na tela: existe arquivo em filesDir/images/<exemplarId>/.
         val images = waitForPhotoFile()
         assert(images.isNotEmpty()) { "Nenhuma foto gravada em filesDir/images" }
+    }
+
+    /**
+     * T334/T343 (FR-311, SC-306): com a janela de 1.000 dp, o formulário de cadastro
+     * mantém a coluna de leitura de 720 dp centralizada em vez de esticar os campos.
+     */
+    @Test
+    fun formularioEmJanelaExpandidaFicaNaColunaDeLeitura() {
+        DeviceWindow.use(widthDp = 1000)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("Catálogo").performClick()
+        waitForText(EMPTY_CATALOG)
+        composeRule.onNodeWithText("+ Mini").performClick()
+        waitForText("Nova miniatura")
+
+        val campo = composeRule.onAllNodes(hasSetTextAction())[0]
+            .getUnclippedBoundsInRoot()
+
+        assertEquals(
+            "Campo deveria ter 720 dp menos o padding de 20 dp de cada lado",
+            680f,
+            (campo.right - campo.left).value,
+            8f,
+        )
+        assertTrue("Coluna não centralizada: ${campo.left}", campo.left.value >= 140f)
     }
 
     private fun typeIntoField(index: Int, text: String) {

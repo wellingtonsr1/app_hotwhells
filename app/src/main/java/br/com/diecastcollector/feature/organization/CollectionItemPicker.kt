@@ -2,11 +2,12 @@ package br.com.diecastcollector.feature.organization
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import br.com.diecastcollector.R
+import br.com.diecastcollector.ui.components.FlowChipGroup
 
 /**
  * Seletor de item da coleção.
@@ -40,6 +42,32 @@ public fun CollectionItemPicker(
     onPick: (CollectionOption) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.collection_item_picker_title)) },
+        text = { CollectionItemPickerContent(options = options, onPick = onPick) },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_close))
+            }
+        },
+    )
+}
+
+/**
+ * Conteúdo do seletor, sem o `AlertDialog` em volta.
+ *
+ * A lista ocupa uma fração da altura disponível em vez de 320 dp fixos: em paisagem com
+ * ~360 dp de altura o seletor cabe, a lista rola e os botões do diálogo continuam
+ * alcançáveis (T339/T344, FR-316). Separado do diálogo para poder ser medido em um
+ * contêiner de teste com a altura da janela.
+ */
+@Composable
+internal fun CollectionItemPickerContent(
+    options: List<CollectionOption>,
+    onPick: (CollectionOption) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     var query by remember { mutableStateOf("") }
     var kind by remember { mutableStateOf(CollectionOptionKind.VARIANT) }
 
@@ -49,65 +77,59 @@ public fun CollectionItemPicker(
             .filter { query.isBlank() || it.label.contains(query.trim(), ignoreCase = true) }
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.collection_item_picker_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = { Text(stringResource(R.string.collection_item_picker_search)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val listMaxHeight = maxHeight * 0.55f
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                label = { Text(stringResource(R.string.collection_item_picker_search)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            FlowChipGroup {
+                FilterChip(
+                    selected = kind == CollectionOptionKind.VARIANT,
+                    onClick = { kind = CollectionOptionKind.VARIANT },
+                    label = { Text(stringResource(R.string.collection_item_picker_variant)) },
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = kind == CollectionOptionKind.VARIANT,
-                        onClick = { kind = CollectionOptionKind.VARIANT },
-                        label = { Text(stringResource(R.string.collection_item_picker_variant)) },
-                    )
-                    FilterChip(
-                        selected = kind == CollectionOptionKind.MODEL,
-                        onClick = { kind = CollectionOptionKind.MODEL },
-                        label = { Text(stringResource(R.string.collection_item_picker_model)) },
-                    )
-                }
-                HorizontalDivider()
-                if (filtered.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.collection_item_picker_empty),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.height(320.dp),
-                        contentPadding = PaddingValues(vertical = 4.dp),
-                    ) {
-                        items(filtered, key = { "${it.kind}-${it.id}" }) { option ->
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onPick(option) }
-                                    .padding(vertical = 10.dp),
-                            ) {
-                                Text(
-                                    text = option.label,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
+                FilterChip(
+                    selected = kind == CollectionOptionKind.MODEL,
+                    onClick = { kind = CollectionOptionKind.MODEL },
+                    label = { Text(stringResource(R.string.collection_item_picker_model)) },
+                )
+            }
+            HorizontalDivider()
+            if (filtered.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.collection_item_picker_empty),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = listMaxHeight),
+                    contentPadding = PaddingValues(vertical = 4.dp),
+                ) {
+                    items(filtered, key = { "${it.kind}-${it.id}" }) { option ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onPick(option) }
+                                .padding(vertical = 10.dp),
+                        ) {
+                            Text(
+                                text = option.label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     }
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.common_close))
-            }
-        },
-    )
+        }
+    }
 }

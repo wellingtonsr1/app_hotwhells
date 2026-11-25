@@ -21,9 +21,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -34,6 +36,8 @@ import br.com.diecastcollector.domain.model.FinancialHistory
 import br.com.diecastcollector.domain.model.NegotiationType
 import br.com.diecastcollector.domain.model.PeriodSpending
 import br.com.diecastcollector.domain.model.SpendingSlice
+import br.com.diecastcollector.ui.components.AdaptiveFieldPair
+import br.com.diecastcollector.ui.components.MetricCard
 import br.com.diecastcollector.ui.format.formatIsoDatePtBr
 import br.com.diecastcollector.ui.format.formatMoneyPtBr
 import br.com.diecastcollector.ui.format.formatYearMonthPtBr
@@ -183,22 +187,27 @@ internal fun FinanceContent(
             text = stringResource(R.string.finance_spending_month),
             style = MaterialTheme.typography.titleMedium,
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(
-                value = state.fromText,
-                onValueChange = onFromChange,
-                label = { Text(stringResource(R.string.finance_period_from)) },
-                singleLine = true,
-                modifier = Modifier.weight(1f),
-            )
-            OutlinedTextField(
-                value = state.toText,
-                onValueChange = onToChange,
-                label = { Text(stringResource(R.string.finance_period_to)) },
-                singleLine = true,
-                modifier = Modifier.weight(1f),
-            )
-        }
+        // Par de datas lado a lado a partir da janela média; empilha em 360 dp/F (T338).
+        AdaptiveFieldPair(
+            first = { fieldModifier ->
+                OutlinedTextField(
+                    value = state.fromText,
+                    onValueChange = onFromChange,
+                    label = { Text(stringResource(R.string.finance_period_from)) },
+                    singleLine = true,
+                    modifier = fieldModifier,
+                )
+            },
+            second = { fieldModifier ->
+                OutlinedTextField(
+                    value = state.toText,
+                    onValueChange = onToChange,
+                    label = { Text(stringResource(R.string.finance_period_to)) },
+                    singleLine = true,
+                    modifier = fieldModifier,
+                )
+            },
+        )
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(onClick = onApplyPeriod, modifier = Modifier.weight(1f)) {
                 Text(stringResource(R.string.finance_period_apply))
@@ -317,20 +326,6 @@ private val DISPOSAL_DATE: DateTimeFormatter =
     DateTimeFormatter.ofPattern("dd/MM/yyyy").withZone(ZoneId.systemDefault())
 
 @Composable
-private fun MetricCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(modifier = modifier) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(text = value, style = MaterialTheme.typography.titleMedium)
-        }
-    }
-}
-
-@Composable
 private fun SpendingSection(
     title: String,
     slices: List<SpendingSlice>,
@@ -349,13 +344,27 @@ private fun SpendingSection(
     }
 }
 
+/**
+ * Linha de gasto com rótulo à esquerda e valor à direita.
+ *
+ * O rótulo cede a largura (`weight`) e trunca em duas linhas: sem isso, um fabricante de
+ * 40 caracteres em 360 dp com fonte ampliada empurrava o valor para fora da tela
+ * (T331, FR-310).
+ */
 @Composable
 private fun SpendingRow(label: String, cents: Long) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
         Text(text = formatMoneyPtBr(cents), style = MaterialTheme.typography.bodyMedium)
     }
 }

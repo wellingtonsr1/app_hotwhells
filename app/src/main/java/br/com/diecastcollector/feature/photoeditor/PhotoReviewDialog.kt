@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -17,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -41,6 +43,21 @@ public fun PhotoReviewDialog(
     onCancel: () -> Unit,
 ) {
     val context = LocalContext.current
+    // T364/FR-316: em paisagem compacta (~360 dp de altura) a prévia 3:4 empurrava as
+    // quatro ações para fora do diálogo. A imagem passa a ter teto de altura e as ações
+    // ficam inteiras; em retrato a proporção 3:4 continua.
+    val landscape = LocalConfiguration.current.screenHeightDp < 480
+    val imageModifier = if (landscape) {
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .heightIn(max = 64.dp)
+    } else {
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp)
+            .aspectRatio(3f / 4f)
+    }
 
     Dialog(onDismissRequest = onCancel) {
         Surface(
@@ -60,11 +77,7 @@ public fun PhotoReviewDialog(
                         .build(),
                     contentDescription = stringResource(R.string.photo_review_title),
                     contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp)
-                        .aspectRatio(3f / 4f)
-                        .clip(RoundedCornerShape(10.dp)),
+                    modifier = imageModifier.clip(RoundedCornerShape(10.dp)),
                 )
 
                 Button(

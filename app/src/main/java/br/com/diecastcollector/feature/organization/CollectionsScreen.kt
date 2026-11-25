@@ -37,6 +37,7 @@ import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.CollectionProgress
 import br.com.diecastcollector.ui.components.AdaptiveGrid
 import br.com.diecastcollector.ui.components.ItemThumbnail
+import br.com.diecastcollector.ui.components.ProgressBar
 
 /** Marcas de teste dos cartões de coleção (T323). */
 public object CollectionTags {
@@ -185,7 +186,7 @@ private fun CollectionCard(
                 }
             }
             if (collection.hasKnownItems) {
-                ProgressBar(percent = collection.percent)
+                ProgressBar(fraction = collection.percent / 100f)
                 Text(
                     text = stringResource(
                         R.string.collections_progress,
@@ -203,26 +204,6 @@ private fun CollectionCard(
                 )
             }
         }
-    }
-}
-
-/** Barra simples: evita depender da assinatura de `LinearProgressIndicator` do Material3. */
-@Composable
-internal fun ProgressBar(percent: Int, modifier: Modifier = Modifier) {
-    val fraction = (percent.coerceIn(0, 100)) / 100f
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(8.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(fraction)
-                .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.primary),
-        )
     }
 }
 

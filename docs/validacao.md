@@ -235,3 +235,91 @@ A evidência antiga da T118 dizia que «os demais tipos de relatório reusam o m
 Isso não corresponde ao código: a tela de relatórios gera **apenas o inventário**, em PDF,
 CSV ou XLSX; os outros dez tipos não existem. A tarefa foi marcada como parcial no
 `tasks.md`; o escopo não muda, mas a evidência não deve induzir a erro.
+
+## 9. Medições da interface responsiva (spec 005, 2026-11-24)
+
+Complementa as seções anteriores para os NFRs da spec 005. Tudo foi medido no emulador
+`hotwheels_test` (API 36, x86_64, `-gpu swiftshader_indirect`), com JDK 17 e o mesmo
+`local.properties` do projeto.
+
+### 9.1 NFR-301 — reorganização em menos de 1 s
+
+`ResponsiveComponentsTest.reorganizacaoDaGradeAbaixoDeUmSegundo` troca a largura do contêiner
+de 360 para 1.000 dp e mede o tempo até a grade de 1 passar a 5 colunas. O valor sai no
+logcat:
+
+```bash
+./gradlew :app:connectedDebugAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=br.com.diecastcollector.ui.components.ResponsiveComponentsTest
+adb logcat -d | grep NFR-301
+# I System.out: NFR-301: grade de 1 para 5 colunas em 130ms
+```
+
+| Medida | Valor | Limite | Estado |
+|---|---|---|---|
+| Recomposição/medida da grade (1 → 5 colunas) | **130 ms** | 1.000 ms | Atende |
+
+A medição cobre a reorganização do layout depois que a classe é recalculada; a troca de
+configuração do sistema (recriação de `Activity`) não entra no número.
+
+### 9.2 NFR-303 — tamanho do artefato
+
+Comparação do commit-base `000721b` com a árvore atual, compilando o mesmo módulo nos dois
+lados (`git worktree add /tmp/baseline005 000721b` + `local.properties` copiado):
+
+```bash
+./gradlew :app:assembleDebug :app:assembleRelease
+ls -l app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/release/app-release.apk
+```
+
+| Artefato | Antes (`000721b`) | Depois | Δ | Limite |
+|---|---|---|---|---|
+| Debug (`app-debug.apk`) | 86.919.553 B | 87.057.909 B | **+138.356 B (+0,13 MB)** | +1 MB |
+| Release (`app-release*.apk`) | 31.930.785 B | 31.943.073 B | **+12.288 B (+0,01 MB)** | +1 MB |
+
+O release de referência é o `app-release-unsigned.apk` gerado no worktree; o atual sai
+assinado com a chave de release do projeto, o que explica a diferença de poucos bytes além
+do código. Ambos ficam muito abaixo de 1 MB.
+
+### 9.3 NFR-302 e abertura — estado da medição
+
+A abertura fria do build de **debug** no emulador por software, com `am start -W`
+(`adb shell am start -W -n br.com.diecastcollector.debug/br.com.diecastcollector.MainActivity`),
+ficou em **4,3 s / 5,5 s / 7,9 s** em três execuções — ruído alto do `swiftshader`, sem
+relação com a meta de 2 s da spec 003, que é medida no build `:app:benchmark`
+(`CompilationMode.Partial` + Baseline Profile). A medição de NFR-302 (abertura de lista,
+rolagem e detalhe) é a mesma de SC-003 e está registrada na seção 9.4.
+
+### 9.4 NFR-302 — abertura da Coleção com 500 variantes
+
+Mesmo roteiro de SC-003 (spec 003): semente de 500 variantes (450 com foto, 25 com arquivo
+ausente, 25 sem foto), build `:app:benchmark` e `CatalogBenchmark`:
+
+```bash
+python3 tools/benchmark_seed.py
+./gradlew :app:assembleBenchmark :benchmark:assembleBenchmarkBenchmark
+ADB=$ANDROID_SDK_ROOT/platform-tools/adb bash tools/seed-benchmark-device.sh
+$ADB shell am instrument -w -r \
+  -e class br.com.diecastcollector.benchmark.CatalogBenchmark \
+  -e androidx.benchmark.enabledRules Macrobenchmark \
+  -e androidx.benchmark.suppressErrors EMULATOR \
+  br.com.diecastcollector.benchmark/androidx.test.runner.AndroidJUnitRunner
+```
+
+| Medida | Antes (2026-11-23) | Depois (2026-11-24) | Meta |
+|---|---|---|---|
+| Abertura da Coleção — mediana (10 aberturas) | 83 ms | **147 ms** | < 1.000 ms |
+| Abertura da Coleção — p90 | 127 ms | **182 ms** | < 1.000 ms |
+| Abertura — máxima (1ª abertura) | 1.230 ms | 1.312 ms | — |
+
+A abertura continua bem abaixo de 1 s, mas ficou **64 ms mais lenta na mediana**; como a
+baseline foi medida em outro dia no mesmo emulador por software, a diferença está dentro da
+variação da máquina (a primeira abertura, que inclui compilação, variou 82 ms entre as duas
+execuções). Não há evidência suficiente para afirmar ganho nem regressão de NFR-302 na
+abertura.
+
+A metade "rolagem" **não foi medida**: `rolarColecaoCom500Variantes` falha no emulador com
+`IllegalStateException: Observed no renderthread slices in trace`, porque o `swiftshader` não
+emite os slices de renderização que `FrameTimingMetric` lê. É a mesma limitação já registrada
+na spec 003 (rolagem fluida depende de aparelho físico); a tarefa T029 daquela spec continua
+bloqueada.

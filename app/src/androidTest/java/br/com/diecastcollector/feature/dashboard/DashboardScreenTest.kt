@@ -1,15 +1,21 @@
 package br.com.diecastcollector.feature.dashboard
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import br.com.diecastcollector.domain.model.CollectionProgress
 import br.com.diecastcollector.domain.model.DashboardEntry
 import br.com.diecastcollector.domain.model.DashboardSnapshot
+import br.com.diecastcollector.testing.WindowSizeFrame
 import br.com.diecastcollector.ui.theme.DiecastTheme
 import org.junit.Rule
 import org.junit.Test
@@ -77,6 +83,42 @@ class DashboardScreenTest {
 
         composeRule.onNodeWithText("Não foi possível ler a coleção").assertIsDisplayed()
         composeRule.onNodeWithText("disco cheio").assertIsDisplayed()
+    }
+
+    /**
+     * FR-304/T323: o painel não tem seletor de período — o período vem do snapshot —, então
+     * o estado a preservar é a posição da rolagem. Redimensionar 360 → 700 dp e recriar a
+     * activity (giro) mantêm o colecionador na seção em que estava.
+     */
+    @Test
+    fun posicaoDoPainelSobreviveAoRedimensionarEAoGirar() {
+        var width by mutableStateOf(360.dp)
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent {
+            DiecastTheme {
+                WindowSizeFrame(width = width) {
+                    DashboardContent(
+                        state = DashboardUiState.Ready(
+                            snapshot().copy(
+                                collectionProgress = (1..30).map {
+                                    CollectionProgress("c$it", "Coleção $it", owned = 1, known = 3)
+                                },
+                            ),
+                        ),
+                    )
+                }
+            }
+        }
+
+        composeRule.onNode(hasScrollAction())
+            .performScrollToNode(hasText("Progresso das coleções"))
+        composeRule.onNodeWithText("Progresso das coleções").assertIsDisplayed()
+
+        composeRule.runOnIdle { width = 700.dp }
+        composeRule.onNodeWithText("Progresso das coleções").assertExists()
+
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.onNodeWithText("Progresso das coleções").assertExists()
     }
 
     private fun show(state: DashboardUiState) {

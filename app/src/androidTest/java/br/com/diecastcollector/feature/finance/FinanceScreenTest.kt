@@ -1,9 +1,11 @@
 package br.com.diecastcollector.feature.finance
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.dp
 import br.com.diecastcollector.domain.model.FinanceSummary
 import br.com.diecastcollector.domain.model.FinancialDisposal
 import br.com.diecastcollector.domain.model.FinancialHistory
@@ -11,8 +13,10 @@ import br.com.diecastcollector.domain.model.MoneyCents
 import br.com.diecastcollector.domain.model.NegotiationType
 import br.com.diecastcollector.domain.model.PeriodSpending
 import br.com.diecastcollector.domain.model.SpendingSlice
-import java.time.Instant
+import br.com.diecastcollector.testing.WindowSizeFrame
 import br.com.diecastcollector.ui.theme.DiecastTheme
+import java.time.Instant
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -95,5 +99,48 @@ class FinanceScreenTest {
         composeRule.onNodeWithText(
             "Vendas e trocas ficam fora do investido; o custo histórico de aquisição não muda.",
         ).performScrollTo().assertIsDisplayed()
+    }
+
+    /**
+     * T331 (FR-310): um fabricante de 40 caracteres não pode empurrar o valor para fora
+     * da tela em 360 dp com fonte 200%. O rótulo cede largura e trunca em duas linhas.
+     */
+    @Test
+    fun fabricanteLongoNaoEmpurraOValorParaForaEm360ComFonteDobrada() {
+        val fabricante = "FabricanteComNomeMuitoLongoParaTeste123"
+        composeRule.setContent {
+            DiecastTheme {
+                WindowSizeFrame(width = 360.dp, fontScale = 2f) {
+                    FinanceContent(
+                        state = FinanceUiState(
+                            summary = FinanceSummary(
+                                investedCents = 100_000,
+                                estimatedCents = 80_000,
+                                ownedExemplars = 6,
+                                exemplarsWithValue = 4,
+                                exemplarsWithoutValuation = 2,
+                                latestValuationDate = "2026-11-15",
+                            ),
+                            byManufacturer = listOf(SpendingSlice(fabricante, 123_456)),
+                            loading = false,
+                        ),
+                        onFromChange = {},
+                        onToChange = {},
+                        onApplyPeriod = {},
+                        onClearPeriod = {},
+                    )
+                }
+            }
+        }
+
+        val valor = composeRule.onNodeWithText("R$ 1.234,56")
+            .performScrollTo()
+            .assertIsDisplayed()
+            .getUnclippedBoundsInRoot()
+
+        assertTrue(
+            "O valor saiu da tela: ${valor.left}..${valor.right}",
+            valor.right.value <= 360f,
+        )
     }
 }

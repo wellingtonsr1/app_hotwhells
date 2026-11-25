@@ -61,6 +61,8 @@ import br.com.diecastcollector.domain.model.PhotoAngle
 import br.com.diecastcollector.domain.model.PhotoEdit
 import br.com.diecastcollector.domain.model.Valuation
 import br.com.diecastcollector.domain.repository.ExemplarDependents
+import br.com.diecastcollector.ui.components.AdaptiveFieldPair
+import br.com.diecastcollector.ui.components.FlowChipGroup
 import br.com.diecastcollector.ui.theme.DiecastTheme
 import java.io.File
 import java.time.Instant
@@ -244,17 +246,9 @@ internal fun ExemplarDetailContent(
                     text = stringResource(R.string.exemplar_condition),
                     style = MaterialTheme.typography.labelLarge,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Condition.entries.take(3).forEach { condition ->
-                        FilterChip(
-                            selected = state.condition == condition,
-                            onClick = { onConditionChange(condition) },
-                            label = { Text(stringResource(condition.labelRes())) },
-                        )
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Condition.entries.drop(3).forEach { condition ->
+                // Cinco condições num grupo que quebra linha (T326, FR-313).
+                FlowChipGroup {
+                    Condition.entries.forEach { condition ->
                         FilterChip(
                             selected = state.condition == condition,
                             onClick = { onConditionChange(condition) },
@@ -267,17 +261,10 @@ internal fun ExemplarDetailContent(
                     text = stringResource(R.string.exemplar_packaging),
                     style = MaterialTheme.typography.labelLarge,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PackagingCondition.entries.take(2).forEach { packaging ->
-                        FilterChip(
-                            selected = state.packagingCondition == packaging,
-                            onClick = { onPackagingChange(packaging) },
-                            label = { Text(stringResource(packaging.labelRes())) },
-                        )
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PackagingCondition.entries.drop(2).forEach { packaging ->
+                // Embalagem incluindo «não informado» no mesmo grupo: em 360 dp com
+                // fonte ampliada o chip de «não informado» sumia da borda (T326).
+                FlowChipGroup {
+                    PackagingCondition.entries.forEach { packaging ->
                         FilterChip(
                             selected = state.packagingCondition == packaging,
                             onClick = { onPackagingChange(packaging) },
@@ -361,57 +348,69 @@ internal fun ExemplarDetailContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = state.acquisitionPrice,
-                        onValueChange = onAcquisitionPriceChange,
-                        label = { Text(stringResource(R.string.add_exemplar_price)) },
-                        singleLine = true,
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            keyboardType = KeyboardType.Decimal,
-                        ),
-                        modifier = Modifier.weight(1f),
-                    )
-                    OutlinedTextField(
-                        value = state.acquisitionShipping,
-                        onValueChange = onAcquisitionShippingChange,
-                        label = { Text(stringResource(R.string.add_exemplar_shipping)) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = state.acquisitionDiscount,
-                        onValueChange = onAcquisitionDiscountChange,
-                        label = { Text(stringResource(R.string.add_exemplar_discount)) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
-                    OutlinedTextField(
-                        value = state.acquisitionDate,
-                        onValueChange = onAcquisitionDateChange,
-                        label = { Text(stringResource(R.string.add_exemplar_date)) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = state.acquisitionStore,
-                        onValueChange = onAcquisitionStoreChange,
-                        label = { Text(stringResource(R.string.add_exemplar_store)) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
-                    OutlinedTextField(
-                        value = state.acquisitionSeller,
-                        onValueChange = onAcquisitionSellerChange,
-                        label = { Text(stringResource(R.string.acquisition_seller)) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
+                AdaptiveFieldPair(
+                    first = { fieldModifier ->
+                        OutlinedTextField(
+                            value = state.acquisitionPrice,
+                            onValueChange = onAcquisitionPriceChange,
+                            label = { Text(stringResource(R.string.add_exemplar_price)) },
+                            singleLine = true,
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = KeyboardType.Decimal,
+                            ),
+                            modifier = fieldModifier,
+                        )
+                    },
+                    second = { fieldModifier ->
+                        OutlinedTextField(
+                            value = state.acquisitionShipping,
+                            onValueChange = onAcquisitionShippingChange,
+                            label = { Text(stringResource(R.string.add_exemplar_shipping)) },
+                            singleLine = true,
+                            modifier = fieldModifier,
+                        )
+                    },
+                )
+                AdaptiveFieldPair(
+                    first = { fieldModifier ->
+                        OutlinedTextField(
+                            value = state.acquisitionDiscount,
+                            onValueChange = onAcquisitionDiscountChange,
+                            label = { Text(stringResource(R.string.add_exemplar_discount)) },
+                            singleLine = true,
+                            modifier = fieldModifier,
+                        )
+                    },
+                    second = { fieldModifier ->
+                        OutlinedTextField(
+                            value = state.acquisitionDate,
+                            onValueChange = onAcquisitionDateChange,
+                            label = { Text(stringResource(R.string.add_exemplar_date)) },
+                            singleLine = true,
+                            modifier = fieldModifier,
+                        )
+                    },
+                )
+                AdaptiveFieldPair(
+                    first = { fieldModifier ->
+                        OutlinedTextField(
+                            value = state.acquisitionStore,
+                            onValueChange = onAcquisitionStoreChange,
+                            label = { Text(stringResource(R.string.add_exemplar_store)) },
+                            singleLine = true,
+                            modifier = fieldModifier,
+                        )
+                    },
+                    second = { fieldModifier ->
+                        OutlinedTextField(
+                            value = state.acquisitionSeller,
+                            onValueChange = onAcquisitionSellerChange,
+                            label = { Text(stringResource(R.string.acquisition_seller)) },
+                            singleLine = true,
+                            modifier = fieldModifier,
+                        )
+                    },
+                )
                 OutlinedTextField(
                     value = state.acquisitionMethod,
                     onValueChange = onAcquisitionMethodChange,
@@ -483,25 +482,29 @@ internal fun ExemplarDetailContent(
                     }
                 }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = state.valuationValue,
-                        onValueChange = onValuationValueChange,
-                        label = { Text(stringResource(R.string.valuation_value)) },
-                        singleLine = true,
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            keyboardType = KeyboardType.Decimal,
-                        ),
-                        modifier = Modifier.weight(1f),
-                    )
-                    OutlinedTextField(
-                        value = state.valuationDate,
-                        onValueChange = onValuationDateChange,
-                        label = { Text(stringResource(R.string.valuation_date)) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
+                AdaptiveFieldPair(
+                    first = { fieldModifier ->
+                        OutlinedTextField(
+                            value = state.valuationValue,
+                            onValueChange = onValuationValueChange,
+                            label = { Text(stringResource(R.string.valuation_value)) },
+                            singleLine = true,
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = KeyboardType.Decimal,
+                            ),
+                            modifier = fieldModifier,
+                        )
+                    },
+                    second = { fieldModifier ->
+                        OutlinedTextField(
+                            value = state.valuationDate,
+                            onValueChange = onValuationDateChange,
+                            label = { Text(stringResource(R.string.valuation_date)) },
+                            singleLine = true,
+                            modifier = fieldModifier,
+                        )
+                    },
+                )
                 OutlinedTextField(
                     value = state.valuationSource,
                     onValueChange = onValuationSourceChange,

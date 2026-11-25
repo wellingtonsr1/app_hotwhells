@@ -13,6 +13,9 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -39,6 +42,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+
+private const val TIMEOUT_REORGANIZACAO_MS = 5_000L
 
 /**
  * Componentes adaptativos por classe de janela (T313).
@@ -177,6 +182,48 @@ class ResponsiveComponentsTest {
             assertTrue("A ação deveria estar visível na linha", it.isNotEmpty())
         }
     }
+
+    /**
+     * NFR-301: mudar a classe de janela precisa reorganizar o layout em menos de 1 s.
+     *
+     * A medição acompanha a recomposição/medida da grade ao trocar a largura do contêiner
+     * de 360 para 1.000 dp, que é o mesmo caminho que um redimensionamento de janela segue
+     * depois que a classe é recalculada.
+     */
+    @Test
+    fun reorganizacaoDaGradeAbaixoDeUmSegundo() {
+        var width by mutableStateOf(360.dp)
+        composeRule.setContent {
+            DiecastTheme {
+                WindowSizeFrame(width = width) {
+                    AdaptiveGrid {
+                        items(20) {
+                            Box(Modifier.size(40.dp).testTag("grid-item"))
+                        }
+                    }
+                }
+            }
+        }
+        composeRule.waitForIdle()
+        assertEquals(1, gridColumns())
+
+        val inicio = System.nanoTime()
+        composeRule.runOnUiThread { width = 1000.dp }
+        composeRule.waitUntil(TIMEOUT_REORGANIZACAO_MS) { gridColumns() == 5 }
+        val gastoMs = (System.nanoTime() - inicio) / 1_000_000
+        println("NFR-301: grade de 1 para 5 colunas em ${gastoMs}ms")
+
+        assertTrue(
+            "Reorganização levou ${gastoMs}ms (limite ${1_000}ms)",
+            gastoMs < 1_000,
+        )
+    }
+
+    private fun gridColumns(): Int = composeRule.onAllNodesWithTag("grid-item")
+        .fetchSemanticsNodes()
+        .map { it.boundsInRoot.left }
+        .distinct()
+        .size
 
     private fun assertGridColumns(width: Dp, expected: Int) {
         composeRule.setContent {

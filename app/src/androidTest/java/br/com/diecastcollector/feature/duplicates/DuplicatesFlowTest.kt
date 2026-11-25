@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.room.Room
@@ -17,8 +18,10 @@ import br.com.diecastcollector.data.db.entity.CarModelEntity
 import br.com.diecastcollector.data.db.entity.ExemplarEntity
 import br.com.diecastcollector.data.db.entity.ManufacturerEntity
 import br.com.diecastcollector.data.db.entity.VariantEntity
+import br.com.diecastcollector.testing.DeviceWindow
 import br.com.diecastcollector.testing.freshInstallRule
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -155,6 +158,28 @@ class DuplicatesFlowTest {
         } finally {
             database.close()
         }
+    }
+
+    /**
+     * T361 (VII.14, FR-306): em janela média a lista de duplicados usa a largura toda sem
+     * cortar o cabeçalho do grupo nem o código do exemplar.
+     */
+    @Test
+    fun duplicadosAceitamJanelaMedia() {
+        DeviceWindow.use(widthDp = 700, heightDp = 800)
+        seed()
+
+        composeRule.onNodeWithText("Catálogo").performClick()
+        waitForText("Coleção")
+        composeRule.onNodeWithText("Duplicados").performClick()
+        waitForText("Mattel · Twin Mill")
+
+        composeRule.onNodeWithText("3 exemplares nesta variante").assertIsDisplayed()
+    }
+
+    @After
+    fun restaurarJanela() {
+        DeviceWindow.reset()
     }
 
     private fun waitForText(text: String) {

@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -39,6 +40,10 @@ public data class CardAction(
  * Cada ação reserva [minActionWidth] para o rótulo caber inteiro. Se a soma não couber na
  * largura do contêiner, as ações passam para um menu de três pontos em vez de serem
  * cortadas na borda ou amassarem o título.
+ *
+ * A reserva é multiplicada pela escala de fonte do sistema: com a fonte em 200% o rótulo
+ * ocupa o dobro e três ações em 360 dp passariam a ser elipsadas em vez de caber — o menu
+ * mantém os rótulos inteiros (FR-327).
  */
 @Composable
 public fun AdaptableCardActions(
@@ -48,8 +53,10 @@ public fun AdaptableCardActions(
 ) {
     if (actions.isEmpty()) return
 
+    val fontScale = LocalDensity.current.fontScale
+
     BoxWithConstraints(modifier = modifier) {
-        val fitsInRow = maxWidth >= minActionWidth * actions.size
+        val fitsInRow = maxWidth >= minActionWidth * actions.size * fontScale
         if (fitsInRow) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

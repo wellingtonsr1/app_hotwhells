@@ -37,6 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.Series
 import br.com.diecastcollector.ui.components.AdaptiveGrid
+import br.com.diecastcollector.ui.components.DialogList
 
 /** Marcas de teste das linhas de série (T323). */
 public object SeriesTags {
@@ -281,7 +282,8 @@ private fun SeriesFormDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // T367: formulário rola em paisagem; confirmar/cancelar ficam no rodapé.
+            DialogList(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },

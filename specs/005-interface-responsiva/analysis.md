@@ -72,16 +72,16 @@ Legenda: **Impl.** = tarefa que altera a tela/componente; **Evidência** = taref
 
 | SC | Critério | Tarefas de evidência | Situação |
 |---|---|---|---|
-| SC-301 | 100% das 37 linhas do inventário nas 3 classes + P | T356 (checklist), T361–T364, T322–T324, T343–T344, T348, T352 | Planejado; depende de T356 |
-| SC-302 | E com > 1 coluna e cartão ≤ 70% | T315, T317, T323, T345, T356 | Planejado |
-| SC-303 | Compacta + fonte 200% com ações alcançáveis | T332, T343, T362, T371 | Parcial: coberto por tela nas telas alteradas; T356 fecha a varredura |
-| SC-304 | 100% dos alvos ≥ 48 × 48 dp | T333, T371 | Planejado |
-| SC-305 | Zero falhas de inset/corte | T312, T313, T350, T352, T372 | Planejado (dobra física fica como limitação em T360) |
-| SC-306 | ≤ 720 dp em E | T310, T343, T362 | Planejado |
-| SC-307 | Suíte e detector de resíduos verdes | T358, T303 | Planejado |
-| SC-308 | Zero arquivos de domínio/dados | T359 | Planejado |
-| SC-309 | Cadastro em tablet com ≤ toques de C | T324 | Planejado |
-| SC-310 | < 1 s sem perder estado | T355, T372 | Planejado |
+| SC-301 | 100% das 37 linhas do inventário nas 3 classes + P | T356 (checklist), T361–T364, T322–T324, T343–T344, T348, T352 | **Parcial**: checklist com **37/37 linhas aprovadas por teste por classe** (T361–T364, T367); capturas por classe não geradas |
+| SC-302 | E com > 1 coluna e cartão ≤ 70% | T315, T317, T323, T345, T356 | **Parcial**: colunas em E provadas por teste (2/4/5 na busca, 4 na grade de fotos); cartão ≤ 70% medido só em `FormColumn` (720 dp), não por cartão |
+| SC-303 | Compacta + fonte 200% com ações alcançáveis | T332, T343, T362, T371 | **Parcial**: coberto por tela nas telas alteradas (`AddExemplar`, `Dashboard`, `CollectionDetail`, `Wishlist`); T356/T371 fecham a varredura |
+| SC-304 | 100% dos alvos ≥ 48 × 48 dp | T333, T371 | **Parcial**: grade de fotos em 48 dp provada em T333; verificação global depende de T371 |
+| SC-305 | Zero falhas de inset/corte | T312, T313, T350, T352, T372 | **Parcial**: insets do visualizador e do editor cobertos por asserção; dobra física não medida |
+| SC-306 | ≤ 720 dp em E | T310, T343, T362 | **Parcial**: `FormColumn` medido em 360/1.000 dp (720 dp exatos) e aplicado às telas de ajuste/auxiliares em T369; falta a verificação de dobra |
+| SC-307 | Suíte e detector de resíduos verdes | T358, T303 | **Atendido**: 148 testes instrumentados, 327 unitários e lint sem erros; varredura de T353 sem resíduos injustificados |
+| SC-308 | Zero arquivos de domínio/dados | T359 | **Atendido**: `git diff --stat 000721b -- core/domain core/data app/.../data` vazio |
+| SC-309 | Cadastro em tablet com ≤ toques de C | T324 | **Pendente**: sem teste de contagem de toques |
+| SC-310 | < 1 s sem perder estado | T355, T372 | **Parcial**: reorganização da grade em 130 ms (NFR-301); redimensionamento em duas janelas depende de T372 |
 
 ---
 
@@ -145,7 +145,93 @@ Registradas aqui e atualizadas por T360 após a execução:
 - Requisitos: **47** (33 FR + 4 NFR + 10 SC)
 - Tarefas: **72** (T301–T372), todas com Aceite e Janela
 - Cobertura FR: **33/33** (30 com tarefa de implementação + 3 com portão de verificação)
-- Cobertura SC: **10/10** planejada (2 dependem de T356)
+- Cobertura SC: **10/10** com evidência declarada; 2 atendidos (SC-307, SC-308), 7 parciais (SC-301–SC-306, SC-310) e 1 pendente (SC-309)
 - Achados da análise inicial: **18** — 1 crítica, 7 altas, 7 médias, 3 baixas
 - Achados fechados: **15** (C1–C14, I1, A1, I2); 3 baixos registrados sem tarefa
 - IDs duplicados em `tasks.md`: **0**
+
+---
+
+## 9. Execução do Polish (T353–T360, 2026-11-24)
+
+### 9.1 T353 — varredura de resíduos
+
+| Padrão procurado | Ocorrências | Situação |
+|---|---|---|
+| `GridCells.Fixed` | 0 em código (só o comentário de `AdaptiveGrid`) | Limpo |
+| `chunked(` em grade | `DashboardScreen` (colunas por classe), `NegotiationHistoryScreen` (1/2 colunas), `PhotoGrid` (2/3/4) | Dinâmico, sem resíduo |
+| `height(<dp>)` de conteúdo listável | Nenhuma; só `Spacer`, barra de progresso e marcadores | Limpo |
+| `Row` de chips sem quebra | `PhotoGrid` (9 ângulos, rolagem horizontal) | **Exceção comentada no código** |
+| `fillMaxWidth` de formulário sem `FormColumn` | Nenhuma nas telas de formulário | Limpo |
+
+A varredura converteu três `Row` de chips restantes em `FlowChipGroup`
+(`ReportsScreen`, `NegotiationScreen`, `CollectionItemPicker`). O seletor de ângulos da grade
+de fotos mantém `horizontalScroll` com justificativa explícita: quebrar 9 ângulos em linhas
+ocuparia mais altura que a própria miniatura.
+
+### 9.2 T354 — componentes extraídos
+
+`ProgressBar` e `MetricCard` agora existem uma única vez, em
+`core/ui/src/main/kotlin/br/com/diecastcollector/ui/components/Metric.kt`, e são reutilizados
+por `DashboardScreen`, `FinanceScreen`, `CollectionsScreen` e `CollectionDetailScreen`.
+`MetricCard` recebeu `valueFirst` (painel mostra número antes do rótulo) e `tag` (o painel
+mantém `DashboardTags.METRIC`). A suíte cobre os quatro consumidores
+(`DashboardScreenTest`, `FinanceScreenTest`, `ListsResponsiveTest`, `CollectionDetailTest`).
+
+### 9.3 T355 — medições
+
+Registradas em `docs/validacao.md` §9:
+
+- **NFR-301**: reorganização da grade 1 → 5 colunas em **130 ms** (limite 1 s).
+- **NFR-303**: APK debug **+138.356 B (+0,13 MB)**; release **+12.288 B (+0,01 MB)** contra
+  o commit `000721b`.
+- **NFR-302**: abertura da Coleção com 500 variantes em **147 ms** de mediana (baseline 83 ms;
+  diferença dentro do ruído do emulador por software). Rolagem não medida: o `swiftshader`
+  não produz os slices de renderização exigidos pelo `FrameTimingMetric`.
+
+### 9.4 T356 — checklist das 37 linhas
+
+`build/responsive/checklist.md`: **37/37 linhas aprovadas por teste por classe** depois do
+lote da Phase 9 (T361–T364, T367), sem nenhuma linha aprovada sem teste que exercite a
+classe ou o contêiner. **As capturas
+por classe não foram geradas**; é a lacuna que mantém SC-301/SC-302 parciais e que também
+bloqueia o cálculo de contraste de T371 sobre imagens.
+
+### 9.5 T358 — suíte completa
+
+| Comando | Resultado |
+|---|---|
+| `./gradlew :app:testDebugUnitTest :core:domain:test :core:data:test` | 76 + 74 + 177 = **327 testes**, 0 falhas, 0 ignorados |
+| `./gradlew :app:connectedDebugAndroidTest` | **167 testes**, 0 falhas, 0 ignorados |
+| `./gradlew :app:lintDebug` | **0 erros**, 23 avisos |
+
+Nenhum teste foi removido, marcado como `@Ignore` ou teve asserção afrouxada: o número de
+testes instrumentados subiu (68 em 2026-11-21 → 167) e as três classes alteradas por este
+lote (`PhotoGridTest`, `PhotoEditorScreenTest`, `ResponsiveComponentsTest`) só ganharam casos.
+
+### 9.6 T359 — portão de não intrusão
+
+```bash
+git diff --stat 000721b -- core/domain core/data app/src/main/java/br/com/diecastcollector/data
+# (vazio)
+git diff 000721b -- app/build.gradle.kts app/src/main/res/values/strings.xml | grep -E "^[+-].*(applicationId|app_name)"
+# (vazio)
+```
+
+`applicationId = "br.com.diecastcollector"` e `app_name = Diecast Collector` seguem os mesmos;
+nenhum arquivo de domínio, dados ou Room foi tocado.
+
+### 9.7 T360 — limitações acrescentadas
+
+- **Capturas por classe ausentes (T356)**: o checklist prova por asserção de limites, não por
+  imagem. Bloqueia SC-301/SC-302 e o contraste medido sobre capturas de T371.
+- **Rolagem de 500 variantes**: falha no emulador com `swiftshader`
+  (`Observed no renderthread slices in trace`); a metade "rolagem fluida" de NFR-302 e SC-003
+  continua pendente de aparelho físico.
+- **Dobra física**: nenhum aparelho dobrável; T372 cobre duas janelas emuladas, não a dobra
+  de hardware (FR-325).
+- **Janela livre (freeform)**: não é o modo padrão do AVD; só tamanhos discretos foram
+  exercitados.
+- **TalkBack**: semântica e foco são verificados por asserção; não há audição real (T371).
+- **Abertura em emulador por software**: números de abertura fria (4,3–7,9 s no debug) não
+  representam o build de release com Baseline Profile (1,456 s medido em 2026-11-21).

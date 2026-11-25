@@ -11,6 +11,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -73,7 +74,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -259,12 +259,16 @@ private fun PhotoEditorContent(
     onSave: () -> Unit,
     onRestoreOriginal: (() -> Unit)?,
 ) {
-    val panelMaxHeight = with(LocalConfiguration.current) { (screenHeightDp * 0.40f).dp }
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .then(dialogInsetsPadding()),
     ) {
+        // Altura do painel a partir do espaço real do diálogo, já sem os insets (T351):
+        // em paisagem a janela tem ~360 dp de altura e 40% da *tela* podia passar do
+        // próprio diálogo, empurrando o rodapé para fora.
+        val panelMaxHeight = maxHeight * 0.40f
+        Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -444,6 +448,7 @@ private fun PhotoEditorContent(
                     }
                 }
             }
+        }
         }
     }
 }
