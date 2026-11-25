@@ -177,10 +177,14 @@ public class LocationsTest {
         }
     }
 
-    /** T361: a grade do inventário usa a largura da janela e não rola na horizontal. */
+    /**
+     * T361/T320: a grade do inventário usa a largura da janela — 1 coluna em 360, 2 em 700
+     * e 3 em 1.000 dp, com os nomes dentro da moldura e sem rolagem horizontal.
+     */
     @Test
     public fun conteudosDaLocalizacaoRespeitamAsClasses() {
         var width by mutableStateOf(360.dp)
+        val titulos = (1..6).map { index -> "Modelo $index" }
         compose.setContent {
             DiecastTheme {
                 WindowSizeFrame(width = width) {
@@ -189,11 +193,11 @@ public class LocationsTest {
                             loading = false,
                             locationId = "rack",
                             name = "Estante A",
-                            items = (1..4).map { index ->
+                            items = titulos.mapIndexed { index, titulo ->
                                 InventoryItem(
                                     exemplarId = "e$index",
                                     variantId = "v$index",
-                                    title = "Modelo $index",
+                                    title = titulo,
                                     internalCode = "HW-00000$index",
                                     condition = Condition.LOOSE,
                                     locationName = "Estante A",
@@ -207,12 +211,60 @@ public class LocationsTest {
             }
         }
 
-        listOf(360.dp, 700.dp, 1000.dp).forEach { target ->
+        listOf(360.dp to 1, 700.dp to 2, 1000.dp to 3).forEach { (target, colunas) ->
             compose.runOnUiThread { width = target }
             compose.waitForIdle()
             compose.onNodeWithText("Estante A").assertIsDisplayed()
+            assertEquals("Colunas do inventário em $target", colunas, colunasDe(titulos))
         }
     }
+
+    /**
+     * T320: a árvore de localizações acompanha a classe — 1 coluna em 360, 2 em 700 e 3 em
+     * 1.000 dp — em vez de uma lista única esticada no tablet.
+     */
+    @Test
+    public fun locaisUsamColunasPorClasseDeJanela() {
+        var width by mutableStateOf(360.dp)
+        val nomes = (1..6).map { index -> "Zona $index" }
+        compose.setContent {
+            DiecastTheme {
+                WindowSizeFrame(width = width) {
+                    LocationsContent(
+                        state = state(
+                            rows = nomes.mapIndexed { index, nome ->
+                                row(
+                                    id = "loc$index",
+                                    name = nome,
+                                    type = LocationType.RACK,
+                                    depth = 0,
+                                    own = index,
+                                )
+                            },
+                        ),
+                        onBack = {},
+                        onOpenContents = {},
+                        onAdd = { _, _, _ -> },
+                        onRename = { _, _ -> },
+                        onArchive = { _, _ -> },
+                        onMessageShown = {},
+                    )
+                }
+            }
+        }
+
+        listOf(360.dp to 1, 700.dp to 2, 1000.dp to 3).forEach { (target, colunas) ->
+            compose.runOnUiThread { width = target }
+            compose.waitForIdle()
+            assertEquals("Colunas de localizações em $target", colunas, colunasDe(nomes))
+        }
+    }
+
+    /** Conta colunas pelo `left` distinto dos itens: uma coluna a mais aparece como outro x. */
+    private fun colunasDe(nomes: List<String>): Int = nomes
+        .map { nome -> compose.onNodeWithText(nome).getUnclippedBoundsInRoot().left.value }
+        .distinct()
+        .size
 
     private fun state(rows: List<LocationRowModel>): LocationsUiState =
         LocationsUiState(rows = rows, loading = false)

@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
+import br.com.diecastcollector.domain.model.Condition
 import br.com.diecastcollector.domain.model.DuplicateAvailability
 import br.com.diecastcollector.domain.model.DuplicateExemplar
 import br.com.diecastcollector.domain.model.DuplicateGroup
@@ -49,6 +50,36 @@ public fun DuplicatesScreen(
     viewModel: DuplicatesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+
+    DuplicatesContent(
+        state = state,
+        onBack = onBack,
+        onOpenNegotiation = onOpenNegotiation,
+        onSelect = viewModel::onSelect,
+        onDismissSheet = viewModel::onDismissSheet,
+        onSaveOffer = viewModel::onSaveOffer,
+        onMessageShown = viewModel::onMessageShown,
+        modifier = modifier,
+    )
+}
+
+/**
+ * Corpo dos duplicados sem o ViewModel (T321).
+ *
+ * Existe para o teste medir as colunas por classe de janela sem semear o banco: a grade é
+ * a mesma que a tela monta em produção, com as mesmas ações por cartão.
+ */
+@Composable
+internal fun DuplicatesContent(
+    state: DuplicatesUiState,
+    onBack: () -> Unit,
+    onOpenNegotiation: (exemplarId: String) -> Unit,
+    onSelect: (String) -> Unit,
+    onDismissSheet: () -> Unit,
+    onSaveOffer: (DuplicateAvailability, Condition?, String, String) -> Unit,
+    onMessageShown: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     val messageText = state.message?.text()
@@ -56,7 +87,7 @@ public fun DuplicatesScreen(
     LaunchedEffect(state.message) {
         messageText?.let {
             snackbarHostState.showSnackbar(it)
-            viewModel.onMessageShown()
+            onMessageShown()
         }
     }
 
@@ -115,7 +146,7 @@ public fun DuplicatesScreen(
                     items(state.groups, key = { it.variantId }) { group ->
                         DuplicateGroupCard(
                             group = group,
-                            onSelect = viewModel::onSelect,
+                            onSelect = onSelect,
                             onNegotiate = onOpenNegotiation,
                         )
                     }
@@ -128,8 +159,8 @@ public fun DuplicatesScreen(
         DuplicateActionsSheet(
             selected = selected,
             saving = state.saving,
-            onDismiss = viewModel::onDismissSheet,
-            onSave = viewModel::onSaveOffer,
+            onDismiss = onDismissSheet,
+            onSave = onSaveOffer,
         )
     }
 }

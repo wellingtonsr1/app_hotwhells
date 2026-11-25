@@ -1,10 +1,12 @@
 package br.com.diecastcollector.feature.recognition
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
@@ -16,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +35,7 @@ import br.com.diecastcollector.domain.model.RecognitionSource
 import br.com.diecastcollector.domain.recognition.RecognitionField
 import br.com.diecastcollector.domain.recognition.RecognitionProposal
 import br.com.diecastcollector.domain.recognition.RecognitionSuggestion
+import br.com.diecastcollector.ui.components.formMaxWidth
 import kotlin.math.roundToInt
 
 /**
@@ -50,109 +54,195 @@ public fun RecognitionReviewSheet(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var acceptedFields by remember { mutableStateOf(emptySet<RecognitionField>()) }
+    // Folha de decisão, não de navegação: aberta pela metade as ações fixas ficavam abaixo
+    // do recorte da folha em paisagem (T368/FR-317).
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
+        sheetState = sheetState,
         modifier = modifier,
     ) {
-        Column(
+        RecognitionReviewContent(
+            proposal = proposal,
+            onApply = onApply,
+            onDismissRequest = onDismissRequest,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+/**
+ * Corpo da revisão, sem a folha (T368, FR-317).
+ *
+ * O corpo rola por conta própria e as ações ficam no rodapé, fora da rolagem: com seis
+ * sugestões a folha crescia e "Aplicar selecionados" saía da janela em paisagem. A largura
+ * de leitura ([formMaxWidth]) deixa a coluna centralizada em vez de esticar a linha por
+ * 1.000 dp no tablet. Fica separado para o teste medir a folha inteira em paisagem real e
+ * o corpo em 360/1.000 dp sem depender da janela do diálogo.
+ */
+@Composable
+internal fun RecognitionReviewContent(
+    proposal: RecognitionProposal,
+    onApply: (Map<RecognitionField, String>) -> Unit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var acceptedFields by remember { mutableStateOf(emptySet<RecognitionField>()) }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .weight(1f, fill = false)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter,
         ) {
-            Text(
-                text = stringResource(R.string.recognition_review_title),
-                style = MaterialTheme.typography.titleLarge,
-            )
-            Text(
-                text = stringResource(R.string.recognition_review_origin, originLabel(proposal.source)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            if (!proposal.identified) {
+            Column(
+                modifier = Modifier
+                    .widthIn(max = formMaxWidth)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
                 Text(
-                    text = stringResource(R.string.recognition_review_unidentified_title),
-                    style = MaterialTheme.typography.titleMedium,
+                    text = stringResource(R.string.recognition_review_title),
+                    style = MaterialTheme.typography.titleLarge,
                 )
-                Text(text = stringResource(R.string.recognition_review_unidentified_body))
-                TextButton(onClick = onDismissRequest, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.recognition_review_dismiss))
-                }
-                return@Column
-            }
-
-            Text(
-                text = stringResource(R.string.recognition_review_intro),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-
-            proposal.suggestions.forEachIndexed { index, suggestion ->
-                if (index > 0) HorizontalDivider()
-                ReviewRow(
-                    suggestion = suggestion,
-                    accepted = suggestion.field in acceptedFields,
-                    onToggle = { checked ->
-                        acceptedFields = if (checked) {
-                            acceptedFields + suggestion.field
-                        } else {
-                            acceptedFields - suggestion.field
-                        }
-                    },
+                Text(
+                    text = stringResource(
+                        R.string.recognition_review_origin,
+                        originLabel(proposal.source),
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            }
 
-            if (proposal.suggestions.size > 1) {
-                TextButton(
-                    onClick = {
-                        acceptedFields = if (acceptedFields.size == proposal.suggestions.size) {
-                            emptySet()
-                        } else {
-                            proposal.suggestions.map { it.field }.toSet()
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
+                if (!proposal.identified) {
                     Text(
-                        stringResource(
-                            if (acceptedFields.size == proposal.suggestions.size) {
-                                R.string.recognition_review_clear
-                            } else {
-                                R.string.recognition_review_accept_all
-                            },
-                        ),
+                        text = stringResource(R.string.recognition_review_unidentified_title),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(text = stringResource(R.string.recognition_review_unidentified_body))
+                    TextButton(onClick = onDismissRequest, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.recognition_review_dismiss))
+                    }
+                } else {
+                    SuggestionList(
+                        proposal = proposal,
+                        acceptedFields = acceptedFields,
+                        onAcceptedFieldsChange = { acceptedFields = it },
                     )
                 }
             }
+        }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TextButton(
-                    onClick = onDismissRequest,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(stringResource(R.string.recognition_review_dismiss))
-                }
-                Button(
-                    onClick = {
-                        onApply(
-                            proposal.suggestions
-                                .filter { it.field in acceptedFields }
-                                .associate { it.field to it.value },
-                        )
+        if (proposal.identified) {
+            ReviewActions(
+                proposal = proposal,
+                acceptedFields = acceptedFields,
+                onApply = onApply,
+                onDismissRequest = onDismissRequest,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SuggestionList(
+    proposal: RecognitionProposal,
+    acceptedFields: Set<RecognitionField>,
+    onAcceptedFieldsChange: (Set<RecognitionField>) -> Unit,
+) {
+    Text(
+        text = stringResource(R.string.recognition_review_intro),
+        style = MaterialTheme.typography.bodyMedium,
+    )
+
+    proposal.suggestions.forEachIndexed { index, suggestion ->
+        if (index > 0) HorizontalDivider()
+        ReviewRow(
+            suggestion = suggestion,
+            accepted = suggestion.field in acceptedFields,
+            onToggle = { checked ->
+                onAcceptedFieldsChange(
+                    if (checked) {
+                        acceptedFields + suggestion.field
+                    } else {
+                        acceptedFields - suggestion.field
                     },
-                    enabled = acceptedFields.isNotEmpty(),
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(stringResource(R.string.recognition_review_apply))
-                }
+                )
+            },
+        )
+    }
+
+    if (proposal.suggestions.size > 1) {
+        TextButton(
+            onClick = {
+                onAcceptedFieldsChange(
+                    if (acceptedFields.size == proposal.suggestions.size) {
+                        emptySet()
+                    } else {
+                        proposal.suggestions.map { it.field }.toSet()
+                    },
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                stringResource(
+                    if (acceptedFields.size == proposal.suggestions.size) {
+                        R.string.recognition_review_clear
+                    } else {
+                        R.string.recognition_review_accept_all
+                    },
+                ),
+            )
+        }
+    }
+}
+
+/** Rodapé fixo da folha: as duas ações nunca entram na rolagem (T368). */
+@Composable
+private fun ReviewActions(
+    proposal: RecognitionProposal,
+    acceptedFields: Set<RecognitionField>,
+    onApply: (Map<RecognitionField, String>) -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    HorizontalDivider()
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            modifier = Modifier
+                .widthIn(max = formMaxWidth)
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            TextButton(
+                onClick = onDismissRequest,
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(stringResource(R.string.recognition_review_dismiss))
+            }
+            Button(
+                onClick = {
+                    onApply(
+                        proposal.suggestions
+                            .filter { it.field in acceptedFields }
+                            .associate { it.field to it.value },
+                    )
+                },
+                enabled = acceptedFields.isNotEmpty(),
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(stringResource(R.string.recognition_review_apply))
             }
         }
     }

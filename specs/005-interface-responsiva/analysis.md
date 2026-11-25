@@ -120,7 +120,7 @@ Legenda: **Impl.** = tarefa que altera a tela/componente; **Evidência** = taref
 
 ## 6. Dependências críticas da rastreabilidade
 
-1. T371 depende de T356 (capturas para o cálculo de contraste).
+1. T371 **não depende mais** de T356: o contraste é calculado das cores do tema em `ContrastAssert` (luminância relativa da WCAG), em vez de amostrar pixels das capturas. Isso mantém a verificação determinística, mas mede os pares de cor declarados — não o que cada tela renderiza com sobreposições e imagens de fundo.
 2. T372 depende de T306 (shell adaptável) e valida FR-301/FR-304/FR-325/NFR-301 em duas janelas.
 3. T361–T364 executam antes de T358, para que a suíte final já inclua a verificação por classe de todas as telas.
 4. T359 fecha FR-329, FR-330 e SC-308 por comando; sem ele, a matriz fica sem prova de não intrusão.
