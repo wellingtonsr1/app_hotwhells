@@ -14,13 +14,18 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityOptionsCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import br.com.diecastcollector.domain.model.PhotoAngle
+import br.com.diecastcollector.testing.WindowSizeFrame
 import br.com.diecastcollector.ui.theme.DiecastTheme
 import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
@@ -117,24 +122,94 @@ class PhotoCaptureTest {
         assertEquals(0, received.get())
     }
 
+    /**
+     * T370/FR-315: em janela estreita com fonte 200% os botões empilham em vez de cortar.
+     *
+     * A largura de 240 dp é a de uma janela compacta dividida; nela o rótulo medido na fonte
+     * atual mais o padding não cabe duas vezes na mesma linha.
+     */
+    @Test
+    fun botoesDeCapturaEmpilhamEmJanelaEstreitaComFonteDobrada() {
+        setContent(
+            permissionGranted = true,
+            registry = FakeCameraRegistry(granted = true),
+            onBytes = { _, _ -> },
+            onDenied = {},
+            width = 240.dp,
+            fontScale = 2f,
+        )
+
+        val gallery = composeRule.onNodeWithText("Galeria").getUnclippedBoundsInRoot()
+        val camera = composeRule.onNodeWithText("Câmera").getUnclippedBoundsInRoot()
+
+        assertTrue(
+            "Esperava Câmera abaixo de Galeria, mas ficou em ${camera.top} × ${gallery.bottom}",
+            camera.top.value >= gallery.bottom.value - 1f,
+        )
+        assertTrue("Galeria saiu da janela: ${gallery.right}", gallery.right.value <= 241f)
+        assertTrue("Câmera saiu da janela: ${camera.right}", camera.right.value <= 241f)
+    }
+
+    @Test
+    fun botoesDeCapturaFicamLadoALadoEmJanelaExpandida() {
+        setContent(
+            permissionGranted = true,
+            registry = FakeCameraRegistry(granted = true),
+            onBytes = { _, _ -> },
+            onDenied = {},
+            width = 700.dp,
+        )
+
+        val gallery = composeRule.onNodeWithText("Galeria").getUnclippedBoundsInRoot()
+        val camera = composeRule.onNodeWithText("Câmera").getUnclippedBoundsInRoot()
+
+        assertTrue(
+            "Esperava os dois botões na mesma linha: ${gallery.right} e ${camera.left}",
+            camera.left.value >= gallery.right.value - 1f,
+        )
+    }
+
+    /** T370/FR-315: em 360 dp com fonte 200% os dois rótulos continuam inteiros na tela. */
+    @Test
+    fun rotulosDeCapturaCabemEm360ComFonteDobrada() {
+        setContent(
+            permissionGranted = true,
+            registry = FakeCameraRegistry(granted = true),
+            onBytes = { _, _ -> },
+            onDenied = {},
+            width = 360.dp,
+            fontScale = 2f,
+        )
+
+        listOf("Galeria", "Câmera").forEach { label ->
+            composeRule.onNodeWithText(label).assertIsDisplayed()
+            val bounds = composeRule.onNodeWithText(label).getUnclippedBoundsInRoot()
+            assertTrue("$label saiu da tela: ${bounds.right}", bounds.right.value <= 361f)
+        }
+    }
+
     private fun setContent(
         permissionGranted: Boolean,
         registry: FakeCameraRegistry,
         onBytes: (ByteArray, PhotoAngle) -> Unit,
         onDenied: () -> Unit,
+        width: Dp = 360.dp,
+        fontScale: Float = 1f,
     ) {
         val base = InstrumentationRegistry.getInstrumentation().targetContext
         composeRule.setContent {
             DiecastTheme {
-                CompositionLocalProvider(
-                    LocalContext provides PermissionContext(base, permissionGranted),
-                    LocalActivityResultRegistryOwner provides RegistryOwner(registry),
-                ) {
-                    PhotoCaptureActions(
-                        selectedAngle = PhotoAngle.BACK,
-                        onPhotoBytesReceived = onBytes,
-                        onPermissionDenied = onDenied,
-                    )
+                WindowSizeFrame(width = width, fontScale = fontScale) {
+                    CompositionLocalProvider(
+                        LocalContext provides PermissionContext(base, permissionGranted),
+                        LocalActivityResultRegistryOwner provides RegistryOwner(registry),
+                    ) {
+                        PhotoCaptureActions(
+                            selectedAngle = PhotoAngle.BACK,
+                            onPhotoBytesReceived = onBytes,
+                            onPermissionDenied = onDenied,
+                        )
+                    }
                 }
             }
         }

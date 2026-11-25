@@ -8,9 +8,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,7 +23,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -123,22 +128,35 @@ public fun PhotoCaptureActions(
         pickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }
 
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Button(
-            onClick = { launchGallery() },
-            modifier = Modifier.weight(1f),
-        ) {
-            Text(stringResource(R.string.photo_gallery))
-        }
+    val galleryLabel = stringResource(R.string.photo_gallery)
+    val cameraLabel = stringResource(R.string.photo_camera)
 
-        OutlinedButton(
-            onClick = { launchCamera() },
-            modifier = Modifier.weight(1f),
-        ) {
-            Text(stringResource(R.string.photo_camera))
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        // T370/FR-315: cada botão precisa do rótulo medido na fonte atual mais o padding
+        // interno. Se os dois não couberem lado a lado, eles empilham em vez de cortar o
+        // texto — em 360 dp com a fonte em 200% os pesos de 1f comeriam o rótulo.
+        val measurer = rememberTextMeasurer()
+        val textStyle = MaterialTheme.typography.labelLarge
+        val density = LocalDensity.current
+        val innerPadding = with(density) { PhotoButtonPadding.toPx() }
+        val spacing = with(density) { PhotoButtonSpacing.toPx() }
+        val required = measurer.measure(galleryLabel, textStyle).size.width +
+            measurer.measure(cameraLabel, textStyle).size.width +
+            2 * innerPadding + spacing
+
+        if (required > constraints.maxWidth) {
+            Column(verticalArrangement = Arrangement.spacedBy(PhotoButtonSpacing)) {
+                GalleryButton(modifier = Modifier.fillMaxWidth(), onClick = { launchGallery() })
+                CameraButton(modifier = Modifier.fillMaxWidth(), onClick = { launchCamera() })
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(PhotoButtonSpacing),
+            ) {
+                GalleryButton(modifier = Modifier.weight(1f), onClick = { launchGallery() })
+                CameraButton(modifier = Modifier.weight(1f), onClick = { launchCamera() })
+            }
         }
     }
 
@@ -173,6 +191,30 @@ public fun PhotoCaptureActions(
                 onPhotoBytesReceived(if (edit.isNeutral) capture.bytes else bytes, selectedAngle)
             },
         )
+    }
+}
+
+private val PhotoButtonSpacing = 8.dp
+
+/**
+ * Folga horizontal de cada botão de captura, usada só na medição de [PhotoCaptureActions].
+ *
+ * O padding real vem do `Button` do Material 3; o valor aqui é a reserva mínima de cada lado
+ * para o rótulo não encostar na borda.
+ */
+private val PhotoButtonPadding = 48.dp
+
+@Composable
+private fun GalleryButton(modifier: Modifier, onClick: () -> Unit) {
+    Button(onClick = onClick, modifier = modifier) {
+        Text(stringResource(R.string.photo_gallery))
+    }
+}
+
+@Composable
+private fun CameraButton(modifier: Modifier, onClick: () -> Unit) {
+    OutlinedButton(onClick = onClick, modifier = modifier) {
+        Text(stringResource(R.string.photo_camera))
     }
 }
 

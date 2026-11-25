@@ -5,11 +5,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -22,6 +25,7 @@ import br.com.diecastcollector.feature.organization.SeriesUiState
 import br.com.diecastcollector.testing.DeviceWindow
 import br.com.diecastcollector.testing.WindowSizeFrame
 import br.com.diecastcollector.testing.WindowSizeFrameTags
+import br.com.diecastcollector.ui.components.MenuMaxHeight
 import br.com.diecastcollector.ui.theme.DiecastTheme
 import java.time.Instant
 import org.junit.After
@@ -103,6 +107,64 @@ class OrganizationResponsiveTest {
 
         val scrollables = composeRule.onAllNodes(hasScrollAction()).fetchSemanticsNodes()
         assertTrue("O corpo do diálogo deveria rolar", scrollables.isNotEmpty())
+    }
+
+    /**
+     * T366/FR-319: o menu de série superior para em [MenuMaxHeight] e rola até a última.
+     *
+     * Com trinta séries o menu crescia até a altura da janela; aqui ele fica dentro do teto e
+     * a última opção só aparece depois de rolar dentro do próprio menu.
+     */
+    @Test
+    fun menuDeSerieSuperiorLimitaAlturaERola() {
+        renderSeries(parents = 30)
+
+        composeRule.onNodeWithText("+ Série").performClick()
+        composeRule.onAllNodesWithText("Série 30").fetchSemanticsNodes().let {
+            assertTrue("A série 30 não deve aparecer antes de abrir o menu", it.isEmpty())
+        }
+        composeRule.onNodeWithText("Série superior: Sem série superior").performClick()
+
+        val menuBounds = composeRule.onNodeWithTag(SeriesTags.PARENT_MENU)
+            .getUnclippedBoundsInRoot()
+        val height = menuBounds.bottom - menuBounds.top
+        assertTrue("Menu mediu $height", height <= MenuMaxHeight + 1.dp)
+
+        composeRule.onNodeWithText("Série 30").performScrollTo().assertIsDisplayed()
+    }
+
+    /** T366/FR-319: o seletor de coleção superior também respeita o teto e rola. */
+    @Test
+    fun menuDeColecaoSuperiorLimitaAlturaERola() {
+        composeRule.setContent {
+            DiecastTheme {
+                WindowSizeFrame(width = 360.dp) {
+                    CollectionFormContent(
+                        state = CollectionFormUiState(
+                            name = "Nova coleção",
+                            parents = (1..30).map { index ->
+                                ParentOption(id = "c$index", name = "Coleção $index")
+                            },
+                        ),
+                        onNameChange = {},
+                        onDescriptionChange = {},
+                        onParentChange = {},
+                        onSave = {},
+                        onMessageShown = {},
+                        onCancel = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Sem coleção superior").performClick()
+
+        val menuBounds = composeRule.onNodeWithTag(CollectionFormTags.PARENT_MENU)
+            .getUnclippedBoundsInRoot()
+        val height = menuBounds.bottom - menuBounds.top
+        assertTrue("Menu mediu $height", height <= MenuMaxHeight + 1.dp)
+
+        composeRule.onNodeWithText("Coleção 30").performScrollTo().assertIsDisplayed()
     }
 
     private fun renderSeries(parents: Int, onAdd: (String, String?) -> Unit = { _, _ -> }) {

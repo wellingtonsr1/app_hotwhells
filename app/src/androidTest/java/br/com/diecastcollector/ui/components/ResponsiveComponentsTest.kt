@@ -4,11 +4,13 @@ package br.com.diecastcollector.ui.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -27,6 +29,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -114,6 +117,43 @@ class ResponsiveComponentsTest {
             val bounds = composeRule.onNodeWithText(label).getUnclippedBoundsInRoot()
             assertTrue("$label saiu da tela: ${bounds.right}", bounds.right.value <= 360f)
         }
+    }
+
+    /**
+     * T365/FR-314: com o teclado aberto a ação primária continua alcançável.
+     *
+     * O IME entra como inset de 200 dp em uma caixa de 480 dp: o que se prova é que a coluna
+     * termina acima do teclado e a rolagem leva o botão até lá. Injetar o inset em vez de
+     * abrir o teclado do sistema mantém o teste independente da configuração do emulador —
+     * o inset é o mesmo dado que a produção lê.
+     */
+    @Test
+    fun formularioMantemAcaoPrimariaAcimaDoTeclado() {
+        composeRule.setContent {
+            DiecastTheme {
+                Box(modifier = Modifier.size(360.dp, 480.dp)) {
+                    FormColumn(
+                        scrollable = true,
+                        imeInsets = WindowInsets(0.dp, 0.dp, 0.dp, 200.dp),
+                    ) {
+                        repeat(6) { index ->
+                            Box(Modifier.fillMaxWidth().height(72.dp).testTag("field-$index"))
+                        }
+                        Button(onClick = {}, modifier = Modifier.fillMaxWidth()) {
+                            Text("Salvar")
+                        }
+                    }
+                }
+            }
+        }
+
+        val bounds = composeRule.onNodeWithText("Salvar")
+            .performScrollTo()
+            .getUnclippedBoundsInRoot()
+        assertTrue(
+            "Ação primária terminou em ${bounds.bottom}; o teclado começa em 280 dp",
+            bounds.bottom.value <= 281f,
+        )
     }
 
     @Test

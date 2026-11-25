@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -26,11 +27,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
 import br.com.diecastcollector.ui.components.FormColumn
+import br.com.diecastcollector.ui.components.MenuMaxHeight
+
+/** Marcas de teste do formulário de coleção (T366). */
+public object CollectionFormTags {
+    public const val PARENT_MENU: String = "collection-form-parent-menu"
+}
 
 @Composable
 public fun CollectionFormScreen(
@@ -155,7 +163,14 @@ private fun ParentPicker(
         )
         Box {
             TextButton(onClick = { expanded = true }) { Text(selectedName) }
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            // T366/FR-319: coleção superior com muitas opções rola dentro do menu.
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier
+                    .heightIn(max = MenuMaxHeight)
+                    .testTag(CollectionFormTags.PARENT_MENU),
+            ) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.collection_form_no_parent)) },
                     onClick = {

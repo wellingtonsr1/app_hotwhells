@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -38,10 +39,17 @@ import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.Series
 import br.com.diecastcollector.ui.components.AdaptiveGrid
 import br.com.diecastcollector.ui.components.DialogList
+import br.com.diecastcollector.ui.components.MenuMaxHeight
 
-/** Marcas de teste das linhas de série (T323). */
+/** Marcas de teste das linhas e dos menus de série (T323, T366). */
 public object SeriesTags {
     public const val ROW: String = "series-row"
+
+    /** Menu de fabricante, no cabeçalho da tela. */
+    public const val MANUFACTURER_MENU: String = "series-manufacturer-menu"
+
+    /** Menu de série superior, dentro do formulário de série. */
+    public const val PARENT_MENU: String = "series-parent-menu"
 }
 
 /**
@@ -221,7 +229,14 @@ private fun ManufacturerPicker(
 
     Box {
         TextButton(onClick = { expanded = true }) { Text(selectedName) }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        // T366/FR-319: com muitos fabricantes o menu rola em vez de crescer sem limite.
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .heightIn(max = MenuMaxHeight)
+                .testTag(SeriesTags.MANUFACTURER_MENU),
+        ) {
             state.manufacturers.forEach { manufacturer ->
                 DropdownMenuItem(
                     text = { Text(manufacturer.name) },
@@ -295,7 +310,13 @@ private fun SeriesFormDialog(
                     TextButton(onClick = { expanded = true }) {
                         Text(stringResource(R.string.series_parent) + ": " + parentName)
                     }
-                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        modifier = Modifier
+                            .heightIn(max = MenuMaxHeight)
+                            .testTag(SeriesTags.PARENT_MENU),
+                    ) {
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.series_no_parent)) },
                             onClick = {

@@ -15,6 +15,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
+ * Altura máxima de um menu de opções (FR-319).
+ *
+ * Um menu com trinta séries crescia até o limite da janela e, em paisagem, os últimos itens
+ * só apareciam depois de arrastar o conteúdo atrás do menu. O teto fixo mantém o menu dentro
+ * da tela e a rolagem passa a ser do próprio menu.
+ */
+public val MenuMaxHeight: Dp = 320.dp
+
+/**
  * Corpo de diálogo com altura relativa ao espaço disponível (FR-316, T367).
  *
  * As listas de opções (unir, separar, série pai) cresciam sem limite e, em paisagem, empurravam

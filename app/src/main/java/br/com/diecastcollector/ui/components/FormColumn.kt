@@ -5,10 +5,13 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -25,6 +28,11 @@ import androidx.compose.ui.unit.dp
  * A rolagem é opcional porque alguns formulários têm ação fixa no rodapé, fora da coluna.
  * Quando ligada, o padding de [contentPadding] é aplicado dentro da rolagem — o conteúdo
  * começa com respiro e o último campo continua alcançável.
+ *
+ * O teclado é reservado na raiz ([imeInsets], FR-314): com o IME aberto a área da coluna
+ * termina acima dele, então a ação primária continua alcançável pela rolagem em vez de
+ * ficar atrás do teclado. Os insets são um parâmetro para o teste medir a folga sem
+ * depender do teclado do sistema — em produção o padrão é o IME real.
  */
 @Composable
 public fun FormColumn(
@@ -32,10 +40,13 @@ public fun FormColumn(
     scrollable: Boolean = false,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    imeInsets: WindowInsets = WindowInsets.ime,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     BoxWithConstraints(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(imeInsets),
         contentAlignment = Alignment.TopCenter,
     ) {
         Column(
