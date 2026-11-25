@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -125,7 +126,9 @@ internal fun ItemThumbnail(
                             Text(
                                 text = stringResource(R.string.photo_viewer_open_gallery),
                                 style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.inverseOnSurface,
+                                // Sobre a película preta do visualizador, branco: o
+                                // `inverseOnSurface` é escuro no tema escuro.
+                                color = Color.White,
                             )
                         }
                     }

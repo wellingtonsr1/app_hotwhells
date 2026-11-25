@@ -39,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -243,7 +244,7 @@ private fun PhotoViewerDialog(
                             stringResource(current.angle.labelRes())
                         },
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.inverseOnSurface,
+                        color = Color.White,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                     )
                 }
@@ -296,7 +297,9 @@ private fun PhotoItemCard(
                 Text(
                     text = stringResource(tile.angle.labelRes()),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.inverseOnSurface,
+                    // Branco fixo: a película é preta a 60% nos dois temas. O
+                    // `inverseOnSurface` é escuro no tema escuro e sumia sobre a foto.
+                    color = Color.White,
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                 )
             }
@@ -312,7 +315,7 @@ private fun PhotoItemCard(
                             if (tile.pending) R.string.photo_pending else R.string.photo_edit_edited_badge,
                         ),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.inverseOnSurface,
+                        color = Color.White,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                     )
                 }
@@ -335,7 +338,7 @@ private fun PhotoItemCard(
                         Icon(
                             imageVector = Icons.Filled.Edit,
                             contentDescription = stringResource(R.string.photo_edit_action),
-                            tint = MaterialTheme.colorScheme.inverseOnSurface,
+                            tint = Color.White,
                             modifier = Modifier.size(18.dp),
                         )
                     }
@@ -363,7 +366,7 @@ private fun PhotoItemCard(
                         tint = if (tile.isPrimary) {
                             MaterialTheme.colorScheme.primary
                         } else {
-                            MaterialTheme.colorScheme.inverseOnSurface
+                            Color.White
                         },
                         modifier = Modifier.size(18.dp),
                     )

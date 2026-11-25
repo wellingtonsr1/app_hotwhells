@@ -354,7 +354,7 @@ private fun PhotoEditorContent(
                     Text(
                         text = stringResource(R.string.photo_editor_original),
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.inverseOnSurface,
+                        color = Color.White,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     )
                 }
@@ -369,7 +369,7 @@ private fun PhotoEditorContent(
                     Text(
                         text = stringResource(R.string.photo_editor_edited),
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.inverseOnSurface,
+                        color = Color.White,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     )
                 }
@@ -719,14 +719,14 @@ private fun CompareChip(onShowOriginal: (Boolean) -> Unit, modifier: Modifier = 
             Icon(
                 imageVector = Icons.Filled.Visibility,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.inverseOnSurface,
+                tint = Color.White,
                 modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.size(6.dp))
             Text(
                 text = stringResource(R.string.photo_editor_compare),
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.inverseOnSurface,
+                color = Color.White,
             )
         }
     }
