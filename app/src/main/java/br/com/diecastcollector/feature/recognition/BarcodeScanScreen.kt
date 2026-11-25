@@ -10,8 +10,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -148,8 +151,11 @@ internal fun BarcodeScanContent(
     modifier: Modifier = Modifier,
 ) {
     // T337: leitura limitada em tablet; sugere código e cria entrada na mesma coluna.
+    // Esta é a única tela que não passa por um Scaffold, então ela mesma reserva as barras
+    // do sistema: sem isso o título ficava colado na barra de status, ao contrário das
+    // demais telas de detalhe.
     FormColumn(
-        modifier = modifier,
+        modifier = modifier.windowInsetsPadding(WindowInsets.safeDrawing),
         scrollable = true,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),

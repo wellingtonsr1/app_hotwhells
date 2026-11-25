@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -323,7 +324,7 @@ public fun AppNavHost(
             }
         },
     ) { padding ->
-        Row(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Row(modifier = Modifier.fillMaxSize()) {
             if (useRail && isTopLevel) {
                 NavigationRail(
                     modifier = Modifier
@@ -353,7 +354,14 @@ public fun AppNavHost(
             NavHost(
                 navController = navController,
                 startDestination = startDestination.route,
-                modifier = Modifier.padding(padding),
+                // O padding do shell entra uma vez só: a barra inferior já reservou o
+                // espaço dela (e o inset do sistema). Consumir esse inset evita que o
+                // Scaffold de cada tela reserve a barra de navegação do aparelho outra
+                // vez, o que deixava um vão vazio acima da barra (a grade do catálogo
+                // terminava no meio da tela e o FAB subia junto).
+                modifier = Modifier
+                    .padding(padding)
+                    .consumeWindowInsets(padding),
             ) {
                 composable(Destination.Dashboard.route) {
                     DashboardScreen()

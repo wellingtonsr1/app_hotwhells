@@ -4,6 +4,8 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
@@ -68,6 +70,37 @@ class AppShellResponsiveTest {
 
         composeRule.onNodeWithTag(AppShellTags.NAVIGATION_RAIL).assertIsDisplayed()
         composeRule.onNodeWithTag(AppShellTags.NAVIGATION_BAR).assertDoesNotExist()
+    }
+
+    /**
+     * O FAB do acervo encosta na barra inferior com a folga de 16 dp do `Scaffold`.
+     *
+     * Guarda contra o padding do shell aplicado em dobro: quando a área do conteúdo
+     * perdia uma altura de barra, o `Scaffold` interno posicionava o FAB no meio da lista
+     * e deixava um vão vazio acima da barra.
+     */
+    @Test
+    fun fabDoCatalogoFica16DpAcimaDaBarraInferior() {
+        DeviceWindow.use(widthDp = 360)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("Catálogo").performClick()
+        val fab = hasText("+ Mini") and hasClickAction()
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MS) {
+            composeRule.onAllNodes(fab).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        val fabBottom = composeRule.onNode(fab).fetchSemanticsNode().boundsInRoot.bottom
+        val barTop = composeRule.onNodeWithTag(AppShellTags.NAVIGATION_BAR)
+            .fetchSemanticsNode().boundsInRoot.top
+        val gapDp = (barTop - fabBottom) / composeRule.density.density
+
+        assertEquals(
+            "FAB a $gapDp dp da barra: o padding do shell deve entrar uma vez só",
+            16f,
+            gapDp,
+            0.5f,
+        )
     }
 
     @Test
