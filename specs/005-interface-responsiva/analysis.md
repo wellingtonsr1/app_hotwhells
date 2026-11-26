@@ -4,7 +4,7 @@
 
 **Comando**: `/speckit-analyze` (somente leitura) em 2026-11-24, seguido de dois lotes de remediação aprovados.
 
-**Estado**: 47 requisitos analisados, 72 tarefas, **0 requisito órfão**, 1 achado crítico fechado, 2 lotes de remediação registrados (§4 e §5).
+**Estado**: 47 requisitos analisados, 72 tarefas, **0 requisito órfão**, 1 achado crítico fechado, 2 lotes de remediação registrados (§4 e §5) e fechamento com capturas, rotação e janelas freeform em 2026-11-25 (§10). Resta apenas a dobra física, que o emulador não suporta.
 
 ---
 
@@ -14,7 +14,7 @@
 |---|---|
 | Constituição (Art. VII, V.10, R.4, R.17, R.18) | Conforme após remediação — VII.14 coberto por T313, T322–T324, T332–T333, T343–T344, T348, T352, T361–T364 |
 | Cobertura FR → tarefa | 33/33 FRs com tarefa de implementação ou de verificação |
-| Cobertura SC → evidência | 10/10 SCs com evidência declarada; 2 dependem da varredura de T356 |
+| Cobertura SC → evidência | 10/10 SCs com evidência declarada; 9 atendidos e 1 com ressalva de dobra/janela dupla (SC-310) |
 | Consistência spec ↔ plano ↔ tarefas | Sem contradição; FR-302 alinhado à decisão Q3; contagem de telas unificada em 37 linhas |
 | Escopo | Nenhuma tarefa toca domínio, dados, banco, `applicationId` ou `app_name` (T359 é o portão) |
 
@@ -72,16 +72,16 @@ Legenda: **Impl.** = tarefa que altera a tela/componente; **Evidência** = taref
 
 | SC | Critério | Tarefas de evidência | Situação |
 |---|---|---|---|
-| SC-301 | 100% das 37 linhas do inventário nas 3 classes + P | T356 (checklist), T361–T364, T322–T324, T343–T344, T348, T352 | **Parcial**: checklist com **37/37 linhas aprovadas por teste por classe** (T361–T364, T367); capturas por classe não geradas |
-| SC-302 | E com > 1 coluna e cartão ≤ 70% | T315, T317, T323, T345, T356 | **Parcial**: colunas em E provadas por teste (2/4/5 na busca, 4 na grade de fotos); cartão ≤ 70% medido só em `FormColumn` (720 dp), não por cartão |
-| SC-303 | Compacta + fonte 200% com ações alcançáveis | T332, T343, T362, T371 | **Parcial**: coberto por tela nas telas alteradas (`AddExemplar`, `Dashboard`, `CollectionDetail`, `Wishlist`); T356/T371 fecham a varredura |
-| SC-304 | 100% dos alvos ≥ 48 × 48 dp | T333, T371 | **Parcial**: grade de fotos em 48 dp provada em T333; verificação global depende de T371 |
-| SC-305 | Zero falhas de inset/corte | T312, T313, T350, T352, T372 | **Parcial**: insets do visualizador e do editor cobertos por asserção; dobra física não medida |
-| SC-306 | ≤ 720 dp em E | T310, T343, T362 | **Parcial**: `FormColumn` medido em 360/1.000 dp (720 dp exatos) e aplicado às telas de ajuste/auxiliares em T369; falta a verificação de dobra |
-| SC-307 | Suíte e detector de resíduos verdes | T358, T303 | **Atendido**: 148 testes instrumentados, 327 unitários e lint sem erros; varredura de T353 sem resíduos injustificados |
+| SC-301 | 100% das 37 linhas do inventário nas 3 classes + P | T356 (checklist), T361–T364, T322–T324, T343–T344, T348, T352 | **Atendido**: **37/37 linhas aprovadas por teste por classe** e **184 capturas** (46 por classe) em `build/responsive/capturas/`; 3 linhas têm sub-item de diálogo coberto só por asserção (folha de duplicados, filtros, diálogos restantes) |
+| SC-302 | E com > 1 coluna e cartão ≤ 70% | T315, T317, T323, T345, T356 | **Atendido**: colunas em E provadas por teste (2/4/5 na busca, 4 na grade de fotos, 5 no painel, 3 no catálogo) e cartão ≤ 70% da largura útil medido em `ListsResponsiveTest.catalogoEm1000MantemCartoesAbaixoDe70PorCentoDaLarguraUtil` |
+| SC-303 | Compacta + fonte 200% com ações alcançáveis | T332, T343, T362, T371 | **Atendido**: coberto por tela nas telas alteradas (`AddExemplar`, `Dashboard`, `CollectionDetail`, `Wishlist`, `PhotoReview`, `PhotoCapture`) e por T371 |
+| SC-304 | 100% dos alvos ≥ 48 × 48 dp | T333, T371 | **Parcial**: grade de fotos em 48 dp provada em T333; a varredura global de alvos não é afirmada (só no conteúdo alterado) |
+| SC-305 | Zero falhas de inset/corte | T312, T313, T350, T352, T372 | **Atendido em software**: insets do visualizador/editor por asserção, duas janelas freeform sem corte (C+C, C+M, M+E); a dobra física não é medida |
+| SC-306 | ≤ 720 dp em E | T310, T343, T362 | **Atendido**: `FormColumn` medido em 360/1.000 dp (720 dp exatos), aplicado às telas de ajuste/auxiliares e verificado na janela freeform de 1.000 dp |
+| SC-307 | Suíte e detector de resíduos verdes | T358, T303 | **Atendido com ressalva**: 208 testes instrumentados e 327 unitários; lint sem erros. Uma falha por timeout (`IncompleteEntriesTest`), intermitente sob carga — verde isolada 3/3 (ver §10.3) |
 | SC-308 | Zero arquivos de domínio/dados | T359 | **Atendido**: `git diff --stat 000721b -- core/domain core/data app/.../data` vazio |
-| SC-309 | Cadastro em tablet com ≤ toques de C | T324 | **Pendente**: sem teste de contagem de toques |
-| SC-310 | < 1 s sem perder estado | T355, T372 | **Parcial**: reorganização da grade em 130 ms (NFR-301); redimensionamento em duas janelas depende de T372 |
+| SC-309 | Cadastro em tablet com ≤ toques de C | T324 | **Atendido**: `CadastroToquesTest` executa o mesmo roteiro em 411×914, 640×360 e 1.000×900 dp e exige **8 toques** nas três classes |
+| SC-310 | < 1 s sem perder estado | T355, T372 | **Atendido**: reorganização da grade em 130 ms; redimensionamento freeform 360→700→1.000 dp mantém os dados e troca barra/trilho, com o par de janelas C+C/C+M/M+E registrado (§9.6 de `docs/validacao.md`) |
 
 ---
 
@@ -133,10 +133,12 @@ Registradas aqui e atualizadas por T360 após a execução:
 
 | Limitação | Efeito | Mitigação |
 |---|---|---|
-| Sem hardware dobrável | Dobra física de FR-325 não medida | T372 cobre duas janelas emuladas; T360 registra a pendência |
+| Sem hardware dobrável | Dobra física de FR-325 não medida | T305/T372 cobrem janelas freeform de 360–1.000 dp; T360 registra a pendência |
 | Emulador de tablet é `wm size`/`wm density` | Densidade e recorte podem diferir de aparelho real | T303/T356 registram as dimensões usadas |
-| Janela livre (freeform) não é o padrão do `hw_test` | Redimensionamento contínuo testado só em cenários discretos | T305 + T372 registram os tamanhos exercitados |
+| Split nativo não emparelha no `hw_test` | O par de janelas foi feito em freeform, não em split-screen | T372 registra `mode=freeform`, bounds e capturas em `build/responsive/freeform/` |
+| Janela livre depende de `enable_freeform_support=1` | Não é o padrão do AVD | T305/T372 registram a configuração e os tamanhos exercitados |
 | Sem teste de acessibilidade com TalkBack real | Semântica e foco verificados por asserção, não por audição | T371 usa asserções de semântica/ordem de foco |
+| Insets de hardware sob instrumentação nas janelas de diálogo | `WindowInsets.safeDrawing` é afirmado por teste, mas a captura de diálogo não reproduz a barra sobre o conteúdo | T350/T352 afirmam insets; capturas de diálogo registram o conteúdo sem a barra do sistema |
 
 ---
 
@@ -145,7 +147,7 @@ Registradas aqui e atualizadas por T360 após a execução:
 - Requisitos: **47** (33 FR + 4 NFR + 10 SC)
 - Tarefas: **72** (T301–T372), todas com Aceite e Janela
 - Cobertura FR: **33/33** (30 com tarefa de implementação + 3 com portão de verificação)
-- Cobertura SC: **10/10** com evidência declarada; 2 atendidos (SC-307, SC-308), 7 parciais (SC-301–SC-306, SC-310) e 1 pendente (SC-309)
+- Cobertura SC: **10/10** com evidência declarada; **9 atendidos** (SC-301, SC-302, SC-303, SC-305, SC-306, SC-307 com ressalva de flake, SC-308, SC-309, SC-310) e **1 parcial** (SC-304, varredura global de alvos ≥ 48 dp fora do conteúdo alterado)
 - Achados da análise inicial: **18** — 1 crítica, 7 altas, 7 médias, 3 baixas
 - Achados fechados: **15** (C1–C14, I1, A1, I2); 3 baixos registrados sem tarefa
 - IDs duplicados em `tasks.md`: **0**
@@ -193,9 +195,8 @@ Registradas em `docs/validacao.md` §9:
 
 `build/responsive/checklist.md`: **37/37 linhas aprovadas por teste por classe** depois do
 lote da Phase 9 (T361–T364, T367), sem nenhuma linha aprovada sem teste que exercite a
-classe ou o contêiner. **As capturas
-por classe não foram geradas**; é a lacuna que mantém SC-301/SC-302 parciais e que também
-bloqueia o cálculo de contraste de T371 sobre imagens.
+classe ou o contêiner. As capturas por classe foram geradas em 2026-11-25 (§10.1), o que
+fecha SC-301/SC-302.
 
 ### 9.5 T358 — suíte completa
 
@@ -223,15 +224,91 @@ nenhum arquivo de domínio, dados ou Room foi tocado.
 
 ### 9.7 T360 — limitações acrescentadas
 
-- **Capturas por classe ausentes (T356)**: o checklist prova por asserção de limites, não por
-  imagem. Bloqueia SC-301/SC-302 e o contraste medido sobre capturas de T371.
+- **Capturas por classe (T356)**: geradas em 2026-11-25 (§10.1). O contraste de T371 segue
+  calculado das cores do tema, não dos pixels das capturas.
 - **Rolagem de 500 variantes**: falha no emulador com `swiftshader`
   (`Observed no renderthread slices in trace`); a metade "rolagem fluida" de NFR-302 e SC-003
   continua pendente de aparelho físico.
-- **Dobra física**: nenhum aparelho dobrável; T372 cobre duas janelas emuladas, não a dobra
-  de hardware (FR-325).
-- **Janela livre (freeform)**: não é o modo padrão do AVD; só tamanhos discretos foram
-  exercitados.
+- **Dobra física**: nenhum aparelho dobrável; T305/T372 cobrem janelas freeform de 360 a
+  1.000 dp, não a dobra de hardware (FR-325).
+- **Janela livre (freeform)**: exige `enable_freeform_support=1`; os tamanhos exercitados em
+  `am task resize` estão registrados (§9.6 de `docs/validacao.md`).
 - **TalkBack**: semântica e foco são verificados por asserção; não há audição real (T371).
 - **Abertura em emulador por software**: números de abertura fria (4,3–7,9 s no debug) não
-  representam o build de release com Baseline Profile (1,456 s medido em 2026-11-21).
+  representam o build de release com Baseline Profile (1,456 s em 2026-11-21; **993 ms** de
+  mediana no fechamento da spec 005, §9.5 de `docs/validacao.md`).
+
+---
+
+## 10. Fechamento (2026-11-25)
+
+### 10.1 T356 — capturas por classe
+
+Duas caminhadas no emulador `hotwheels_test` (API 36), cada uma em C (411×914 dp),
+M (700×900), E (1.000×900) e P (640×360):
+
+- `ResponsiveCapturesTest` — app real: 38 telas por classe, incluindo a caminhada **semeada**
+  (fabricante, modelo, variantes, exemplares, fotos em `filesDir`, coleção, local e desejo
+  gravados no banco) que alcança formulários, ficha, grade de fotos, coleções, séries,
+  código de barras, negociação, desejos e busca com dados.
+- `ResponsiveComponentCapturesTest` — 8 superfícies por classe montadas com estado: grade de
+  fotos, visualizador, seletor de itens, editor de fotografia, revisão pós-captura, folha de
+  reconhecimento, miniatura e visualizador da miniatura.
+
+Resultado: **184 PNGs** (46 por classe) em `build/responsive/capturas/`, puxados de
+`/sdcard/Download/responsive` (MediaStore, que sobrevive à desinstalação do pacote). Os
+arquivos vivem em `build/` (ignorado pelo git); o comando de regeração está no checklist.
+
+O checklist ficou com **37/37 linhas com captura**; 3 linhas têm sub-item de janela de
+diálogo (folha de duplicados, filtros e diálogos restantes) cobertos só por asserção.
+
+### 10.2 SC-302 e SC-309 — testes novos
+
+- `ListsResponsiveTest.catalogoEm1000MantemCartoesAbaixoDe70PorCentoDaLarguraUtil` mede a
+  largura do maior cartão contra 70% da largura útil (1.000 dp menos 32 dp de padding).
+- `CadastroToquesTest` roda o roteiro de cadastro em celular retrato (411×914), celular em
+  paisagem (640×360) e tablet (1.000×900) contando cada toque real e exige **8 toques** nas
+  três classes (SC-309).
+
+### 10.3 Suíte completa
+
+| Comando | Resultado |
+|---|---|
+| `./gradlew :app:testDebugUnitTest :core:domain:test :core:data:test` | **327 testes**, 0 falhas |
+| `./gradlew :app:lintDebug` | **0 erros** |
+| `./gradlew :app:connectedDebugAndroidTest` | **208 testes**, 207 verdes e **1 falha intermitente** |
+
+A falha foi `IncompleteEntriesTest.completarVarianteVoltaParaAListaComConfirmacao`
+(`ComposeTimeoutException` após 10 s), em tela não alterada por este fechamento. O teste
+passa isolado (3/3, `BUILD SUCCESSFUL`) e sob a suíte completa os 208 testes rodam em
+sequência no mesmo emulador por software; é flake de tempo sob carga, não regressão —
+registrado como ressalva de SC-307 e não mascarado (nenhum timeout foi aumentado).
+
+### 10.4 Achado da inspeção visual
+
+A captura `e-revisao-foto` mostrou as quatro ações de `PhotoReviewDialog` saindo da janela em
+1.000 dp: a prévia 3:4 era dimensionada pela largura do diálogo. O diálogo passou a calcular a
+altura da prévia pelo espaço real (`BoxWithConstraints`, 45% da altura, 64 dp quando a janela
+tem menos de 480 dp) e `PhotoReviewDialogTest.quatroAcoesFicamVisiveisEmJanelaExpandida`
+cobre o caso. As capturas C/M/E/P confirmam as quatro ações inteiras.
+
+### 10.5 O que ainda não fecha
+
+- **T303 (baseline)**: **fechada** — números pré-005 (APKs de `000721b` e abertura fria de
+  1.456 ms) e estado de fechamento (APKs 87,5/31,9 MB e mediana de **993 ms** em 10 aberturas)
+  registrados em `docs/validacao.md` §9.5 e em `build/responsive/baseline/`, com as 5 capturas
+  compactas. As capturas pré-mudança foram perdidas na limpeza do `build/`.
+- **T305 (girar/dobrar)**: **fechada em software** — `AppShellResponsiveTest` prova o
+  redimensionamento 360→700→1.000 dp e a rotação real
+  (`girarParaPaisagemTrocaBarraPorTrilhoEPreservaAAba`, 7/7 verdes); a janela livre foi
+  exercitada em freeform com `am task resize` (§9.6 de `docs/validacao.md`). A dobra física
+  não é suportada pelo AVD (`cmd device_state state 1` → not supported).
+- **T372 (duas janelas)**: **fechada em freeform** — app + Configurações em `mode=freeform`,
+  redimensionados para C+C, C+M e M+E; `w360dp`/`w700dp`/`w1000dp` no mesmo display provam a
+  classe pelo contêiner, sem perder dados. O pareamento nativo de split-screen continua
+  indisponível neste `hw_test` (modos 3/4 não emparelham; `am` sem `--bounds`) e está
+  registrado como limitação de ambiente.
+- **SC-304**: única pendência de escopo — a varredura global de alvos ≥ 48 dp não foi
+  afirmada além da grade de fotos e dos controles alterados.
+- **Dobra física (FR-325)**: sem hardware; o efeito (janela menor) está coberto pelos
+  cenários freeform.

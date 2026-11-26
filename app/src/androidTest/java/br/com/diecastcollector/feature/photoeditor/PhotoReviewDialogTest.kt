@@ -67,6 +67,19 @@ class PhotoReviewDialogTest {
             .forEach { label -> composeRule.onNodeWithText(label).assertIsDisplayed() }
     }
 
+    /**
+     * T356/T364: em janela expandida (1.000 × 900 dp) a prévia 3:4 não pode empurrar as
+     * ações para fora — o caso apareceu na captura `e-revisao-foto`.
+     */
+    @Test
+    fun quatroAcoesFicamVisiveisEmJanelaExpandida() {
+        DeviceWindow.use(widthDp = 1000, heightDp = 900)
+        setContent()
+
+        listOf("Editar fotografia", "Salvar sem editar", "Tirar novamente", "Cancelar")
+            .forEach { label -> composeRule.onNodeWithText(label).assertIsDisplayed() }
+    }
+
     /** T364: em 360 dp com fonte 200% as ações não se sobrepõem. */
     @Test
     fun quatroAcoesFicamVisiveisComFonteDobrada() {

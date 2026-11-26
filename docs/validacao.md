@@ -323,3 +323,73 @@ A metade "rolagem" **não foi medida**: `rolarColecaoCom500Variantes` falha no e
 emite os slices de renderização que `FrameTimingMetric` lê. É a mesma limitação já registrada
 na spec 003 (rolagem fluida depende de aparelho físico); a tarefa T029 daquela spec continua
 bloqueada.
+
+### 9.5 Baseline da spec 005 (T303)
+
+Referência anterior à mudança e estado de fechamento, ambos no `hotwheels_test`
+(API 36, x86_64, `-gpu swiftshader_indirect`) com JDK 17. Diferente de §9.2–9.4, esta
+tabela reúne os números que a T303 exige e fica versionada, porque `build/` é ignorado
+pelo git.
+
+| Medida | Antes (pré-005) | Agora (2026-11-25) | Δ | Limite |
+|---|---|---|---|---|
+| APK debug | 86.919.553 B (`000721b`) | 87.556.411 B | +636.858 B (+0,61 MB) | +1 MB |
+| APK release | 31.930.785 B (`000721b`) | 31.943.073 B | +12.288 B (+0,01 MB) | +1 MB |
+| Abertura fria — mediana de 10 execuções | **1.456 ms** (2026-11-21) | **993 ms** (904–1.073 ms) | −463 ms | — |
+
+O número de 1.456 ms é o do baseline profile da spec 003 (§8.1), imediatamente antes de a
+spec 005 começar; APKs de `000721b` e números de startup no mesmo emulador. Comandos:
+
+```bash
+./gradlew :app:assembleDebug :app:assembleRelease
+ls -l app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/release/app-release.apk
+
+./gradlew :app:assembleBenchmark
+adb install -r app/build/outputs/apk/benchmark/app-benchmark.apk
+for i in $(seq 1 10); do
+  adb shell am force-stop br.com.diecastcollector; sleep 2
+  adb shell am start -W -n br.com.diecastcollector/br.com.diecastcollector.MainActivity
+done
+# TotalTime: 1001, 986, 904, 1000, 940, 1073, 927, 976, 1041, 1041 → mediana 993 ms
+```
+
+As cinco capturas compactas da T303 (painel, catálogo, busca, formulário de exemplar e
+editor) ficam em `build/responsive/baseline/capturas-compactas/`, geradas por
+`ResponsiveCapturesTest` (C = 411×914 dp). As capturas **anteriores** à mudança não existem
+mais (o `build/` da época foi limpo); o estado de fechamento serve de referência dali em
+diante, junto do conjunto completo de 184 capturas em `build/responsive/capturas/`.
+
+### 9.6 Rotação, janela livre e duas janelas (T305/T372)
+
+O emulador `hw_test` não emparelha split-screen e não tem hardware dobrável; a verificação
+foi feita com **rotação real** e **janelas freeform**, no lugar de `wm size` (que muda o
+display inteiro) e de dois lados de split.
+
+**Rotação** — `AppShellResponsiveTest.girarParaPaisagemTrocaBarraPorTrilhoEPreservaAAba`
+pede `SCREEN_ORIENTATION_LANDSCAPE` na activity de produção, espera a recriação e verifica
+que o shell troca barra inferior por trilho e que a aba Financeiro continua selecionada.
+7/7 verdes junto dos demais casos do shell.
+
+**Janela livre e duas janelas** — com `enable_freeform_support=1` e
+`force_resizable_activities=1`:
+
+```bash
+adb shell wm size 2625x2400; adb shell wm density 420   # display 1.000 × 914 dp
+adb shell am start --windowingMode 5 -n br.com.diecastcollector/br.com.diecastcollector.MainActivity
+adb shell am start -a android.settings.SETTINGS --windowingMode 5
+adb shell am task resize <appTask> 0 0 945 2200          # 360 dp
+adb shell am task resize <settingsTask> 945 0 2625 2200  # 640 dp
+adb shell am task resize <appTask> 0 0 1837 2200         # 700 dp
+```
+
+Confirmado no `dumpsys activity activities`: `mode=freeform` nas duas tarefas e
+`mGlobalConfig w360dp` / `w700dp` para o app, no mesmo display de 1.000 dp — a classe segue o
+contêiner, não a tela, e os dados (500 exemplares no painel) permanecem nas duas larguras.
+Com `wm density 240` (display 1.750 dp) o par ficou 1.000 dp (app) + 750 dp (Configurações).
+Capturas em `build/responsive/freeform/`: C+C, C+M, M+E, além do app sozinho a 360 dp.
+
+**Não coberto**: pareamento nativo de split-screen (o `am` desta imagem não aceita
+`--bounds` e os modos 3/4 não emparelham) e **dobra física** — `cmd device_state state 1`
+responde "Requested state: 1 is not supported" e não há perfil dobrável no AVD. A dobra
+segue como limitação de hardware; o efeito dela (janela menor) está coberto pelos cenários
+freeform acima.

@@ -1,12 +1,15 @@
 package br.com.diecastcollector
 
+import android.content.pm.ActivityInfo
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -113,6 +116,41 @@ class AppShellResponsiveTest {
             composeRule.onAllNodesWithText("+ Mini").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithTag(AppShellTags.NAVIGATION_RAIL).assertIsDisplayed()
+    }
+
+    /**
+     * T305 (FR-301/FR-304): girar a activity recria a configuração e troca barra por trilho
+     * sem perder a aba selecionada. A orientação é pedida na activity de produção; o teste
+     * espera a recriação e mede o shell real, não uma classe injetada.
+     */
+    @Test
+    fun girarParaPaisagemTrocaBarraPorTrilhoEPreservaAAba() {
+        composeRule.onNodeWithText("Financeiro").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(AppShellTags.NAVIGATION_BAR).assertIsDisplayed()
+
+        composeRule.activityRule.scenario.onActivity { activity ->
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        }
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MS) {
+            composeRule.onAllNodesWithTag(AppShellTags.NAVIGATION_RAIL)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onNodeWithTag(AppShellTags.NAVIGATION_RAIL).assertIsDisplayed()
+        composeRule.onNodeWithTag(AppShellTags.NAVIGATION_BAR).assertDoesNotExist()
+        // O título da tela também se chama "Financeiro": o que precisa estar selecionado é
+        // o item do trilho, não o texto do conteúdo.
+        composeRule.onNode(hasText("Financeiro") and isSelected()).assertIsDisplayed()
+    }
+
+    @After
+    fun restaurarOrientacao() {
+        runCatching {
+            composeRule.activityRule.scenario.onActivity { activity ->
+                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
+        }
     }
 
     @Test

@@ -34,6 +34,7 @@ import br.com.diecastcollector.testing.WindowSizeFrame
 import br.com.diecastcollector.ui.theme.DiecastTheme
 import java.time.Instant
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -103,6 +104,27 @@ class ListsResponsiveTest {
 
     @Test
     fun painelEm1000TemCincoColunas() = assertDashboardColumns(1000.dp, 5)
+
+    /**
+     * SC-302: em janela expandida o cartão não estica além de 70% da largura útil.
+     *
+     * A conta usa a largura do conteúdo (1.000 dp menos os 16 dp de cada lado do
+     * `CatalogContent`), não a da moldura: 70% da moldura daria folga indevida.
+     */
+    @Test
+    fun catalogoEm1000MantemCartoesAbaixoDe70PorCentoDaLarguraUtil() {
+        renderCatalog(1000.dp)
+
+        val larguraUtilPx = with(composeRule.density) { (1000.dp - 32.dp).toPx() }
+        val maiorCartaoPx = composeRule.onAllNodesWithTag(CatalogTags.CARD)
+            .fetchSemanticsNodes()
+            .maxOf { it.boundsInRoot.width }
+
+        assertTrue(
+            "Maior cartão = $maiorCartaoPx px; limite = ${larguraUtilPx * 0.7f} px",
+            maiorCartaoPx <= larguraUtilPx * 0.7f,
+        )
+    }
 
     @Test
     fun catalogoEm700NaoRolaNaHorizontal() {

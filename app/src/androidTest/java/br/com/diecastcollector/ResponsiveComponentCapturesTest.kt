@@ -18,13 +18,20 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import br.com.diecastcollector.data.storage.AndroidPhotoProcessor
 import br.com.diecastcollector.domain.model.PhotoAngle
+import br.com.diecastcollector.domain.model.RecognitionSource
+import br.com.diecastcollector.domain.recognition.RecognitionField
+import br.com.diecastcollector.domain.recognition.RecognitionProposal
+import br.com.diecastcollector.domain.recognition.RecognitionSuggestion
 import br.com.diecastcollector.feature.catalog.PhotoGrid
 import br.com.diecastcollector.feature.catalog.PhotoGridTags
 import br.com.diecastcollector.feature.catalog.PhotoTile
@@ -34,7 +41,9 @@ import br.com.diecastcollector.feature.organization.CollectionOptionKind
 import br.com.diecastcollector.feature.photoeditor.PhotoEditorDialog
 import br.com.diecastcollector.feature.photoeditor.PhotoEditorViewModel
 import br.com.diecastcollector.feature.photoeditor.PhotoReviewDialog
+import br.com.diecastcollector.feature.recognition.RecognitionReviewContent
 import br.com.diecastcollector.testing.DeviceWindow
+import br.com.diecastcollector.ui.components.ItemThumbnail
 import br.com.diecastcollector.ui.theme.DiecastTheme
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -86,7 +95,7 @@ class ResponsiveComponentCapturesTest {
         capturarComponentes(classe = "p", widthDp = 640, heightDp = 360)
     }
 
-    private enum class Superficie { GRADE, SELETOR }
+    private enum class Superficie { GRADE, SELETOR, EDITOR, REVISAO, RECONHECIMENTO, MINIATURA }
 
     private fun capturarComponentes(classe: String, widthDp: Int, heightDp: Int) {
         DeviceWindow.use(widthDp = widthDp, heightDp = heightDp)
@@ -136,6 +145,39 @@ class ResponsiveComponentCapturesTest {
                             .fillMaxSize()
                             .padding(16.dp),
                     )
+                    // Editor de fotografia (linha 30): mesmo ViewModel de produção do
+                    // `PhotoEditorScreenTest`, aberto como o app abre (`Dialog`).
+                    Superficie.EDITOR -> PhotoEditorDialog(
+                        sourceKey = "captura-$classe",
+                        sourceBytes = foto,
+                        onDismiss = {},
+                        onSaved = { _, _ -> },
+                        viewModel = PhotoEditorViewModel(processador),
+                    )
+                    // Revisão pós-captura (linhas 34 e 35): as quatro ações do diálogo.
+                    Superficie.REVISAO -> PhotoReviewDialog(
+                        imageBytes = foto,
+                        fromCamera = true,
+                        onEdit = {},
+                        onSave = {},
+                        onRetake = {},
+                        onCancel = {},
+                    )
+                    // Folha de reconhecimento (linha 34): seis sugestões, corpo rolável e
+                    // ações fixas no rodapé.
+                    Superficie.RECONHECIMENTO -> RecognitionReviewContent(
+                        proposal = propostaDeReconhecimento,
+                        onApply = {},
+                        onDismissRequest = {},
+                    )
+                    // Miniatura de item (linha 32): tocar abre o visualizador com insets. Sem
+                    // "Ver galeria completa": a ficha usa a miniatura sem esse atalho, e o
+                    // botão sob a barra só apareceria por causa da limitação de insets do
+                    // diálogo sob instrumentação.
+                    Superficie.MINIATURA -> ItemThumbnail(
+                        photoPath = caminhoDaMiniatura,
+                        contentDescription = "Twin Mill",
+                    )
                     }
                 }
 
@@ -146,10 +188,58 @@ class ResponsiveComponentCapturesTest {
         // Grade de fotos (linhas 31 e 32 do checklist).
         capturar("$classe-grade-fotos")
 
+        // Visualizador em tela cheia: o toque vai no centro da miniatura, que é onde o app
+        // abre a foto (o cartão em si não tem ação de clique, o Box interno tem).
+        if (tentar {
+                composeRule.onAllNodesWithTag(PhotoGridTags.TILE)[0]
+                    .performTouchInput { click() }
+            }
+        ) {
+            composeRule.waitForIdle()
+            esperar(900)
+            capturarTela("$classe-visualizador-fotos")
+            fecharDialogo()
+        }
+
         // Seletor de itens da coleção (linha 33).
         superficie.value = Superficie.SELETOR
         esperar(600)
         capturar("$classe-seletor-itens")
+
+        // Editor de fotografia (linha 30). Diálogo vive em outra janela: a captura tem de
+        // ser a da tela inteira, senão sai a raiz da activity (branca).
+        superficie.value = Superficie.EDITOR
+        // `takeScreenshot` não passa pelo sincronizador do Compose: sem este `waitForIdle`
+        // a captura sai um estado atrás (pegava o seletor, não o editor).
+        composeRule.waitForIdle()
+        esperar(2_000)
+        capturarTela("$classe-editor")
+        fecharDialogo()
+
+        // Revisão pós-captura (linha 35).
+        superficie.value = Superficie.REVISAO
+        composeRule.waitForIdle()
+        esperar(1_000)
+        capturarTela("$classe-revisao-foto")
+        fecharDialogo()
+
+        // Folha de reconhecimento (linha 34).
+        superficie.value = Superficie.RECONHECIMENTO
+        composeRule.waitForIdle()
+        esperar(800)
+        capturar("$classe-reconhecimento")
+
+        // Miniatura de item e o visualizador que ela abre (linha 32).
+        superficie.value = Superficie.MINIATURA
+        composeRule.waitForIdle()
+        esperar(800)
+        capturar("$classe-miniatura")
+        if (tentar { composeRule.onNodeWithContentDescription("Twin Mill").performClick() }) {
+            composeRule.waitForIdle()
+            esperar(800)
+            capturarTela("$classe-miniatura-visualizador")
+            fecharDialogo()
+        }
     }
 
     // ------------------------------------------------------------------------ utilidades
@@ -179,6 +269,29 @@ class ResponsiveComponentCapturesTest {
         false
     }
 
+    private val propostaDeReconhecimento = RecognitionProposal.of(
+        source = RecognitionSource.PHOTO,
+        provider = "mlkit-photo",
+        suggestions = listOf(
+            RecognitionSuggestion(RecognitionField.MANUFACTURER, "Hot Wheels Originals", 0.91),
+            RecognitionSuggestion(RecognitionField.MODEL, "Twin Mill III", 0.88),
+            RecognitionSuggestion(RecognitionField.SERIES, "Mainline 2024", 0.75),
+            RecognitionSuggestion(RecognitionField.YEAR, "2024", 0.93),
+            RecognitionSuggestion(RecognitionField.VARIANT, "Azul metálico", 0.62),
+            RecognitionSuggestion(RecognitionField.CODE, "HW-2024-0001", 0.66),
+        ),
+    )
+
+    /** Caminho relativo de uma foto real em `filesDir`, exigido pela miniatura. */
+    private val caminhoDaMiniatura: String by lazy {
+        val arquivo = File(
+            InstrumentationRegistry.getInstrumentation().targetContext.filesDir,
+            "capturas/miniatura.jpg",
+        ).apply { parentFile?.mkdirs() }
+        arquivo.writeBytes(jpeg())
+        "capturas/miniatura.jpg"
+    }
+
     private fun jpeg(width: Int = 240, height: Int = 320): ByteArray {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         Canvas(bitmap).drawColor(Color.rgb(180, 40, 40))
@@ -186,6 +299,46 @@ class ResponsiveComponentCapturesTest {
         bitmap.compress(Bitmap.CompressFormat.JPEG, 92, stream)
         bitmap.recycle()
         return stream.toByteArray()
+    }
+
+    /**
+     * Captura pela `UiAutomation`: é o único caminho que enxerga a janela do `Dialog`.
+     * `captureToImage` devolve a raiz da activity, que fica em branco atrás do diálogo.
+     */
+    private fun capturarTela(nome: String) {
+        val bitmap = try {
+            InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        } catch (erro: Throwable) {
+            println("CAPTURA-FALHOU $nome: ${erro.message}")
+            return
+        }
+        if (bitmap == null) {
+            println("CAPTURA-FALHOU $nome: tela indisponível")
+            return
+        }
+        gravar(nome, bitmap)
+        bitmap.recycle()
+    }
+
+    private fun gravar(nome: String, bitmap: Bitmap) {
+        val contexto = InstrumentationRegistry.getInstrumentation().targetContext
+        val resolver = contexto.contentResolver
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val chaves = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, "$nome.png")
+                put(MediaStore.Downloads.MIME_TYPE, "image/png")
+                put(MediaStore.Downloads.RELATIVE_PATH, "Download/responsive")
+            }
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, chaves) ?: return
+            resolver.openOutputStream(uri)?.use { saida ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, saida)
+            }
+        } else {
+            val diretorio = File(contexto.getExternalFilesDir(null), "capturas").apply { mkdirs() }
+            FileOutputStream(File(diretorio, "$nome.png")).use { saida ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, saida)
+            }
+        }
     }
 
     private fun capturar(nome: String, dialogo: Boolean = false) {
