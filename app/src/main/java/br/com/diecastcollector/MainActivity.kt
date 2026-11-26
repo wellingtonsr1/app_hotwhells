@@ -8,11 +8,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
 import br.com.diecastcollector.appearance.AppearancePreferences
+import br.com.diecastcollector.appearance.ApplicationNightMode
 import br.com.diecastcollector.navigation.AppNavHost
 import br.com.diecastcollector.ui.components.ProvideWindowSizeClass
 import br.com.diecastcollector.ui.theme.DiecastTheme
@@ -27,6 +29,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var appearance: AppearancePreferences
 
+    @Inject
+    lateinit var applicationNightMode: ApplicationNightMode
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Primeiro quadro seguro: se a preferência ainda não chegou do disco, as barras
@@ -37,6 +42,12 @@ class MainActivity : ComponentActivity() {
             // milissegundos, sem atrasar a abertura (FR-413, NFR-402).
             val mode by appearance.mode.collectAsState(initial = ThemeMode.SYSTEM)
             val dark = mode.isDark(isSystemInDarkTheme())
+
+            // FR-410/NFR-403: espelha o modo no mecanismo de modo noturno do sistema, que
+            // o Android aplica **antes** de criar o processo — assim o splash e a janela
+            // já usam `values`/`values-night` da aparência escolhida. O DataStore continua
+            // sendo a única fonte da preferência; repetir o mesmo modo é inócuo.
+            LaunchedEffect(mode) { applicationNightMode.apply(mode) }
 
             // FR-409: os ícones das barras seguem a aparência do app, não a do Android —
             // inclusive quando o usuário força um modo oposto ao do sistema.

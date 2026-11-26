@@ -29,10 +29,15 @@ Usar **DataStore Preferences** para a chave textual `appearance_mode`, com valor
 - O arquivo fica no armazenamento privado, **fora** do banco e **fora** do pacote de backup da coleção (`FileBackupService` copia banco + fotos + tabelas exportadas; não varre `filesDir` nem DataStore).
 - Sem dependência nova: a versão continua sendo a 1.1.1 já registrada; `docs/dependencias.md` e `docs/revisao-dependencias.md` passam a declarar a finalidade real (preferências simples do app).
 
+### Modo noturno por aplicativo (FR-410)
+
+O fundo da janela/splash é escolhido pelo sistema **antes** de o processo existir, a partir de `values`/`values-night`; o DataStore não pode alimentar esse primeiro desenho sem bloquear a thread principal. Por isso a aparência também é espelhada em `UiModeManager.setApplicationNightMode` (API 31+), que o sistema persiste por pacote e aplica ao criar o processo. O espelho **não é um segundo armazenamento da preferência**: o DataStore continua sendo a fonte da verdade e o `MainActivity` apenas reconcilia o modo do sistema a cada leitura; em **Sistema** o espelho é `MODE_NIGHT_AUTO`, que o AOSP traduz para "sem sobreposição" (segue o Android). A activity trata `uiMode` em `configChanges` para a troca não recriar a tela (FR-406/426). Nada disso cria paleta, tema ou dependência nova.
+
 ## Consequências
 
 - **Positivas**: um mecanismo moderno e atômico, sem dependência nova; leitura não bloqueia a interface (FR-413, NFR-402); escrita concorrente resulta sempre em um valor íntegro (NFR-405); a preferência não interfere no backup/restauração (FR-415).
-- **Negativas**: o primeiro quadro em modo forçado pode usar a paleta do sistema por poucos milissegundos; o valor inicial é `SYSTEM` e o resíduo é **medido e registrado** (NFR-403, T420), não mascarado. O APK precisa ser medido antes/depois, porque a biblioteca deixa de ser removida pelo R8 (NFR-404: +≤ 100 KB).
+- **Negativas**: o APK precisa ser medido antes/depois, porque a biblioteca deixa de ser removida pelo R8 (NFR-404: +≤ 100 KB, medido **+67,0 KB** em T420).
+- **Limite conhecido**: o espelho do modo noturno só existe a partir do **API 31**; em API 26–30 o splash segue o Android até o primeiro quadro (resíduo medido em T420, ~3,38 s em startup frio interpretado).
 - **Limite conhecido**: `SharedPreferences` continua sendo o mecanismo do lembrete de backup. A coexistência é aceita porque os dados têm ciclos de vida diferentes e migrar o lembrete está fora do escopo da spec 006; o ADR registra que, numa migração futura, o destino é o mesmo DataStore, não um terceiro mecanismo.
 - **Rastreabilidade**: decisão usada por FR-404, FR-412–FR-416, NFR-405 e NFR-406; alternativas detalhadas em [`specs/006-preferencia-aparencia/research.md`](../specs/006-preferencia-aparencia/research.md) §2.1.
 

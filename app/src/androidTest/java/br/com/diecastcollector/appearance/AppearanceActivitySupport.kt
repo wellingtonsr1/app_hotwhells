@@ -1,5 +1,6 @@
 package br.com.diecastcollector.appearance
 
+import android.app.UiModeManager
 import android.content.res.Configuration
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsSelected
@@ -27,7 +28,13 @@ internal object AppearanceActivitySupport {
         rule.waitForIdle()
     }
 
-    /** Toca na opção de aparência e espera a marca de seleção refletir a escolha. */
+    /**
+     * Toca na opção de aparência e espera a marca de seleção refletir a escolha.
+     *
+     * Também espera a configuração do app alcançar o modo escolhido: a aparência espelha
+     * o modo noturno do sistema (FR-410) e a mudança de configuração é assíncrona. Sem
+     * isso, uma recriação logo depois poderia ler a configuração anterior.
+     */
     fun selectMode(rule: ComposeTestRule, label: String) {
         rule.onNodeWithText(label).performScrollTo().performClick()
         rule.waitForIdle()
@@ -36,6 +43,14 @@ internal object AppearanceActivitySupport {
                 rule.onNodeWithText(label).assertIsSelected()
                 true
             }.getOrDefault(false)
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            val esperadoEscuro = when (label) {
+                "Claro" -> false
+                "Escuro" -> true
+                else -> isSystemInDark()
+            }
+            rule.waitUntil(3_000) { appConfigDark() == esperadoEscuro }
         }
         // A marca só aparece depois que a escrita no DataStore terminou; um instante a mais
         // garante que a próxima recriação leia o valor novo.
@@ -74,7 +89,24 @@ internal object AppearanceActivitySupport {
         )
     }
 
+    /**
+     * Modo escuro **do Android**, não o do app: a aparência escolhida agora espelha o modo
+     * noturno por aplicativo (FR-410), então a configuração do processo pode divergir do
+     * sistema.
+     */
     fun isSystemInDark(): Boolean {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val manager = context.getSystemService(UiModeManager::class.java)
+        return when (manager?.nightMode) {
+            UiModeManager.MODE_NIGHT_YES -> true
+            UiModeManager.MODE_NIGHT_NO -> false
+            // Modo agendado/automático: a configuração do processo é a melhor leitura.
+            else -> appConfigDark()
+        }
+    }
+
+    /** Modo escuro **do app** (o que a janela e os recursos estão usando). */
+    fun appConfigDark(): Boolean {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         return context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
             Configuration.UI_MODE_NIGHT_YES

@@ -417,9 +417,9 @@ pelas tarefas T401–T424 da spec 006 (FR-417–FR-423).
 ## 11. Preferência de aparência (spec 006, 2026-11-26)
 
 Execução das tarefas **T409** (testes instrumentados da seção Aparência, incluindo fonte 200% e
-coluna de 1.000 dp) e **T413** (persistência manual), complementando a seção 10. O working tree
-está sobre `54ebb20` com as alterações da spec 006 **ainda não commitadas**; por isso o commit
-não identifica o código executado.
+coluna de 1.000 dp), **T413** (persistência manual), **T420** (medições), **T421** (suíte completa) e
+**T425** (correção do splash em modo forçado), complementando a seção 10. As medições e a suíte de 2026-11-26 rodaram sobre o código da spec 006
+já commitado em `d1d8e4d` (mais o novo `AppearanceApplyLatencyTest`, ainda não commitado).
 
 ### 11.1 Ambiente
 
@@ -430,6 +430,10 @@ não identifica o código executado.
 | Aparelho | emulador `hw_test`, Android 16 (API 36), x86_64, `-gpu swiftshader_indirect` |
 | Toolchain | JDK 17.0.21+9, Gradle 8.11.1 |
 | Escala de fonte | `font_scale 1.0`, exceto na captura de fonte ampliada (`2.0`, revertida em seguida) |
+
+A rerodada de **T420/T421** (mesmo dia) usou Linux, JDK 17.0.21.1 Temurin, Gradle 8.11.1 e o mesmo
+emulador `hw_test` (API 36, x86_64, `-gpu swiftshader_indirect`); os comandos de `adb` abaixo estão
+na forma Linux, sem `JAVA_HOME` do Windows.
 
 ### 11.2 T409 — testes instrumentados da seção Aparência
 
@@ -609,10 +613,14 @@ Suíte da spec 006 no emulador `hw_test` (API 36), build de debug, com
 | `SystemBarsAppearanceTest` | 1 | 1/1 | T417 — ícones das barras seguem a aparência forçada, não o Android |
 | `AppearanceCapturesTest` | 4 | 4/4 | T418 — 48 capturas Claro × Escuro em C/M/E/P |
 | `PhotoNeutralityTest` | 1 | 1/1 | T424 — a foto não muda de cor entre os modos |
-| **Total** | **24** | **24/24** | `build-logs/appearance-connected-4.log`, `BUILD SUCCESSFUL in 2m 48s` |
+| `AppearanceApplyLatencyTest` | 1 | 1/1 | T420 — NFR-401: mediana **36 ms** do toque ao primeiro quadro com a nova paleta |
+| `AppearanceWindowBackgroundTest` | 1 | 1/1 | T425/FR-410 — `window_background` e `uiMode` seguem a aparência sem recriar a activity |
+| **Total** | **26** | **26/26** | suíte do pacote `appearance` reexecutada em `build-logs/appearance-after-splash-2.log` |
 
-Complementos da mesma rodada:
+Complementos da mesma rodada (reexecutados em 2026-11-26 na máquina Linux, JDK 17.0.21.1):
 
+- Suíte instrumentada completa: **235/235 verdes** em 17m47s
+  (`build-logs/full-connected-006-splash.log`), com o código final da correção do splash.
 - Suíte unitária completa: **87 testes, 0 falhas** (`:app:testDebugUnitTest --no-build-cache`),
   incluindo o novo `falhaDeLeituraCaiEmSistemaSemLancar`.
 - Lint: `:app:lintDebug` **BUILD SUCCESSFUL** (sem erro; `abortOnError = true`).
@@ -640,23 +648,76 @@ HotOrangeLight/FlameRed). Nenhuma cor nova, nenhuma paleta nova, nenhum `Color(0
 - `docs/validacao-006-t418-ajustes-claro.png`
 - `docs/validacao-006-t418-ajustes-escuro.png`
 
-#### 11.5.2 Medições (T420)
+#### 11.5.2 Medições (T420 — 2026-11-26, reexecutadas nesta máquina)
 
-| Medida | Valor | Comando / observação |
-|---|---|---|
-| APK release | **32.011.709 B** — igual ao release anterior (Δ 0 B) | `./gradlew :app:assembleRelease --no-build-cache` |
-| APK debug | **87.428.655 B** e **87.721.749 B** em dois builds consecutivos do mesmo código | debug não passa por R8; a variação de ~286 KB entre builds do mesmo código é empacotamento, não código novo — o release, que é a medida de entrega, ficou idêntico nas duas medições |
-| Abertura fria (debug recém-instalado, JIT) | 4.208–4.886 ms (10 execuções) | `adb shell am force-stop …; adb shell am start -W …` |
-| Abertura fria após compilação AOT | **1.833–1.987 ms** (3 execuções) | mesma medição depois de `cmd package compile -m speed -f` |
-| Abertura fria do release no emulador | não medida nesta rodada | release é arm-only; executar em aparelho ARM |
-| Aplicação do tema (< 100 ms, NFR-401) | não medida com cronômetro | é uma recomposição única, sem recriação: T410 prova que a posição da lista e o texto digitado permanecem |
-| Resíduo de primeiro quadro (NFR-403) | **não medido** | sem captura de quadro por frame a 60 Hz no ambiente de teste; fica como limitação, não como aprovado |
+O "antes" é o commit `54ebb20` (código imediatamente anterior à feature), compilado no mesmo
+emulador `hw_test` (API 36, x86_64, `swiftshader_indirect`), com os mesmos `keystore/` e
+`keystore.properties`. Assim a comparação atribui a diferença à feature, não ao ambiente.
 
-O baseline de 993 ms registrado na spec 005 foi medido em outro estado de compilação do mesmo
-emulador (o pacote estava AOT-compilado). Os 4,2 s acima são do primeiro conjunto de execuções logo
-após `adb install`, com o app interpretado; depois de `cmd package compile -m speed -f` o mesmo APK
-fica em 1,8–2,0 s. Não há evidência de regressão atribuível à aparência: a leitura do DataStore é
-assíncrona e não bloqueia a abertura (`MainActivity` usa `collectAsState(initial = SYSTEM)`).
+| Medida | Antes (`54ebb20`) | Depois (spec 006) | Δ / limite | Comando |
+|---|---|---|---|---|
+| APK release assinado | **31.943.073 B** | **32.011.737 B** | **+68.664 B (+67,1 KB)** — limite +100 KB (NFR-404) | `./gradlew :app:assembleRelease` |
+| Abertura fria com AOT, 10 execuções | 1.411–1.850 ms, **mediana 1.552 ms** | 1.334–1.913 ms, **mediana 1.559 ms** | **+7 ms** (NFR-402) | `cmd package compile -m speed -f` + `am force-stop` + `am start -W`, repetido 10× |
+| Aplicação do tema (NFR-401) | — | **mediana 36 ms** por toque — amostras 37, 36, 25, 45, 32, 29 ms | limite 100 ms | `AppearanceApplyLatencyTest` |
+| Resíduo de primeiro quadro (NFR-403) | Escuro forçado: fundo de janela claro por **~3,38 s** (2.228→5.611 ms no vídeo) | **Sistema**: nenhum quadro de paleta oposta; **Escuro forçado**: 33 quadros, todos escuros; **Claro forçado**: nenhum quadro escuro do app | limite de 1 quadro (≤ 16,7 ms) | `screenrecord` + análise de quadros com OpenCV |
+| APK debug | 86.903.169 B | 88.142.839 B | +1,2 MB, mas debug não passa por R8 e varia entre builds do mesmo código; não é medida de entrega | `./gradlew :app:assembleDebug` |
+
+**NFR-401 — como foi medido**: `AppearanceApplyLatencyTest` (instrumentado, app real) registra um
+`ViewTreeObserver.OnDrawListener` no `decorView`, toca na opção e compara o `SystemClock.uptimeMillis`
+no *draw* do primeiro quadro com o instante do toque; cada iteração também confere a paleta do bitmap
+renderizado, para que a medida só valha se a tela realmente mudou. Resultado: **mediana 36 ms**
+(amostras 37, 36, 25, 45, 32, 29 ms), reexecutado depois da correção do splash.
+
+**NFR-402 — o baseline de 993 ms da spec 005 não se reproduz neste emulador**: o próprio código
+anterior à feature mede 1.552 ms de mediana aqui, no mesmo A/B logo antes. Contra esse "antes"
+medido agora, a feature custa **+7 ms** de mediana — dentro do ruído (o emulador varia ±200 ms entre
+séries) — o que é consistente com a leitura assíncrona do DataStore (`MainActivity` usa
+`collectAsState(initial = SYSTEM)`, sem `runBlocking`). A chamada de espelho do modo noturno ocorre
+depois do primeiro quadro (`LaunchedEffect`), fora do caminho crítico da abertura.
+
+**NFR-403 / FR-410 — modo forçado (defeito medido e corrigido)**: o fundo de janela vem de
+`values`/`values-night`; antes da correção, ao forçar Escuro com o Android no claro o splash ficava
+claro por **~3,38 s** (startup frio interpretado neste emulador), muito acima do limite de um quadro
+(`docs/validacao-006-t420-splash-forcado-antes.png`).
+
+A correção espelha a aparência no **modo noturno por aplicativo** do sistema
+(`ApplicationNightMode` → `UiModeManager.setApplicationNightMode`, API 31+): o Android persiste a
+escolha por pacote e a aplica **antes de criar o processo**, então a janela inicial já resolve
+`values-night`/`values`. O DataStore continua sendo a única fonte da preferência; o `MainActivity`
+só reconcilia o espelho a cada leitura (`LaunchedEffect(mode)`) e a activity declara
+`android:configChanges="uiMode"` para a mudança de configuração não recriar a tela (FR-406/426),
+comprovado por `AppearanceWindowBackgroundTest`.
+
+Medição depois da correção, mesmo método e mesmo emulador, Android em `night no` para o caso escuro:
+
+- **Escuro forçado com Android claro**: 33 quadros gravados, **todos escuros** (o splash aparece
+escuro desde o primeiro quadro do app) — `docs/validacao-006-t420-splash-forcado-corrigido.png`.
+- **Claro forçado com Android escuro**: depois da tela inicial do Android, **nenhum quadro escuro do
+app** — `docs/validacao-006-t420-splash-claro-corrigido.png`.
+- **Sistema**: nenhum quadro de paleta oposta, como antes.
+
+Comando da captura de quadros (app recém-instalado):
+
+```bash
+adb shell screenrecord --time-limit 8 --bit-rate 8000000 /sdcard/t420-dark.mp4 &
+sleep 2
+adb shell am start -n br.com.diecastcollector.debug/br.com.diecastcollector.MainActivity
+# análise: OpenCV lê os PTS reais de cada quadro (CAP_PROP_POS_MSEC) e classifica
+# a cor dominante do quadro (claro #F4F1EE / escuro #121212).
+```
+
+O `screenrecord` deste emulador entrega apenas **6,2–6,7 quadros/s** (encoder por software), então a
+resolução temporal da captura é de ~150 ms: ela prova que não há paleta oposta amostrada, mas não tem
+granularidade para cronometrar um único quadro a 60 Hz. A garantia de um quadro vem do mecanismo — o
+sistema escolhe o tema da janela antes do primeiro desenho — e do teste que confere
+`R.color.window_background` e a configuração `uiMode` do app sem recriação
+(`AppearanceWindowBackgroundTest`).
+
+**Abertura fria em Escuro forçado** (o pior caso do caminho novo, com a reconciliação do espelho):
+8 execuções com AOT, **1.146–1.433 ms, mediana 1.322 ms** — sem regressão frente às séries acima.
+
+**Limite restante**: o `setApplicationNightMode` só existe a partir do **API 31**; em API 26–30 o app
+continua correto, mas o splash segue o Android até o primeiro quadro (mesmo resíduo de antes).
 
 #### 11.5.3 Capturas Claro × Escuro (T418)
 
@@ -679,12 +740,17 @@ revisão.
 
 #### 11.5.4 Limites desta execução
 
-- A suíte instrumentada **completa** (233 casos) foi iniciada e interrompida em 5/233 por tempo de
-  execução; no lugar dela rodaram os 24 casos de aparência e 55 casos de regressão focada, todos
-  verdes. A suíte completa continua sendo o gate de T421 e deve ser rodada em uma janela dedicada.
+- **T421 fechado**: suíte instrumentada **completa 235/235 verdes** (`BUILD SUCCESSFUL in 17m 47s`,
+  `build-logs/full-connected-006-splash.log`), unidade **87/87** e lint verdes, com o código final da
+  correção do splash e os 26 casos de aparência incluídos.
+- **NFR-403 / FR-410 resolvidos em API 31+**: com `setApplicationNightMode` o splash nasce na paleta
+  escolhida nas duas direções (0 quadros opostos amostrados, §11.5.2). Em **API 26–30** o mecanismo não
+  existe: o app continua correto, mas o splash segue o Android até o primeiro quadro (limitação).
+- O `screenrecord` deste emulador rende só 6,2–6,7 quadros/s, então a resolução temporal da captura é
+  de ~150 ms; ela prova ausência de paleta oposta amostrada, mas não cronometra um quadro a 60 Hz. A
+  garantia de um quadro vem do mecanismo do sistema + `AppearanceWindowBackgroundTest`.
 - `RenderedContrastTest` cobre grade e cartões; diálogos do editor/revisão vivem em outra janela e
   não entram na amostragem por `captureToImage` — a área de edição é preta fixa no código, com
   comentário, e não recebe véu do tema.
 - O APK de **release** (arm64-v8a/armeabi-v7a) não foi executado: o emulador é x86_64.
-- A captura de quadro para o resíduo de primeiro quadro (NFR-403) não foi feita.
 - Só o build de **debug** rodou os testes instrumentados.
