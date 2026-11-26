@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-23
 
-**Status**: Implemented (v1) — SC-003 atestado só na metade «abre em menos de 1 s»
+**Status**: Implemented (v1) — SC-003 atestado só na metade «abre em menos de 1 s» · Esclarecida em 2026-11-26 (CL-003-01/CL-003-02): identidade visual por modo de aparência, na spec e no contrato do cartão
 
 **Input**: User description: "Melhoria visual da tela Coleção: cada cartão da listagem deve exibir uma miniatura fotográfica do carrinho à esquerda, com nome do modelo, fabricante, ano e quantidade de exemplares à direita, preservando pesquisa, filtros, navegação, botão de inclusão e a identidade visual atual."
 
@@ -23,6 +23,15 @@ como o colecionador reconhece seus carrinhos: pela imagem, e não pelo texto.
 
 A atividade é exclusivamente de apresentação. Ela não cria, altera, move nem remove
 fotografias, cadastros, relacionamentos ou regras de negócio.
+
+## Clarifications
+
+### Session 2026-11-26
+
+- Q: A FR-013 exige "tema escuro, fundo preto, cartões em cinza escuro" como identidade visual. A Spec 006 introduz a escolha entre Sistema, Claro e Escuro. A identidade deixa de valer no modo Claro? → A: **A identidade é o conjunto de tokens, tipografia, formas e hierarquia, não a paleta escura como obrigação permanente.** No modo **Escuro** (e em **Sistema** com o Android escuro), a FR-013 MUST ser cumprida exatamente como está: fundo `InkBlack`, cartões em `Graphite`/`SmokyGrey`, textos `Chalk`, destaques `FlameRedDark`/`HotOrangeLight`. No modo **Claro**, MUST usar os tokens claros da mesma paleta (`Chalk`, `PureWhite`, `InkBlack`, `MutedGrey`, `FlameRed`, `HotOrange`), com a mesma tipografia, formas, espaçamentos e hierarquia — **sem cor nova**.
+- Q: A FR-013 precisa ser renumerada ou reescrita? → A: **Não.** O número é preservado e o texto recebe apenas o esclarecimento de modo; nenhum critério de aceite (SC-001–SC-005) muda.
+
+**Consequências registradas**: nenhuma mudança de layout, conteúdo, acessibilidade ou desempenho no modo escuro; o modo claro passa a ser explicitamente permitido, com contraste verificado pela Spec 006 (FR-422/FR-423).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -165,9 +174,19 @@ termo de pesquisa e cadastrar um item pelo botão «+ Mini».
   cache de imagens já existente no aplicativo.
 - **FR-012**: Falha ao ler ou decodificar um arquivo de foto MUST resultar no espaço
   reservado, nunca em exceção visível, cartão colapsado ou espaço desproporcional.
-- **FR-013**: A aparência MUST respeitar a identidade visual atual: tema escuro, fundo
-  preto, cartões em cinza escuro, textos claros, destaques em vermelho/coral,
-  tipografia e componentes Material 3, navegação inferior inalterada.
+- **FR-013**: A aparência MUST preservar a identidade visual do produto — paleta,
+  tipografia, formas, espaçamentos e componentes Material 3 — em todas as opções de
+  aparência suportadas.
+  - **No modo Escuro** (e em **Sistema** quando o Android está escuro): fundo preto
+    (`InkBlack`), cartões em cinza escuro (`Graphite`/`SmokyGrey`), textos claros
+    (`Chalk`), destaques em vermelho/coral (`FlameRedDark`/`HotOrangeLight`), navegação
+    inalterada.
+  - **No modo Claro**: os tokens claros da mesma paleta (`Chalk` de fundo, `PureWhite`
+    de superfície, `InkBlack` de texto, `MutedGrey` secundário, `FlameRed`/`HotOrange`
+    de destaque), com a mesma tipografia, formas, espaçamentos, hierarquia e navegação.
+
+  Nenhuma cor fora dos tokens existentes MUST ser introduzida por este esclarecimento,
+  e a troca de aparência MUST NOT alterar layout, conteúdo ou regra de negócio.
 - **FR-014**: O layout MUST manter altura consistente entre cartões, sem cartões
   excessivamente altos, e funcionar em telas Android a partir de 360 dp de largura,
   em retrato e paisagem, respeitando o tamanho de fonte configurado no sistema.

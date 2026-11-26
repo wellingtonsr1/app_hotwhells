@@ -4,9 +4,15 @@
 
 **Created**: 2026-11-23
 
-**Status**: Draft
+**Status**: Draft — esclarecida em 2026-11-26 (CL-004-01): aparência escolhida e neutralidade da edição
 
 **Input**: User description: "Preparar um editor de fotografias completo integrado ao aplicativo, permitindo capturar, editar, visualizar, organizar e salvar fotografias dos carrinhos sem sair do aplicativo."
+
+## Clarifications
+
+### Session 2026-11-26
+
+- Q: A premissa "A interface segue o tema escuro" continua válida depois da escolha de aparência da Spec 006? → A: **A interface segue a aparência escolhida pelo usuário (Sistema, Claro ou Escuro); a área de edição fotográfica permanece neutra em todos os modos.** No modo Escuro, nada muda em relação ao comportamento atual. As sobreposições sobre a foto (ícones, rótulos, *scrims* e alças de recorte) MUST manter legibilidade independentemente do tema, e o tema MUST NOT tingir a imagem exibida ou salva.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -181,4 +187,4 @@ O usuário escolhe uma imagem da galeria pela categoria selecionada e o editor a
 - O editor opera sobre fotos guardadas no armazenamento privado do aplicativo; a imagem escolhida na galeria é copiada pelo fluxo atual, que já remove EXIF sensível.
 - Não há migração destrutiva: os campos novos da fotografia são opcionais e as fotos existentes permanecem válidas sem original separado até a primeira edição.
 - O backup em ZIP atual já copia a pasta de imagens; apenas a coleta de caminhos precisa considerar o original.
-- A interface segue o tema escuro e os componentes Material 3 já usados; a documentação técnica da funcionalidade é entregue em `docs/`.
+- A interface segue a aparência escolhida pelo usuário (Spec 006, FR-401–FR-409) e os componentes Material 3 já usados; no modo Escuro o comportamento atual é preservado. A área de edição permanece neutra e a imagem não é tingida pelo tema em nenhum modo (Spec 006, FR-419/FR-420). A documentação técnica da funcionalidade é entregue em `docs/`.

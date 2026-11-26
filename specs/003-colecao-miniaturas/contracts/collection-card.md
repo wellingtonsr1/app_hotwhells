@@ -21,7 +21,7 @@ implementação; fixa o que o usuário vê e o que o teste pode afirmar.
 | Título | Nome do modelo, no máximo 2 linhas com reticências |
 | Subtítulo | Fabricante, ano (se houver) e contagem, separados por « · », no máximo 2 linhas com reticências |
 | Atalho | «Ver exemplares», alinhado ao fim, abaixo do bloco de texto |
-| Cartão | Fundo de superfície do tema escuro, cantos arredondados, largura total |
+| Cartão | Fundo de superfície do tema em uso (claro ou escuro), cantos arredondados, largura total |
 
 ## Estados da miniatura
 
@@ -50,10 +50,12 @@ implementação; fixa o que o usuário vê e o que o teste pode afirmar.
 
 ## Identidade visual
 
-- Tema escuro (`InkBlack` de fundo, `SmokyGrey` nas superfícies, destaque `FlameRedDark`).
+- Segue a aparência escolhida pelo usuário (Spec 006):
+  - **Escuro / Sistema escuro**: `InkBlack` de fundo, `SmokyGrey` nas superfícies, destaque `FlameRedDark`.
+  - **Claro / Sistema claro**: `Chalk` de fundo, `PureWhite` nas superfícies, destaque `FlameRed`.
 - Tipografia Material 3: título em `titleMedium`, subtítulo em `bodySmall` com
   `onSurfaceVariant`.
-- Nenhuma cor, fonte ou espaçamento novo fora dos tokens existentes.
+- Nenhuma cor, fonte ou espaçamento novo fora dos tokens existentes; a miniatura não recebe tingimento do tema.
 
 ## Acessibilidade
 

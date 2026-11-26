@@ -393,3 +393,23 @@ Capturas em `build/responsive/freeform/`: C+C, C+M, M+E, além do app sozinho a 
 responde "Requested state: 1 is not supported" e não há perfil dobrável no AVD. A dobra
 segue como limitação de hardware; o efeito dela (janela menor) está coberto pelos cenários
 freeform acima.
+
+## 10. Esclarecimento G2 da aparência (spec 006, 2026-11-26)
+
+O esclarecimento aprovado em `specs/006-preferencia-aparencia/clarifications-g2.md` foi aplicado
+às especificações de origem, exclusivamente por redação — nenhum comportamento visual mudou.
+
+| ID | Documento | Alteração aplicada |
+|---|---|---|
+| CL-003-01 | `specs/003-colecao-miniaturas/spec.md` | bloco `Clarifications` (2026-11-26), `Status` e **FR-013** com identidade por modo de aparência |
+| CL-003-02 | `specs/003-colecao-miniaturas/contracts/collection-card.md` | §Identidade visual por modo e linha «Cartão» com superfície do tema em uso |
+| CL-004-01 | `specs/004-editor-fotografias/spec.md` | bloco `Clarifications` (2026-11-26), `Status` e premissa de aparência escolhida + neutralidade da edição |
+
+**O que não mudou**: nenhum FR-001–FR-012/FR-014/FR-015 da spec 003, nenhum FR-201–FR-226 da
+spec 004, nenhum SC das duas, nenhum teste e nenhum código. No modo **Escuro** o resultado visual
+continua idêntico ao entregue; o modo **Claro** passa a ter respaldo documental e é verificado
+pelas tarefas T401–T424 da spec 006 (FR-417–FR-423).
+
+**Verificação**: `git diff` das duas specs e do contrato limitado aos trechos acima; reexecução de
+`/speckit-analyze` na spec 006 em 2026-11-26 confirmou o fechamento de H1/M7 (0 críticos, 0 altos,
+0 médios e 0 baixos após as correções de documentação).
