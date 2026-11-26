@@ -23,14 +23,17 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -256,6 +259,34 @@ public object AppShellTags {
     public const val NAVIGATION_RAIL: String = "shell-navigation-rail"
 }
 
+/**
+ * Rótulo de aba.
+ *
+ * A fonte acompanha o sistema até o tamanho que cabe na barra (1×) e para aí: com fonte a
+ * 200%, cinco nomes a 24 sp precisariam de ~120 dp cada nos ~78 dp de uma aba em 360–420 dp,
+ * e qualquer quebra em duas linhas partia a palavra ("Paine/l", "Finan/ceiro"). Sem escalar
+ * além de 1×, o rótulo aparece inteiro em uma linha, e o nome da aba continua completo na
+ * semântica pelo `contentDescription` do ícone. Fundir, esconder ou encolher o texto abaixo
+ * do padrão seria pior que mantê-lo no tamanho de desenho.
+ */
+@Composable
+private fun TabLabel(@StringRes label: Int) {
+    val densidade = LocalDensity.current
+    CompositionLocalProvider(
+        LocalDensity provides Density(
+            density = densidade.density,
+            fontScale = densidade.fontScale.coerceAtMost(1f),
+        ),
+    ) {
+        Text(
+            text = stringResource(label),
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
 /** Aba da barra inferior: rota, rótulo e ícone. Só rotas de primeiro nível entram aqui. */
 private data class BottomTab(
     val destination: Destination,
@@ -310,14 +341,7 @@ public fun AppNavHost(
                             selected = selected,
                             onClick = { onTabSelected(tab, selected) },
                             icon = { Icon(tab.icon, contentDescription = stringResource(tab.label)) },
-                            label = {
-                                Text(
-                                    text = stringResource(tab.label),
-                                    maxLines = 1,
-                                    softWrap = false,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
+                            label = { TabLabel(tab.label) },
                         )
                     }
                 }
@@ -340,13 +364,7 @@ public fun AppNavHost(
                             icon = {
                                 Icon(tab.icon, contentDescription = stringResource(tab.label))
                             },
-                            label = {
-                                Text(
-                                    text = stringResource(tab.label),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
+                            label = { TabLabel(tab.label) },
                         )
                     }
                 }

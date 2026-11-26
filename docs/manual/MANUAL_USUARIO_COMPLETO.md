@@ -2426,8 +2426,8 @@ variante e «código · localização · condição» e **Voltar**.
 
 ### Finalidade
 
-Reunir as opções do aplicativo: localizações, backup, relatórios, importação, dados,
-informações e privacidade, além do lembrete de backup.
+Reunir as opções do aplicativo: aparência, localizações, backup, relatórios, importação,
+dados, informações e privacidade, além do lembrete de backup.
 
 ### Como acessar
 
@@ -2435,14 +2435,19 @@ Toque na aba **Ajustes**.
 
 ### Identificação visual
 
-Título **Ajustes**, cartão **Lembrete de backup** no topo e sete entradas com título e
-subtítulo. No fim, a nota de funcionamento offline.
+Título **Ajustes**, cartão **Aparência** no topo (com as opções **Sistema**, **Claro** e
+**Escuro**), cartão **Lembrete de backup** e sete entradas com título e subtítulo. No fim,
+a nota de funcionamento offline.
 
 ### Elementos da tela
 
 | Elemento | Tipo | Onde fica | O que faz | Resultado |
 |---|---|---|---|---|
-| **Lembrete de backup** | cartão | topo | mostra intervalo e último backup | diálogo de configuração |
+| **Aparência** | cartão | topo | escolhe o tema do app | aplica na hora e guarda a escolha |
+| **Sistema** | opção | cartão Aparência | acompanha o tema do Android | paleta do Android |
+| **Claro** | opção | cartão Aparência | força a paleta clara | paleta clara |
+| **Escuro** | opção | cartão Aparência | força a paleta escura | paleta escura |
+| **Lembrete de backup** | cartão | abaixo da aparência | mostra intervalo e último backup | diálogo de configuração |
 | **A cada 30 dias · nenhum backup** | texto | cartão | estado do lembrete | — |
 | **Localizações** | entrada | lista, 1ª | abre a árvore de lugares | tela Localizações |
 | **Backup e restauração** | entrada | lista, 2ª | abre o backup | tela Backup |
@@ -2458,8 +2463,10 @@ subtítulo. No fim, a nota de funcionamento offline.
 ### Como utilizar
 
 1. Toque na entrada desejada.
-2. No cartão de lembrete, escolha **Intervalo do lembrete** ou **Fazer backup agora**.
-3. Use **Localizações** antes de mover exemplares.
+2. Em **Aparência**, toque em **Sistema**, **Claro** ou **Escuro**: a tela muda na hora e a
+   escolha continua valendo na próxima abertura do app.
+3. No cartão de lembrete, escolha **Intervalo do lembrete** ou **Fazer backup agora**.
+4. Use **Localizações** antes de mover exemplares.
 
 ### Exemplos
 
@@ -2467,6 +2474,9 @@ subtítulo. No fim, a nota de funcionamento offline.
 
 ### Regras e validações
 
+- A aparência é uma preferência local (DataStore, fora do banco e fora do pacote de
+  backup) com três valores: **Sistema**, **Claro** e **Escuro**. Ausência ou valor
+  ilegível equivale a **Sistema**.
 - O lembrete é uma preferência local (SharedPreferences), fora do banco.
 - O app não tem conta, login nem internet; a nota «Nada do acervo sai do aparelho» resume isso.
 

@@ -203,6 +203,14 @@
     <string name="settings_privacy">Política de privacidade</string>
     <string name="settings_privacy_subtitle">O que fica no aparelho e o que nunca é enviado</string>
     <string name="settings_offline_note">Este app funciona sem conta e sem internet. Nada do acervo sai do aparelho.</string>
+
+    <!-- Aparência (Spec 006, FR-401–FR-404, FR-414). -->
+    <string name="settings_appearance">Aparência</string>
+    <string name="settings_appearance_subtitle">Sistema acompanha o Android; Claro e Escuro valem sempre.</string>
+    <string name="settings_appearance_system">Sistema</string>
+    <string name="settings_appearance_light">Claro</string>
+    <string name="settings_appearance_dark">Escuro</string>
+    <string name="settings_appearance_write_failed">Não foi possível salvar a aparência. A escolha anterior continua valendo.</string>
     <string name="about_title">Sobre</string>
     <string name="about_version">Versão %1$s (build %2$s)</string>
     <string name="about_build_date">Compilado em %1$s</string>

@@ -34,3 +34,6 @@ out/
 
 # Perfil gerado pelo :benchmark — a cópia versionada é app/src/main/baseline-prof.txt
 app/src/release/generated/
+
+# Logs e capturas de verificações locais (emulador/builds)
+build-logs/

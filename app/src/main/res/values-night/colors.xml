@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Fundo da janela antes do primeiro quadro em Compose (Spec 006, FR-410).
+      Em values/ fica o tom claro; aqui, o escuro que já existia.
+    -->
+    <color name="window_background">#121212</color>
+</resources>

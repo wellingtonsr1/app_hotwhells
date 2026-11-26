@@ -58,6 +58,9 @@ import coil.request.ImageRequest
 /** Marcas de teste da grade de fotos (T352). */
 public object PhotoGridTags {
     public const val TILE: String = "photo-tile"
+
+    /** Etiqueta do ângulo sobre a miniatura; usada pelo teste de contraste renderizado. */
+    public const val ANGLE_BADGE: String = "photo-angle-badge"
 }
 
 /**
@@ -292,7 +295,9 @@ private fun PhotoItemCard(
             Surface(
                 color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f),
                 shape = RoundedCornerShape(bottomEnd = 6.dp),
-                modifier = Modifier.align(Alignment.TopStart),
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .testTag(PhotoGridTags.ANGLE_BADGE),
             ) {
                 Text(
                     text = stringResource(tile.angle.labelRes()),

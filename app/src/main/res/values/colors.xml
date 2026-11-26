@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="window_background">#121212</color>
+    <!--
+      Fundo da janela antes do primeiro quadro em Compose (Spec 006, FR-410).
+      Em values-night/ fica o escuro #121212; aqui, o tom claro da paleta (Chalk).
+    -->
+    <color name="window_background">#F4F1EE</color>
     <!-- Fundo do ícone adaptativo: preto da moldura da arte do ícone. -->
     <color name="ic_launcher_background">#010101</color>
 </resources>

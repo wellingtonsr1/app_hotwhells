@@ -32,7 +32,7 @@ Cada ligação aponta para a âncora do capítulo no documento principal.
 | 25 | Financeiro | `finance` | [25. Financeiro](MANUAL_USUARIO_COMPLETO.md#25-financeiro) |
 | 26 | Localizações | `locations` | [26. Localizações](MANUAL_USUARIO_COMPLETO.md#26-localizacoes) |
 | 27 | Conteúdo da localização | `locations/{locationId}` | [27. Conteúdo da localização](MANUAL_USUARIO_COMPLETO.md#27-conteudo-da-localizacao) |
-| 28 | Ajustes | `settings` | [28. Ajustes](MANUAL_USUARIO_COMPLETO.md#28-ajustes) |
+| 28 | Ajustes (inclui a seção **Aparência**: Sistema, Claro, Escuro) | `settings` | [28. Ajustes](MANUAL_USUARIO_COMPLETO.md#28-ajustes) |
 | 29 | Backup e restauração | `settings/backup` | [29. Backup e restauração](MANUAL_USUARIO_COMPLETO.md#29-backup-e-restauracao) |
 | 30 | Relatórios | `settings/reports` | [30. Relatórios](MANUAL_USUARIO_COMPLETO.md#30-relatorios) |
 | 31 | Importação | `settings/import` | [31. Importação](MANUAL_USUARIO_COMPLETO.md#31-importacao) |
@@ -69,7 +69,7 @@ Os elementos de cada tela estão na tabela «Elementos da tela» do capítulo co
 | Financeiro | 10 | [25. Financeiro](MANUAL_USUARIO_COMPLETO.md#25-financeiro) |
 | Localizações | 9 | [26. Localizações](MANUAL_USUARIO_COMPLETO.md#26-localizacoes) |
 | Conteúdo da localização | 3 | [27. Conteúdo da localização](MANUAL_USUARIO_COMPLETO.md#27-conteudo-da-localizacao) |
-| Ajustes | 12 | [28. Ajustes](MANUAL_USUARIO_COMPLETO.md#28-ajustes) |
+| Ajustes | 16 | [28. Ajustes](MANUAL_USUARIO_COMPLETO.md#28-ajustes) |
 | Backup e restauração | 8 | [29. Backup e restauração](MANUAL_USUARIO_COMPLETO.md#29-backup-e-restauracao) |
 | Relatórios | 5 | [30. Relatórios](MANUAL_USUARIO_COMPLETO.md#30-relatorios) |
 | Importação | 6 | [31. Importação](MANUAL_USUARIO_COMPLETO.md#31-importacao) |

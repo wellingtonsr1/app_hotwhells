@@ -311,6 +311,8 @@ private fun PhotoEditorContent(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
+                // Preto fixo, não token de tema: é a área neutra de edição, onde a cor
+                // percebida da foto não pode depender da aparência escolhida (FR-419).
                 .background(Color.Black),
         ) {
             val preview = state.displayedPreview
@@ -719,6 +721,7 @@ private fun CompareChip(onShowOriginal: (Boolean) -> Unit, modifier: Modifier = 
             Icon(
                 imageVector = Icons.Filled.Visibility,
                 contentDescription = null,
+                // Sobre a película preta do comparador: branco fixo (BR-406).
                 tint = Color.White,
                 modifier = Modifier.size(18.dp),
             )
@@ -872,6 +875,8 @@ private fun CropStage(
             val top = imageTop + crop.top * imageHeight
             val right = imageLeft + crop.right * imageWidth
             val bottom = imageTop + crop.bottom * imageHeight
+            // Preto fixo + branco fixo: moldura de recorte é cor de legibilidade sobre a
+            // imagem, não superfície de tema — vale igual nos dois modos (BR-406).
             val scrim = Color.Black.copy(alpha = 0.55f)
 
             // Escurece só o que fica fora da moldura, dentro da imagem.

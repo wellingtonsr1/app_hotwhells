@@ -4,12 +4,19 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -19,14 +26,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
 import br.com.diecastcollector.ui.components.FormColumn
+import br.com.diecastcollector.ui.theme.ThemeMode
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -53,6 +63,8 @@ public fun SettingsRoute(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val reminder by viewModel.reminder.collectAsState()
+    val appearance by viewModel.appearance.collectAsState()
+    val appearanceWriteFailed by viewModel.appearanceWriteFailed.collectAsState()
     SettingsScreen(
         onAbout = onAbout,
         onPrivacy = onPrivacy,
@@ -64,6 +76,9 @@ public fun SettingsRoute(
         modifier = modifier,
         reminder = reminder,
         onIntervalChange = viewModel::setIntervalDays,
+        appearance = appearance,
+        onAppearanceChange = viewModel::setAppearance,
+        appearanceWriteFailed = appearanceWriteFailed,
     )
 }
 
@@ -79,6 +94,9 @@ public fun SettingsScreen(
     onImport: () -> Unit = {},
     reminder: BackupReminder? = null,
     onIntervalChange: (Int) -> Unit = {},
+    appearance: ThemeMode = ThemeMode.SYSTEM,
+    onAppearanceChange: (ThemeMode) -> Unit = {},
+    appearanceWriteFailed: Boolean = false,
     now: Instant = Instant.now(),
 ) {
     var showReminder by remember { mutableStateOf(false) }
@@ -96,6 +114,13 @@ public fun SettingsScreen(
                 text = stringResource(R.string.settings_title),
                 style = MaterialTheme.typography.headlineSmall,
             )
+        // Spec 006, FR-402: seção dentro de Ajustes, sem rota nova. Fica na mesma
+        // FormColumn das demais opções, herdando o limite de 720 dp e a rolagem (Spec 005).
+        AppearanceSection(
+            appearance = appearance,
+            onAppearanceChange = onAppearanceChange,
+            writeFailed = appearanceWriteFailed,
+        )
         if (reminder != null) {
             val overdue = reminder.isOverdue(now)
             SettingsRow(
@@ -223,6 +248,74 @@ public fun SettingsScreen(
             },
         )
     }
+}
+
+/**
+ * Seção **Aparência** (Spec 006, FR-401–FR-403, FR-424, FR-425).
+ *
+ * Seleção única com [RadioButton]: a marca não depende só de cor e o grupo é anunciado
+ * como seleção única pelo leitor de tela. Cada linha inteira é tocável e tem no mínimo
+ * 48 dp de altura, mesmo com fonte ampliada.
+ */
+@Composable
+private fun AppearanceSection(
+    appearance: ThemeMode,
+    onAppearanceChange: (ThemeMode) -> Unit,
+    writeFailed: Boolean,
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.settings_appearance),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                text = stringResource(R.string.settings_appearance_subtitle),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Column(Modifier.selectableGroup()) {
+                ThemeMode.entries.forEach { mode ->
+                    val selected = appearance == mode
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                            .selectable(
+                                selected = selected,
+                                role = Role.RadioButton,
+                                onClick = { onAppearanceChange(mode) },
+                            )
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = selected, onClick = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(mode.labelRes()),
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                    }
+                }
+            }
+            if (writeFailed) {
+                Text(
+                    text = stringResource(R.string.settings_appearance_write_failed),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+    }
+}
+
+private fun ThemeMode.labelRes(): Int = when (this) {
+    ThemeMode.SYSTEM -> R.string.settings_appearance_system
+    ThemeMode.LIGHT -> R.string.settings_appearance_light
+    ThemeMode.DARK -> R.string.settings_appearance_dark
 }
 
 /** Uma linha, como as outras opções: intervalo + situação. */

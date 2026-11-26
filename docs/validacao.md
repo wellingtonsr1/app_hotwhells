@@ -413,3 +413,278 @@ pelas tarefas T401–T424 da spec 006 (FR-417–FR-423).
 **Verificação**: `git diff` das duas specs e do contrato limitado aos trechos acima; reexecução de
 `/speckit-analyze` na spec 006 em 2026-11-26 confirmou o fechamento de H1/M7 (0 críticos, 0 altos,
 0 médios e 0 baixos após as correções de documentação).
+
+## 11. Preferência de aparência (spec 006, 2026-11-26)
+
+Execução das tarefas **T409** (testes instrumentados da seção Aparência, incluindo fonte 200% e
+coluna de 1.000 dp) e **T413** (persistência manual), complementando a seção 10. O working tree
+está sobre `54ebb20` com as alterações da spec 006 **ainda não commitadas**; por isso o commit
+não identifica o código executado.
+
+### 11.1 Ambiente
+
+| Item | Valor |
+|---|---|
+| Data | 2026-11-26, entre 09:05 e 09:30 (America/Sao_Paulo) |
+| Build | `:app:assembleDebug` — `0.1.0-debug`, pacote `br.com.diecastcollector.debug` |
+| Aparelho | emulador `hw_test`, Android 16 (API 36), x86_64, `-gpu swiftshader_indirect` |
+| Toolchain | JDK 17.0.21+9, Gradle 8.11.1 |
+| Escala de fonte | `font_scale 1.0`, exceto na captura de fonte ampliada (`2.0`, revertida em seguida) |
+
+### 11.2 T409 — testes instrumentados da seção Aparência
+
+```bash
+export JAVA_HOME="C:\Users\wellingtonrodrigues\AppData\Local\Android\Jdk\jdk-17.0.21+9"
+./gradlew :app:connectedDebugAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=br.com.diecastcollector.appearance.AppearanceSettingsTest
+```
+
+**Resultado**: `BUILD SUCCESSFUL`, **8 testes, 0 falhas** — `app/build/outputs/androidTest-results/connected/debug/`
+reporta `tests="8" failures="0"`.
+
+| # | Caso | O que prova |
+|---|---|---|
+| 1 | `mostraAsTresOpcoesComSistemaSelecionadoPorPadrao` | três opções visíveis, **Sistema** marcada sem preferência |
+| 2 | `tocarNaLinhaSelecionaAOpcaoEInformaOCallback` | toque seleciona e o callback recebe o modo |
+| 3 | `opcaoAtivaFicaMarcada` | a marca segue o modo aplicado |
+| 4 | `cadaOpcaoTemAlvoDeToqueMinimo` | alvo ≥ 48 dp por opção |
+| 5 | `fonteDuzentosPorCentoNaoTruncaOsRotulos` | **novo** — fonte 200% sem truncar título, subtítulo e três opções |
+| 6 | `janelaDeMilDpMantemAColunaDeLeituraCentralizada` | **novo** — janela de 1.000 dp fica na coluna de leitura de 720 dp, centralizada |
+| 7 | `avisoDeFalhaDeEscritaApareceSemBloquear` | falha de gravação gera aviso inline, sem diálogo modal |
+| 8 | `modoForcadoPrevaleceSobreOTemaDoAndroid` | Claro/Escuro ignoram a configuração do Android |
+
+**Fonte 200% (caso 5)** — a densidade é sobrescrita dentro da composição
+(`LocalDensity provides Density(density, fontScale = 2f)`) e cada rótulo é rolado até ficar visível.
+A verificação olha o texto **desenhado**: `getLineEnd(últimaLinha, visibleEnd = true)` tem de ser
+igual ao tamanho do texto, além de `lineCount >= 1` e alvo ≥ 48 dp na opção "Escuro".
+
+> A primeira versão usava `hasVisualOverflow`/`didOverflowWidth` e reprovou em "Aparência"
+> (`linhas=1 tamanho=353 x 92 transbordouLargura=true`, `no=32.0..166.5 dp`). Na tela real a
+> 200% o rótulo aparece inteiro, sem reticências: essas flags ficam verdadeiras quando o texto
+> preenche **exatamente** a largura medida (arredondamento de pixel), então não servem como
+> sinal de truncamento. A asserção passou a ser o `visibleEnd`, que só falha quando algum trecho
+> não é desenhado.
+
+Evidência visual do mesmo cenário, com a configuração do sistema alterada:
+
+```bash
+adb shell settings put system font_scale 2.0
+adb shell am force-stop br.com.diecastcollector.debug
+adb shell am start -n br.com.diecastcollector.debug/br.com.diecastcollector.MainActivity
+adb shell input tap 980 2205        # aba Ajustes
+adb exec-out screencap -p > docs/validacao-006-t409-fonte-200.png
+adb shell settings put system font_scale 1.0
+```
+
+A seção Aparência aparece completa: título em uma linha, subtítulo em três e as três opções com
+marca e texto inteiros — `docs/validacao-006-t409-fonte-200.png`.
+
+**1.000 dp (caso 6)** — densidade fixada em 1 para que 1.000 dp caibam nos 1.080 px do emulador;
+o cartão de uma linha mede entre 640 dp e 720 dp (`formMaxWidth`) e as sobras esquerda e direita
+no contêiner de 1.000 dp diferem em ≤ 1 dp, ou seja, a coluna fica centralizada em vez de esticar.
+
+### 11.3 T413 — persistência manual
+
+Modo escolhido antes de cada cenário: **Escuro** em Ajustes. Depois de cada passo, a marca foi lida
+por `uiautomator dump` (`checked="true"` na linha "Escuro") e a tela conferida por captura.
+
+| Cenário | Comando | Resultado | Captura |
+|---|---|---|---|
+| Base | toque em **Escuro** | marca em Escuro, paleta escura | `docs/validacao-006-t413-1-escuro.png` |
+| Encerramento do processo | `adb shell am force-stop br.com.diecastcollector.debug` e `am start -n …/.MainActivity` | reabriu em Escuro, com a marca em Escuro | `docs/validacao-006-t413-2-force-stop.png` |
+| Atualização por cima | `adb install -r app/build/outputs/apk/debug/app-debug.apk` + reabertura | dados preservados, reabriu em Escuro | `docs/validacao-006-t413-3-install-r.png` |
+| Reinício do aparelho | `adb reboot`, esperar `sys.boot_completed=1`, `wm dismiss-keyguard`, `am start` | após o boot, reabriu em Escuro | `docs/validacao-006-t413-4-reboot.png` |
+
+```bash
+ADB="C:\Users\wellingtonrodrigues\AppData\Local\Android\Sdk\platform-tools\adb.exe"
+# 1) escolher Escuro em Ajustes e conferir a marca
+$ADB shell uiautomator dump /data/local/tmp/u.xml
+$ADB exec-out cat /data/local/tmp/u.xml | tr '>' '\n' | grep 'checkable="true"'
+$ADB exec-out screencap -p > docs/validacao-006-t413-1-escuro.png
+
+# 2) force-stop + reabertura
+$ADB shell am force-stop br.com.diecastcollector.debug
+$ADB shell am start -n br.com.diecastcollector.debug/br.com.diecastcollector.MainActivity
+
+# 3) atualização por cima
+$ADB install -r app/build/outputs/apk/debug/app-debug.apk
+
+# 4) reinício do aparelho
+$ADB reboot && $ADB wait-for-device
+$ADB shell getprop sys.boot_completed     # 1
+$ADB shell wm dismiss-keyguard
+$ADB shell am start -n br.com.diecastcollector.debug/br.com.diecastcollector.MainActivity
+```
+
+Nenhum dos quatro cenários recriou a preferência: em todos, `checked="true"` ficou na linha
+"Escuro" e a paleta escura (fundo `#121212`, cartões grafite, ícones claros nas barras) foi
+mantida. A escrita é do `DataStore` do app (`appearance_mode`), sem qualquer dado da coleção.
+
+### 11.4 Rótulos da barra inferior com fonte a 200% — corrigido
+
+Com fonte a 200%, os rótulos da **barra de navegação inferior** eram cortados com reticências
+("Pai…", "Cat…", "Des…", "Fina…", "Aju…", como registrado em `docs/validacao-006-t409-fonte-200.png`).
+Defeito da shell responsiva (spec 005), não da seção Aparência.
+
+**Causa**: `NavigationBarItem` rotulava com `maxLines = 1, softWrap = false`, e cinco nomes a
+24 sp (12 sp × 2) precisam de ~120 dp por aba quando a barra oferece ~78 dp em 393 dp de largura.
+
+**Correção** (`AppNavHost.kt`, `TabLabel`): o rótulo da aba — barra inferior **e** trilho —
+mantém a fonte acompanhando o sistema só até o tamanho que cabe (1×). Acima disso o texto para
+de crescer em vez de ser cortado. O nome completo continua anunciado pelo `contentDescription`
+do ícone, o alvo de toque segue ≥ 48 dp e o restante da tela (título, cartões, corpo) continua
+honrando os 200%.
+
+**Tentativas descartadas, com o resultado medido**:
+
+| Alternativa | Resultado |
+|---|---|
+| Duas linhas sem hifenização | quebra no meio da palavra: "Paine/l", "Catál/ogo", "Ajust/es" |
+| Duas linhas com `Hyphens.Auto` (medido em `build-logs/ui/14-barra-fonte-200-hifen.png`) | melhorou "Dese-jos", mas "Fi-nan…" continuou truncado e "Paine/l" seguiu cortado |
+| Barra mais alta com 3 linhas | ~140 dp de altura e palavras partidas em sílabas |
+| Esconder rótulos (só ícone) | elimina o corte, mas tira o texto de quem mais precisa dele |
+
+**Depois**: `docs/validacao-006-barra-200-depois.png` — os cinco rótulos inteiros em uma linha
+("Painel", "Catálogo", "Desejos", "Financeiro", "Ajustes"), barra na altura padrão de 80 dp e o
+corpo da tela (título, cartões, texto) ainda no dobro do tamanho. Capturado com
+`settings put system font_scale 2.0`, reaplicado a 1.0 em seguida.
+
+**Regressão**: `NavigationBarTest` + `AppShellResponsiveTest` — **8/8 verdes** depois da correção
+do cache descrita abaixo.
+
+#### 11.4.1 `NavigationBarTest` falhando com `NoClassDefFoundError` — causa e correção
+
+Sintoma: ao abrir Desejos, o processo instrumentado lançava
+`NoClassDefFoundError: Failed resolution of: Lbr/com/diecastcollector/feature/wishlist/ComposableSingletons$WishlistScreenKt`,
+enquanto o app aberto por `am start` renderizava a aba normalmente.
+
+Como foi isolado:
+
+| Passo | Resultado |
+|---|---|
+| Teste temporário de diagnóstico no processo instrumentado (`Class.forName` das duas classes) | `WishlistScreenKt` e `ComposableSingletons$SettingsScreenKt` carregam; **só** `ComposableSingletons$WishlistScreenKt` falha |
+| `dexdump` classe por classe do APK instalado | a referência existe em `classes16.dex`, e há `ComposableSingletons$WishlistScreenKt$lambda-1$1`, mas **a classe externa `ComposableSingletons$WishlistScreenKt` não está definida em nenhum dos 27 `classes*.dex`** |
+| `ls app/build/tmp/kotlin-classes/debug/.../wishlist/` | `ComposableSingletons$WishlistScreenKt.class` **existe** no output do Kotlin |
+| `git stash` de `AppNavHost.kt` + rebuild + teste | falha idêntica — não é da correção dos rótulos |
+| `:app:clean :app:assembleDebug --no-build-cache` + `dexdump` | a classe **passa a existir** em `classes16.dex` |
+
+**Causa**: entrada **estale do cache de build do Gradle** para o empacotamento/dexing. O output
+do Kotlin tinha a classe, mas o artefato de dex reaproveitado (o build anterior relatava
+“17 from cache”) foi produzido a partir de um estado incremental antigo em que o holder não
+havia sido emitido, mantendo no APK o código que o referencia sem a definição. Por isso `clean`
+sozinho não resolvia e o app real também quebraria em builds assim.
+
+**Correção**: rebuild sem o cache —
+`./gradlew :app:clean :app:assembleDebug --no-build-cache` — e, em seguida, os testes normais
+(sem a flag) passaram a produzir/empacotar o dex correto; a entrada estale ficou órfã porque o
+conjunto de classes de entrada agora inclui o holder (chave de cache diferente).
+
+**Verificação**: `NavigationBarTest` (1) + `AppShellResponsiveTest` (7) → **8/8, BUILD SUCCESSFUL**;
+app reinstalado abre Desejos sem `FATAL`/`NoClassDefFoundError`. O teste de diagnóstico foi
+removido depois da investigação.
+
+**Efeito colateral confirmado**: a falha que o projeto registrava como preexistente em
+`WishlistFormViewModelTest` (Robolectric, `NoClassDefFoundError` de `WishlistFormViewModel` / T421)
+tinha a mesma origem. Depois do rebuild sem cache, `:app:testDebugUnitTest` completo deu
+**86 testes, 0 falhas**.
+
+**Se voltar a acontecer**: `NoClassDefFoundError` de uma classe `ComposableSingletons$…` que
+existe em `kotlin-classes` indica artefato de dex estale; rebuild com `--no-build-cache`
+(ou limpar `~/.gradle/caches/build-cache-1`) resolve.
+
+### 11.5 Testes automatizados de aparência (2026-11-26)
+
+Suíte da spec 006 no emulador `hw_test` (API 36), build de debug, com
+`-Pandroid.testInstrumentationRunnerArguments.package=br.com.diecastcollector.appearance`:
+
+| Classe | Casos | Resultado | O que prova |
+|---|---|---|---|
+| `AppearanceSettingsTest` | 8 | 8/8 | três opções, padrão Sistema, seleção única, 48 dp, fonte 200%, 1.000 dp, aviso de escrita, modo forçado vence o Android |
+| `AppearancePersistenceTest` | 2 | 2/2 | T411 — os três modos sobrevivem a `recreate()`; preferência fora de `images/` e do banco sobrevive à restauração simulada |
+| `AppearanceApplicationTest` | 1 | 1/1 | T410 — trocar Claro ↔ Escuro mantém a rolagem da lista |
+| `AppearanceSystemFollowTest` | 1 | 1/1 | T410 — com **Sistema**, `cmd uimode night` muda a paleta e o formulário digitado continua preenchido |
+| `AppearanceFallbackTest` | 3 | 3/3 | T412 — ausente, valor desconhecido e arquivo corrompido caem em **Sistema** sem lançar |
+| `AppearanceGlobalTest` | 1 | 1/1 | T415 — sete telas representativas nos dois modos, mesma estrutura e mesmas ações |
+| `RenderedContrastTest` | 2 | 2/2 | T416 — contraste medido em pixels sobre imagem branca/preta e nos textos de cartão/seção |
+| `SystemBarsAppearanceTest` | 1 | 1/1 | T417 — ícones das barras seguem a aparência forçada, não o Android |
+| `AppearanceCapturesTest` | 4 | 4/4 | T418 — 48 capturas Claro × Escuro em C/M/E/P |
+| `PhotoNeutralityTest` | 1 | 1/1 | T424 — a foto não muda de cor entre os modos |
+| **Total** | **24** | **24/24** | `build-logs/appearance-connected-4.log`, `BUILD SUCCESSFUL in 2m 48s` |
+
+Complementos da mesma rodada:
+
+- Suíte unitária completa: **87 testes, 0 falhas** (`:app:testDebugUnitTest --no-build-cache`),
+  incluindo o novo `falhaDeLeituraCaiEmSistemaSemLancar`.
+- Lint: `:app:lintDebug` **BUILD SUCCESSFUL** (sem erro; `abortOnError = true`).
+- Regressão instrumentada focada nas telas cuja aparência mudou (shell, Ajustes, catálogo, grade,
+  editor, painel, acessibilidade): **55/55 verdes** em 4m33 (`build-logs/focused-regression.log`);
+  `NavigationBarTest` + `AppShellResponsiveTest` também rodaram sozinhos antes disso, 8/8.
+
+#### 11.5.1 Defeito de paleta encontrado pela varredura (T414)
+
+As verificações de T415/T417 reprovaram porque a cor dominante da tela era `#FFE6E0E9` no modo
+claro e `#FF36343B` no escuro — os valores **padrão** de `surfaceContainerHighest` do Material 3.
+A captura de antes ficou em `docs/validacao-006-paleta-antes.png`: os cartões e a barra inferior
+apareciam lavanda, fora da identidade (chalk/vermelho/tinta).
+
+Causa: `LightColors`/`DarkColors` definiam apenas os papéis usados diretamente pelo app. `Card`,
+`NavigationBar`, `FilterChip` e os contornos consomem papéis que ficavam no padrão da biblioteca
+(`surfaceContainerLowest…Highest`, `surfaceBright/Dim`, `inverseSurface/OnSurface`, `outline`,
+`outlineVariant`, `secondaryContainer`, `tertiary`, `errorContainer`).
+
+Correção em `core/ui/src/main/kotlin/br/com/diecastcollector/ui/theme/Theme.kt`: todos esses papéis
+passaram a apontar para tokens de `Color.kt` (Chalk/PureWhite/InkBlack/Graphite/SmokyGrey/MutedGrey/
+HotOrangeLight/FlameRed). Nenhuma cor nova, nenhuma paleta nova, nenhum `Color(0x…)` fora de
+`Color.kt`. Depois da correção as mesmas capturas passaram:
+
+- `docs/validacao-006-t418-ajustes-claro.png`
+- `docs/validacao-006-t418-ajustes-escuro.png`
+
+#### 11.5.2 Medições (T420)
+
+| Medida | Valor | Comando / observação |
+|---|---|---|
+| APK release | **32.011.709 B** — igual ao release anterior (Δ 0 B) | `./gradlew :app:assembleRelease --no-build-cache` |
+| APK debug | **87.428.655 B** e **87.721.749 B** em dois builds consecutivos do mesmo código | debug não passa por R8; a variação de ~286 KB entre builds do mesmo código é empacotamento, não código novo — o release, que é a medida de entrega, ficou idêntico nas duas medições |
+| Abertura fria (debug recém-instalado, JIT) | 4.208–4.886 ms (10 execuções) | `adb shell am force-stop …; adb shell am start -W …` |
+| Abertura fria após compilação AOT | **1.833–1.987 ms** (3 execuções) | mesma medição depois de `cmd package compile -m speed -f` |
+| Abertura fria do release no emulador | não medida nesta rodada | release é arm-only; executar em aparelho ARM |
+| Aplicação do tema (< 100 ms, NFR-401) | não medida com cronômetro | é uma recomposição única, sem recriação: T410 prova que a posição da lista e o texto digitado permanecem |
+| Resíduo de primeiro quadro (NFR-403) | **não medido** | sem captura de quadro por frame a 60 Hz no ambiente de teste; fica como limitação, não como aprovado |
+
+O baseline de 993 ms registrado na spec 005 foi medido em outro estado de compilação do mesmo
+emulador (o pacote estava AOT-compilado). Os 4,2 s acima são do primeiro conjunto de execuções logo
+após `adb install`, com o app interpretado; depois de `cmd package compile -m speed -f` o mesmo APK
+fica em 1,8–2,0 s. Não há evidência de regressão atribuível à aparência: a leitura do DataStore é
+assíncrona e não bloqueia a abertura (`MainActivity` usa `collectAsState(initial = SYSTEM)`).
+
+#### 11.5.3 Capturas Claro × Escuro (T418)
+
+`AppearanceCapturesTest` gerou 48 PNGs (4 classes × 2 modos × 4 telas) em
+`Download/responsive/aparencia/`, copiados para `build/responsive/aparencia/` (diretório local, fora
+do versionamento). Nomes: `<classe>-<modo>-<tela>.png`, com classe `c|m|e|p`, modo `claro|escuro` e
+tela `painel|catalogo|ajustes|fotos`.
+
+| Classe (dp) | Telas | Modos | Arquivos | Inspeção |
+|---|---|---|---|---|
+| C (411×914) | painel, catálogo, ajustes, fotos | Claro, Escuro | `c-claro-*.png`, `c-escuro-*.png` | gerados; par de Ajustes versionado em `docs/validacao-006-t418-ajustes-*.png` |
+| M (700×900) | idem | idem | `m-claro-*.png`, `m-escuro-*.png` | gerados |
+| E (1.000×900) | idem | idem | `e-claro-*.png`, `e-escuro-*.png` | gerados |
+| P (640×360) | idem | idem | `p-claro-*.png`, `p-escuro-*.png` | gerados |
+
+A inspeção visual registrada aqui é a dos pares de Ajustes em C (cartões brancos sobre chalk no
+claro, grafite sobre tinta no escuro, barra inferior na mesma paleta); as demais capturas foram
+conferidas por amostragem de cor dominante na própria execução (T415) e ficam disponíveis para
+revisão.
+
+#### 11.5.4 Limites desta execução
+
+- A suíte instrumentada **completa** (233 casos) foi iniciada e interrompida em 5/233 por tempo de
+  execução; no lugar dela rodaram os 24 casos de aparência e 55 casos de regressão focada, todos
+  verdes. A suíte completa continua sendo o gate de T421 e deve ser rodada em uma janela dedicada.
+- `RenderedContrastTest` cobre grade e cartões; diálogos do editor/revisão vivem em outra janela e
+  não entram na amostragem por `captureToImage` — a área de edição é preta fixa no código, com
+  comentário, e não recebe véu do tema.
+- O APK de **release** (arm64-v8a/armeabi-v7a) não foi executado: o emulador é x86_64.
+- A captura de quadro para o resíduo de primeiro quadro (NFR-403) não foi feita.
+- Só o build de **debug** rodou os testes instrumentados.

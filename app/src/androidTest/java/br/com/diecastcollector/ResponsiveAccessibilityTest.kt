@@ -26,6 +26,7 @@ import br.com.diecastcollector.testing.DeviceWindow
 import br.com.diecastcollector.testing.WindowSizeFrame
 import br.com.diecastcollector.testing.freshInstallRule
 import br.com.diecastcollector.ui.theme.DiecastTheme
+import br.com.diecastcollector.ui.theme.ThemeMode
 import java.time.Instant
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -248,7 +249,7 @@ class ResponsiveAccessibilityContentTest {
     private fun assertThemeContrast(dark: Boolean) {
         var scheme: ColorScheme? = null
         compose.setContent {
-            DiecastTheme(darkTheme = dark) {
+            DiecastTheme(mode = if (dark) ThemeMode.DARK else ThemeMode.LIGHT) {
                 scheme = MaterialTheme.colorScheme
             }
         }
