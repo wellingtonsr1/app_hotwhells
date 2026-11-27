@@ -88,6 +88,9 @@ public class PhotoEditorViewModel @Inject constructor(
 
     private var source: ByteArray = ByteArray(0)
     private var previewJob: Job? = null
+    private var suggestJob: Job? = null
+    /** Cada edição do usuário invalida uma sugestão de moldura ainda em andamento. */
+    private var editGeneration: Int = 0
     private var baseKey: String? = null
     private var finalKey: String? = null
 
@@ -105,6 +108,8 @@ public class PhotoEditorViewModel @Inject constructor(
         if (_state.value.started && _state.value.sourceKey == sourceKey) return
 
         previewJob?.cancel()
+        suggestJob?.cancel()
+        editGeneration = 0
         source = sourceBytes
         baseKey = null
         finalKey = null
@@ -126,6 +131,13 @@ public class PhotoEditorViewModel @Inject constructor(
             started = true,
         )
         schedulePreview(force = true)
+
+        // A moldura começa na cartela quando a foto ainda não tem edição própria. A
+        // sugestão entra como estado inicial (sem passo de desfazer) e só se o usuário
+        // não tiver mexido em nada enquanto o detector rodava.
+        if (!alreadyEdited && initialEdit.isNeutral) {
+            launchCropSuggestion(initialEdit.rotationQuarterTurns, editGeneration)
+        }
     }
 
     public fun onTool(tool: PhotoTool) {
@@ -158,6 +170,8 @@ public class PhotoEditorViewModel @Inject constructor(
                 aspect = PhotoAspect.ORIGINAL,
             )
         }
+        // A cartela continua na foto, agora deitada: sugere a moldura na nova orientação.
+        launchCropSuggestion(_state.value.edit.rotationQuarterTurns, editGeneration)
     }
 
     public fun onFlipHorizontal() {
@@ -256,6 +270,8 @@ public class PhotoEditorViewModel @Inject constructor(
     public fun reset() {
         previewJob?.cancel()
         previewJob = null
+        suggestJob?.cancel()
+        suggestJob = null
         source = ByteArray(0)
         baseKey = null
         finalKey = null
@@ -265,9 +281,36 @@ public class PhotoEditorViewModel @Inject constructor(
     // ---- Internos ------------------------------------------------------------------
 
     private fun updateEdit(transform: (PhotoEdit) -> PhotoEdit) {
+        editGeneration++
+        suggestJob?.cancel()
         val history = _state.value.history
         _state.update { it.copy(history = history.applyBounded(transform(history.current))) }
         schedulePreview()
+    }
+
+    /**
+     * Propõe a moldura da cartela como estado inicial (sem passo de desfazer). O giro entra
+     * no detector para o retângulo já sair nas coordenadas da imagem deitada; se o usuário
+     * editar antes de a resposta chegar, a geração muda e a sugestão é descartada.
+     */
+    private fun launchCropSuggestion(rotationQuarterTurns: Int, generation: Int) {
+        suggestJob?.cancel()
+        suggestJob = viewModelScope.launch {
+            val crop = withContext(Dispatchers.Default) {
+                runCatching { processor.suggestCrop(source, rotationQuarterTurns) }.getOrNull()
+            } ?: return@launch
+            _state.update { current ->
+                val edit = current.edit
+                val stillExpected = generation == editGeneration &&
+                    edit.crop.isFull &&
+                    edit.rotationQuarterTurns == rotationQuarterTurns
+                if (stillExpected) {
+                    current.copy(history = PhotoEditHistory.from(edit.copy(crop = crop)))
+                } else {
+                    current
+                }
+            }
+        }
     }
 
     private fun orientedWidth(): Int =

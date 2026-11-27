@@ -8,6 +8,7 @@ import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
 import androidx.core.graphics.scale
+import br.com.diecastcollector.domain.model.NormalizedRect
 import br.com.diecastcollector.domain.model.PhotoEdit
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
@@ -39,6 +40,16 @@ public interface PhotoProcessor {
     public suspend fun preview(source: ByteArray, edit: PhotoEdit): ProcessedImage
 
     public suspend fun export(source: ByteArray, edit: PhotoEdit): ProcessedImage
+
+    /**
+     * Moldura inicial em torno da cartela (FR-205), em coordenadas da imagem já orientada
+     * pelo EXIF e pelo giro do usuário. `null` quando o fundo não é uniforme o bastante
+     * para separar o objeto.
+     */
+    public suspend fun suggestCrop(
+        source: ByteArray,
+        rotationQuarterTurns: Int = 0,
+    ): NormalizedRect?
 }
 
 @Singleton
@@ -59,6 +70,44 @@ public class AndroidPhotoProcessor @Inject constructor() : PhotoProcessor {
             maxEdge = edit.quality.maxEdge,
             jpegQuality = edit.quality.jpegQuality,
         )
+
+    override suspend fun suggestCrop(
+        source: ByteArray,
+        rotationQuarterTurns: Int,
+    ): NormalizedRect? =
+        withContext(Dispatchers.Default) {
+            if (source.isEmpty()) return@withContext null
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(source, 0, source.size, bounds)
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@withContext null
+
+            val sample = sampleSize(bounds.outWidth, bounds.outHeight, SUGGEST_MAX_EDGE * 2)
+            val decoded = BitmapFactory.decodeByteArray(
+                source,
+                0,
+                source.size,
+                BitmapFactory.Options().apply { inSampleSize = sample },
+            ) ?: return@withContext null
+
+            var current = decoded
+            try {
+                // Mesma orientação aplicada à prévia, senão o retângulo sairia girado.
+                current = orient(
+                    current,
+                    ImageOrientation.of(source),
+                    PhotoEdit.NONE.copy(rotationQuarterTurns = rotationQuarterTurns),
+                )
+                val width = current.width
+                val height = current.height
+                if (width <= 0 || height <= 0) return@withContext null
+                val pixels = IntArray(width * height)
+                current.getPixels(pixels, 0, width, 0, 0, width, height)
+                CardBoundsDetector.detect(pixels, width, height)
+            } finally {
+                if (!current.isRecycled) current.recycle()
+                if (decoded !== current && !decoded.isRecycled) decoded.recycle()
+            }
+        }
 
     private suspend fun process(
         source: ByteArray,
@@ -325,6 +374,7 @@ public class AndroidPhotoProcessor @Inject constructor() : PhotoProcessor {
 
     private companion object {
         const val PREVIEW_MAX_EDGE = 1080
+        const val SUGGEST_MAX_EDGE = 320
         const val PREVIEW_QUALITY = 80
         const val MAX_BYTES = 1_500_000
         const val MIN_QUALITY = 55

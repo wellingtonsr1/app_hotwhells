@@ -2,11 +2,8 @@ package br.com.diecastcollector.ui.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
@@ -27,8 +24,9 @@ import br.com.diecastcollector.R
  * Diálogo de mídia em tela cheia que respeita as barras do sistema (FR-323, FR-325).
  *
  * Os visualizadores abriam com `fillMaxSize` e o botão fechar caía sob a status bar em
- * paisagem. Aqui o conteúdo e o fechar ficam dentro de `safeDrawing`, então nenhum deles
- * fica atrás de recorte, barra de navegação ou gestos.
+ * paisagem. Aqui o conteúdo e o fechar ficam dentro dos insets do diálogo, então nenhum
+ * deles fica atrás de recorte, barra de navegação ou gestos. A leitura usa a mesma reserva
+ * do editor de fotografia: em alguns aparelhos a janela do diálogo reporta zero embaixo.
  */
 @Composable
 public fun MediaDialogScaffold(
@@ -38,7 +36,12 @@ public fun MediaDialogScaffold(
 ) {
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            // Sem isto a janela do diálogo não reporta insets: com edge-to-edge
+            // obrigatório o atalho "Ver galeria completa" caía sob a barra de gestos.
+            decorFitsSystemWindows = false,
+        ),
     ) {
         Surface(
             modifier = modifier.fillMaxSize(),
@@ -47,7 +50,7 @@ public fun MediaDialogScaffold(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.safeDrawing),
+                    .then(dialogInsetsPadding()),
             ) {
                 content()
                 IconButton(

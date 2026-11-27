@@ -3,8 +3,11 @@ package br.com.diecastcollector.feature.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -24,9 +27,10 @@ import br.com.diecastcollector.ui.components.FormColumn
  */
 @Composable
 public fun PrivacyPolicyScreen(modifier: Modifier = Modifier) {
-    // T369: a política mantém linha de leitura em E (FR-311).
+    // T369: a política mantém linha de leitura em E (FR-311). Tela empilhada, sem
+    // Scaffold: reserva a barra de status e a de navegação aqui.
     FormColumn(
-        modifier = modifier,
+        modifier = modifier.windowInsetsPadding(WindowInsets.safeDrawing),
         scrollable = true,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),

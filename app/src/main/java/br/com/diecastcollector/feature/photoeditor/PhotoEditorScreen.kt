@@ -15,23 +15,11 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.platform.LocalView
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
-import android.os.Build
-import android.view.WindowManager
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -87,6 +75,7 @@ import br.com.diecastcollector.domain.model.PhotoAspect
 import br.com.diecastcollector.domain.model.PhotoEdit
 import br.com.diecastcollector.domain.model.PhotoQuality
 import br.com.diecastcollector.ui.UiMessage
+import br.com.diecastcollector.ui.components.dialogInsetsPadding
 import kotlin.math.abs
 import kotlinx.coroutines.delay
 
@@ -735,14 +724,27 @@ private fun CompareChip(onShowOriginal: (Boolean) -> Unit, modifier: Modifier = 
     }
 }
 
-private enum class CropDrag { MOVE, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT }
+private enum class CropDrag {
+    MOVE,
+    LEFT,
+    TOP,
+    RIGHT,
+    BOTTOM,
+    TOP_LEFT,
+    TOP_RIGHT,
+    BOTTOM_LEFT,
+    BOTTOM_RIGHT,
+}
 
 /**
  * Imagem inteira com a moldura de corte por cima (FR-205).
  *
- * Arrastar um canto redimensiona; arrastar dentro move. A moldura é normalizada no
- * domínio; aqui só se converte pixel ↔ 0..1. Nada de processar bitmap enquanto o dedo se
- * move — o retângulo muda e a exportação acontece ao salvar.
+ * Arrastar um canto ou uma das quatro linhas redimensiona; arrastar dentro move. A moldura
+ * é normalizada no domínio; aqui só se converte pixel ↔ 0..1. Nada de processar bitmap
+ * enquanto o dedo se move — o retângulo muda e a exportação acontece ao salvar.
+ *
+ * As linhas também respondem ao toque porque os cantos, com a moldura no limite da tela,
+ * caem na borda do aparelho, onde o gesto de voltar do sistema rouba o arrasto.
  */
 @Composable
 private fun CropStage(
@@ -768,7 +770,8 @@ private fun CropStage(
 
         val density = LocalDensity.current
         val handleRadius = with(density) { 9.dp.toPx() }
-        val hitRadius = with(density) { 32.dp.toPx() }
+        val cornerHitRadius = with(density) { 40.dp.toPx() }
+        val edgeHitRadius = with(density) { 24.dp.toPx() }
 
         // O gesto não pode depender de `crop` como chave do `pointerInput`: cada frame do
         // arrasto altera a moldura, reiniciaria o detector e o toque morreria no primeiro
@@ -793,20 +796,40 @@ private fun CropStage(
                             val activeCrop = currentCrop
                             startCrop = activeCrop
                             accumulated = Offset.Zero
+                            val left = point(activeCrop.left, activeCrop.top).x
+                            val right = point(activeCrop.right, activeCrop.bottom).x
+                            val top = point(activeCrop.left, activeCrop.top).y
+                            val bottom = point(activeCrop.right, activeCrop.bottom).y
                             val corners = listOf(
-                                CropDrag.TOP_LEFT to point(activeCrop.left, activeCrop.top),
-                                CropDrag.TOP_RIGHT to point(activeCrop.right, activeCrop.top),
-                                CropDrag.BOTTOM_LEFT to point(activeCrop.left, activeCrop.bottom),
-                                CropDrag.BOTTOM_RIGHT to point(activeCrop.right, activeCrop.bottom),
+                                CropDrag.TOP_LEFT to Offset(left, top),
+                                CropDrag.TOP_RIGHT to Offset(right, top),
+                                CropDrag.BOTTOM_LEFT to Offset(left, bottom),
+                                CropDrag.BOTTOM_RIGHT to Offset(right, bottom),
+                            )
+                            val edges = listOf(
+                                CropDrag.LEFT to (
+                                    position.y in top..bottom &&
+                                        abs(position.x - left) <= edgeHitRadius
+                                    ),
+                                CropDrag.TOP to (
+                                    position.x in left..right &&
+                                        abs(position.y - top) <= edgeHitRadius
+                                    ),
+                                CropDrag.RIGHT to (
+                                    position.y in top..bottom &&
+                                        abs(position.x - right) <= edgeHitRadius
+                                    ),
+                                CropDrag.BOTTOM to (
+                                    position.x in left..right &&
+                                        abs(position.y - bottom) <= edgeHitRadius
+                                    ),
                             )
                             mode = corners
-                                .firstOrNull { (_, corner) -> (position - corner).getDistance() <= hitRadius }
+                                .firstOrNull { (_, corner) -> (position - corner).getDistance() <= cornerHitRadius }
                                 ?.first
+                                ?: edges.firstOrNull { (_, near) -> near }?.first
                                 ?: if (
-                                    position.x >= imageLeft + activeCrop.left * imageWidth &&
-                                    position.x <= imageLeft + activeCrop.right * imageWidth &&
-                                    position.y >= imageTop + activeCrop.top * imageHeight &&
-                                    position.y <= imageTop + activeCrop.bottom * imageHeight
+                                    position.x in left..right && position.y in top..bottom
                                 ) {
                                     CropDrag.MOVE
                                 } else {
@@ -836,6 +859,34 @@ private fun CropStage(
                                         newTop + height,
                                     )
                                 }
+
+                                CropDrag.LEFT -> NormalizedRect.safe(
+                                    startCrop.left + dx,
+                                    startCrop.top,
+                                    startCrop.right,
+                                    startCrop.bottom,
+                                )
+
+                                CropDrag.TOP -> NormalizedRect.safe(
+                                    startCrop.left,
+                                    startCrop.top + dy,
+                                    startCrop.right,
+                                    startCrop.bottom,
+                                )
+
+                                CropDrag.RIGHT -> NormalizedRect.safe(
+                                    startCrop.left,
+                                    startCrop.top,
+                                    startCrop.right + dx,
+                                    startCrop.bottom,
+                                )
+
+                                CropDrag.BOTTOM -> NormalizedRect.safe(
+                                    startCrop.left,
+                                    startCrop.top,
+                                    startCrop.right,
+                                    startCrop.bottom + dy,
+                                )
 
                                 CropDrag.TOP_LEFT -> NormalizedRect.safe(
                                     startCrop.left + dx,
@@ -910,104 +961,20 @@ private fun CropStage(
                 drawCircle(Color.White, radius = handleRadius, center = corner)
                 drawCircle(Color.Black.copy(alpha = 0.4f), radius = handleRadius / 2f, center = corner)
             }
+
+            // Alças no meio das linhas: mostram que as laterais também redimensionam.
+            val edgeHandleRadius = handleRadius * 0.7f
+            listOf(
+                Offset((left + right) / 2f, top),
+                Offset((left + right) / 2f, bottom),
+                Offset(left, (top + bottom) / 2f),
+                Offset(right, (top + bottom) / 2f),
+            ).forEach { edge ->
+                drawCircle(Color.White, radius = edgeHandleRadius, center = edge)
+                drawCircle(Color.Black.copy(alpha = 0.4f), radius = edgeHandleRadius / 2f, center = edge)
+            }
         }
     }
-}
-
-/**
- * Insets do sistema para o diálogo.
- *
- * O `Dialog` do Compose cria uma janela própria, e nem sempre essa janela reporta os
- * insets: em alguns aparelhos o inset inferior chega como 0 (o rodapé ficava sob a barra de
- * navegação, sem receber toque) enquanto o topo vem certo. Por isso são três leituras
- * independentes, e vale a maior por lado:
- *
- * 1. `WindowInsets.safeDrawing` da janela do diálogo (`decorFitsSystemWindows = false`);
- * 2. o `decorView` da Activity que abriu o editor;
- * 3. `WindowManager.currentWindowMetrics`, que não depende de dispatch de insets.
- *
- * Se as três reportarem zero na base, usa-se a altura canônica de `navigation_bar_height`,
- * para que o rodapé continue alcançável.
- */
-@Composable
-private fun dialogInsetsPadding(): Modifier {
-    val view = LocalView.current
-    val density = LocalDensity.current
-    val layoutDirection = LocalLayoutDirection.current
-    val windowInsets = WindowInsets.safeDrawing.asPaddingValues()
-    var activityInsets by remember { mutableStateOf(IntArray(4)) }
-    val metricsInsets = remember(view) { systemBarInsetsFromWindowMetrics(view.context) }
-    val navigationBarFallback = remember(view) { navigationBarHeightPx(view.context) }
-
-    DisposableEffect(view) {
-        // Reserva: a Activity que abriu o editor. É dela que vem o inset quando a janela
-        // do diálogo ainda não recebeu os seus.
-        val activityDecor = view.context.findActivity()?.window?.decorView
-        val target = activityDecor ?: view
-        fun read(systemInsets: WindowInsetsCompat?) {
-            val bars = systemInsets?.getInsets(
-                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout(),
-            ) ?: return
-            val next = intArrayOf(bars.left, bars.top, bars.right, bars.bottom)
-            if (!next.contentEquals(activityInsets)) activityInsets = next
-        }
-        read(ViewCompat.getRootWindowInsets(target))
-        ViewCompat.setOnApplyWindowInsetsListener(target) { _, systemInsets ->
-            read(systemInsets)
-            systemInsets
-        }
-        ViewCompat.requestApplyInsets(target)
-        onDispose { ViewCompat.setOnApplyWindowInsetsListener(target, null) }
-    }
-
-    fun sidePx(index: Int): Int {
-        val fromWindow = when (index) {
-            0 -> with(density) { windowInsets.calculateLeftPadding(layoutDirection).roundToPx() }
-            1 -> with(density) { windowInsets.calculateTopPadding().roundToPx() }
-            2 -> with(density) { windowInsets.calculateRightPadding(layoutDirection).roundToPx() }
-            else -> with(density) { windowInsets.calculateBottomPadding().roundToPx() }
-        }
-        return maxOf(fromWindow, activityInsets[index], metricsInsets[index])
-    }
-
-    val bottomPx = sidePx(3).let { if (it > 0) it else navigationBarFallback }
-    return Modifier.padding(
-        start = with(density) { sidePx(0).toDp() },
-        top = with(density) { sidePx(1).toDp() },
-        end = with(density) { sidePx(2).toDp() },
-        bottom = with(density) { bottomPx.toDp() },
-    )
-}
-
-/**
- * Insets dos system bars pela janela, e não pelo dispatch: `getInsetsIgnoringVisibility`
- * devolve a área reservada mesmo que a barra esteja oculta naquele instante.
- */
-private fun systemBarInsetsFromWindowMetrics(context: Context): IntArray {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return IntArray(4)
-    val manager = context.getSystemService(WindowManager::class.java) ?: return IntArray(4)
-    val insets = manager.currentWindowMetrics.windowInsets.getInsetsIgnoringVisibility(
-        android.view.WindowInsets.Type.systemBars() or
-            android.view.WindowInsets.Type.displayCutout(),
-    )
-    return intArrayOf(insets.left, insets.top, insets.right, insets.bottom)
-}
-
-/** Altura canônica da barra de navegação, usada só quando nenhuma fonte reporta inset. */
-private fun navigationBarHeightPx(context: Context): Int {
-    val resources = context.resources
-    val id = resources.getIdentifier("navigation_bar_height", "dimen", "android")
-    return if (id > 0) resources.getDimensionPixelSize(id) else 0
-}
-
-/** Sobe a cadeia de contextos até a Activity que hospeda o diálogo. */
-private fun Context.findActivity(): Activity? {
-    var current: Context? = this
-    while (current is ContextWrapper) {
-        if (current is Activity) return current
-        current = current.baseContext
-    }
-    return null
 }
 
 /**

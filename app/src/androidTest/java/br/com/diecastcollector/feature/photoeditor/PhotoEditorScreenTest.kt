@@ -58,13 +58,14 @@ class PhotoEditorScreenTest {
         onSaved: (ByteArray, PhotoEdit) -> Unit = { _, _ -> },
         onDismiss: () -> Unit = {},
         initialEdit: PhotoEdit = PhotoEdit.NONE,
+        sourceBytes: ByteArray = jpeg(),
         viewModel: PhotoEditorViewModel = PhotoEditorViewModel(AndroidPhotoProcessor()),
     ): PhotoEditorViewModel {
         composeRule.setContent {
             DiecastTheme {
                 PhotoEditorDialog(
                     sourceKey = "teste-${System.nanoTime()}",
-                    sourceBytes = jpeg(),
+                    sourceBytes = sourceBytes,
                     initialEdit = initialEdit,
                     onDismiss = onDismiss,
                     onSaved = onSaved,
@@ -243,6 +244,91 @@ class PhotoEditorScreenTest {
         val moved = viewModel.state.value.edit.crop
         assertEquals(initialCrop.width(), moved.width(), 0.001f)
         assertTrue(moved.right <= 1f)
+    }
+
+    /**
+     * Regressão: com a moldura no limite, os cantos ficam na borda do aparelho (onde o gesto
+     * do sistema rouba o toque), então arrastar a própria linha lateral precisa redimensionar.
+     */
+    @Test
+    fun arrastarLinhaLateralRedimensiona() {
+        val viewModel = setContent(initialEdit = PhotoEdit(crop = NormalizedRect.FULL))
+
+        composeRule.waitUntil(TIMEOUT_MS) {
+            composeRule.onAllNodesWithContentDescription("Enquadrar").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        val stage = composeRule.onNodeWithContentDescription("Enquadrar").fetchSemanticsNode()
+        composeRule.onNodeWithContentDescription("Enquadrar").performTouchInput {
+            val start = Offset(10f, stage.size.height / 2f)
+            swipe(start, start + Offset(120f, 0f), durationMillis = 300)
+        }
+
+        composeRule.waitUntil(TIMEOUT_MS) {
+            viewModel.state.value.edit.crop.left > 0f
+        }
+        val resized = viewModel.state.value.edit.crop
+        assertEquals(0f, resized.top, 0.001f)
+        assertEquals(1f, resized.bottom, 0.001f)
+    }
+
+    /** Foto sintética: cartela clara/colorida sobre fundo escuro e uniforme. */
+    private fun jpegComCartela(): ByteArray {
+        val bitmap = Bitmap.createBitmap(240, 320, Bitmap.Config.ARGB_8888)
+        Canvas(bitmap).drawColor(Color.rgb(48, 48, 48))
+        val paint = android.graphics.Paint()
+        paint.color = Color.rgb(240, 240, 240)
+        Canvas(bitmap).drawRect(30f, 40f, 210f, 180f, paint)
+        paint.color = Color.rgb(30, 90, 168)
+        Canvas(bitmap).drawRect(30f, 180f, 210f, 280f, paint)
+        val stream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 92, stream)
+        bitmap.recycle()
+        return stream.toByteArray()
+    }
+
+    /**
+     * FR-205: a moldura inicial deve começar na cartela, não na foto inteira. A sugestão
+     * entra como estado inicial — sem passo de desfazer e sem marcar a foto como editada.
+     */
+    @Test
+    fun abreComMolduraAjustadaACartela() {
+        val viewModel = setContent(sourceBytes = jpegComCartela())
+
+        composeRule.waitUntil(TIMEOUT_MS) {
+            viewModel.state.value.edit.crop != NormalizedRect.FULL
+        }
+        val crop = viewModel.state.value.edit.crop
+        assertTrue("moldura não recuou: $crop", crop.left > 0.05f)
+        assertTrue("moldura não recuou: $crop", crop.top > 0.05f)
+        assertTrue("moldura não recuou: $crop", crop.right < 0.95f)
+        assertTrue("moldura não recuou: $crop", crop.bottom < 0.95f)
+        assertTrue("sugestão marcou a foto como editada", !viewModel.state.value.hasChanges)
+    }
+
+    /**
+     * Girar zera o corte; a nova moldura deve vir já na orientação deitada, sem o usuário
+     * precisar redesenhá-la. A cartela sintética é simétrica, então o retângulo esperado é
+     * o mesmo em coordenadas normalizadas.
+     */
+    @Test
+    fun sugereMolduraDeNovoAposGirar() {
+        val viewModel = setContent(sourceBytes = jpegComCartela())
+
+        composeRule.waitUntil(TIMEOUT_MS) {
+            viewModel.state.value.edit.crop != NormalizedRect.FULL
+        }
+
+        composeRule.onNodeWithText("Girar").performClick()
+        composeRule.onNodeWithText("Girar 90° à direita").performClick()
+
+        composeRule.waitUntil(TIMEOUT_MS) {
+            viewModel.state.value.edit.rotationQuarterTurns == 1 &&
+                viewModel.state.value.edit.crop != NormalizedRect.FULL
+        }
+        val crop = viewModel.state.value.edit.crop
+        assertTrue("moldura não foi refeita: $crop", crop.left > 0.05f && crop.top > 0.05f)
+        assertTrue("moldura não foi refeita: $crop", crop.right < 0.95f && crop.bottom < 0.95f)
     }
 
     private fun NormalizedRect.width(): Float = right - left
