@@ -32,7 +32,8 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Pula a apresentação de primeira abertura nos testes: eles medem a navegação.
+        testInstrumentationRunner = "br.com.diecastcollector.DiecastTestRunner"
         // FR-171: a data de compilação é gravada no build, não inventada na tela.
         buildConfigField("String", "BUILD_TIME", "\"${Instant.now()}\"")
     }

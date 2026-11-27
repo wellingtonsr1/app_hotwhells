@@ -12,9 +12,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import br.com.diecastcollector.appearance.AppearancePreferences
 import br.com.diecastcollector.appearance.ApplicationNightMode
+import br.com.diecastcollector.feature.welcome.WELCOME_SKIP_PROPERTY
+import br.com.diecastcollector.feature.welcome.WelcomeScreen
 import br.com.diecastcollector.navigation.AppNavHost
 import br.com.diecastcollector.ui.components.ProvideWindowSizeClass
 import br.com.diecastcollector.ui.theme.DiecastTheme
@@ -43,6 +48,14 @@ class MainActivity : ComponentActivity() {
             val mode by appearance.mode.collectAsState(initial = ThemeMode.SYSTEM)
             val dark = mode.isDark(isSystemInDarkTheme())
 
+            // Abertura com a arte da marca em toda inicialização: o painel só aparece
+            // depois do toque em Começar. Voltar do segundo plano não repete a tela
+            // (`rememberSaveable`); um processo novo começa nela de novo. A suíte
+            // instrumentada liga a propriedade antes de abrir a activity.
+            var welcomeOpen by rememberSaveable {
+                mutableStateOf(!skipWelcomeForTests())
+            }
+
             // FR-410/NFR-403: espelha o modo no mecanismo de modo noturno do sistema, que
             // o Android aplica **antes** de criar o processo — assim o splash e a janela
             // já usam `values`/`values-night` da aparência escolhida. O DataStore continua
@@ -52,28 +65,51 @@ class MainActivity : ComponentActivity() {
             // FR-409: os ícones das barras seguem a aparência do app, não a do Android —
             // inclusive quando o usuário força um modo oposto ao do sistema.
             SideEffect {
+                // A arte da apresentação é escura: sobre ela os ícones precisam ser claros
+                // mesmo no tema claro.
                 enableEdgeToEdge(
                     statusBarStyle = SystemBarStyle.auto(
                         Color.TRANSPARENT,
                         Color.TRANSPARENT,
-                    ) { dark },
+                    ) { dark || welcomeOpen },
                     navigationBarStyle = SystemBarStyle.auto(
                         Color.TRANSPARENT,
                         Color.TRANSPARENT,
-                    ) { dark },
+                    ) { dark || welcomeOpen },
                 )
             }
 
             DiecastTheme(mode = mode) {
-                // A classe de janela é medida uma vez, no contêiner que o app recebeu:
-                // em duas janelas cada lado tem a sua (FR-301, FR-304).
-                ProvideWindowSizeClass {
-                    AppNavHost()
+                if (welcomeOpen) {
+                    WelcomeScreen(onStart = { welcomeOpen = false })
+                } else {
+                    Navigation()
                 }
             }
         }
     }
 }
+
+/**
+ * Navegação principal.
+ *
+ * A classe de janela é medida uma vez, no contêiner que o app recebeu: em duas janelas
+ * cada lado tem a sua (FR-301, FR-304).
+ */
+@Composable
+private fun Navigation() {
+    ProvideWindowSizeClass {
+        AppNavHost()
+    }
+}
+
+/**
+ * Saída só para a instrumentação: `createAndroidComposeRule<MainActivity>` abre a activity
+ * com o intent padrão e não teria como responder à apresentação antes do primeiro teste.
+ * Fora da suíte, a propriedade nunca existe.
+ */
+private fun skipWelcomeForTests(): Boolean =
+    System.getProperty(WELCOME_SKIP_PROPERTY) == "true"
 
 @Preview(showBackground = true)
 @Composable

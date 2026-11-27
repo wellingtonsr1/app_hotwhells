@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Diecast Collector</string>
+    <string name="welcome_tagline">Sua coleção. Sua garagem.</string>
+    <string name="welcome_start">Começar</string>
 
     <!-- Erros de domínio traduzidos para o usuário (T027). -->
     <string name="error_validation">Não foi possível salvar: %1$s</string>

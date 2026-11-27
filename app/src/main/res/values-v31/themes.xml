@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      No Android 12+ o sistema desenha a abertura e aceita só fundo, ícone e marca —
+      por isso não há tela de splash própria (nem atraso artificial). O fundo é o mesmo
+      `window_background`, que já troca com a aparência.
+
+      O ícone é intencionalmente vazio: a marca completa já abre em seguida, na tela de
+      boas-vindas, e repetir o logo aqui daria duas apresentações em sequência. Sem o
+      recurso transparente, o sistema voltaria a usar o ícone do app por padrão. Abaixo do
+      API 31 não existe esse mecanismo: a janela abre só com a cor.
+    -->
+    <style name="Theme.DiecastCollector" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:windowSplashScreenBackground">@color/window_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_blank</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>
