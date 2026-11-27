@@ -20,6 +20,7 @@ Commit `424e4fb`. Cada regra é rastreável ao arquivo citado; nenhuma foi infer
 - Grupo = mesma **variante** (`variantId`), nunca pelo nome do modelo.
 - Disponibilidade por exemplar: `TRADE`, `SALE`, `BOTH`, `UNAVAILABLE`; «Em negociação» quando existe negociação ativa.
 - Dois exemplares da mesma variante contam como duplicados; duas variantes do mesmo modelo, não.
+- Duplicidade não é pré-condição para disponibilizar nem negociar: a oferta e a negociação valem para qualquer exemplar `OWNED`. Quando a variante tem **um único** exemplar, o aviso «Último exemplar da variante» aparece antes de gravar a disponibilidade e antes de abrir a negociação, e não aparece com negociação ativa (`UniqueExemplarPolicy`).
 
 ## Progresso de coleção (`core/domain/.../model/CollectionProgress.kt`)
 

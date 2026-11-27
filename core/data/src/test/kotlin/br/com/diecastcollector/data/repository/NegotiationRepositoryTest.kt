@@ -10,6 +10,7 @@ import br.com.diecastcollector.data.db.entity.ExemplarEntity
 import br.com.diecastcollector.data.db.entity.ManufacturerEntity
 import br.com.diecastcollector.data.db.entity.VariantEntity
 import br.com.diecastcollector.domain.model.Condition
+import br.com.diecastcollector.domain.model.DuplicateAvailability
 import br.com.diecastcollector.domain.model.ExemplarStatus
 import br.com.diecastcollector.domain.model.IsoDate
 import br.com.diecastcollector.domain.model.MoneyCents
@@ -43,6 +44,7 @@ public class NegotiationRepositoryTest {
 
     private lateinit var database: AppDatabase
     private lateinit var repository: NegotiationRepositoryImpl
+    private lateinit var duplicates: DuplicateRepositoryImpl
 
     private val clock: Clock = Clock.fixed(
         Instant.parse("2026-05-01T12:00:00Z"),
@@ -61,6 +63,11 @@ public class NegotiationRepositoryTest {
             database = database,
             transactionRunner = transactionRunner,
             auditLogWriter = AuditLogWriter(database.historyDao()),
+            clock = clock,
+        )
+        duplicates = DuplicateRepositoryImpl(
+            database = database,
+            transactionRunner = transactionRunner,
             clock = clock,
         )
     }
@@ -189,6 +196,94 @@ public class NegotiationRepositoryTest {
         assertThat(result.isFailure).isTrue()
         assertThat(result.exceptionOrNull()?.message).contains("diferente do negociado")
         assertThat(statusOf("e1")).isEqualTo(ExemplarStatus.OWNED)
+    }
+
+    @Test
+    public fun `indisponivel durante negociacao ativa preserva oferta e negociacao`(): Unit =
+        runBlocking {
+            seed()
+            duplicates.setOffer(
+                exemplarId = "e1",
+                availability = DuplicateAvailability.SALE,
+                condition = Condition.LOOSE,
+                askingPrice = MoneyCents(4_500),
+                notes = "Com caixa",
+            ).getOrThrow()
+            val negotiation = repository.open(
+                NewNegotiation("e1", NegotiationType.SALE, counterparty = "Ana"),
+            ).getOrThrow()
+
+            // FR-510: mudar a disponibilidade não mexe na negociação em andamento.
+            duplicates.setOffer(
+                exemplarId = "e1",
+                availability = DuplicateAvailability.UNAVAILABLE,
+                condition = null,
+                askingPrice = null,
+                notes = null,
+            ).getOrThrow()
+
+            val offer = duplicates.observeOffer("e1").first()!!
+            assertThat(offer.availability).isEqualTo(DuplicateAvailability.UNAVAILABLE)
+            assertThat(offer.askingPrice).isNull()
+            val active = repository.observeByExemplar("e1").first().single()
+            assertThat(active.id).isEqualTo(negotiation.id)
+            assertThat(active.status).isEqualTo(NegotiationStatus.RESERVED)
+            assertThat(statusOf("e1")).isEqualTo(ExemplarStatus.OWNED)
+        }
+
+    @Test
+    public fun `cancelar preserva a oferta registrada no exemplar`(): Unit = runBlocking {
+        seed()
+        duplicates.setOffer(
+            exemplarId = "e1",
+            availability = DuplicateAvailability.TRADE,
+            condition = Condition.SEALED,
+            askingPrice = MoneyCents(8_000),
+            notes = "Troca por Camaro",
+        ).getOrThrow()
+        val negotiation = repository.open(
+            NewNegotiation("e1", NegotiationType.TRADE),
+        ).getOrThrow()
+
+        repository.cancel(negotiation.id).getOrThrow()
+
+        val offer = duplicates.observeOffer("e1").first()!!
+        assertThat(offer.availability).isEqualTo(DuplicateAvailability.TRADE)
+        assertThat(offer.condition).isEqualTo(Condition.SEALED)
+        assertThat(offer.askingPrice).isEqualTo(MoneyCents(8_000))
+        assertThat(offer.notes).isEqualTo("Troca por Camaro")
+        assertThat(statusOf("e1")).isEqualTo(ExemplarStatus.OWNED)
+        assertThat(repository.observeEventsForExemplar("e1").first().map { it.description })
+            .contains("Negociação cancelada")
+    }
+
+    @Test
+    public fun `conclusao mantem negociacao e evento no historico`(): Unit = runBlocking {
+        seed()
+        val negotiation = repository.open(
+            NewNegotiation("e1", NegotiationType.SALE),
+        ).getOrThrow()
+
+        repository.closeSale(negotiation.id, MoneyCents(4_500), null).getOrThrow()
+
+        val history = repository.observeByExemplar("e1").first()
+        assertThat(history).hasSize(1)
+        assertThat(history.single().id).isEqualTo(negotiation.id)
+        assertThat(history.single().status).isEqualTo(NegotiationStatus.CLOSED)
+        assertThat(repository.observeEventsForExemplar("e1").first())
+            .isNotEmpty()
+    }
+
+    @Test
+    public fun `recusa de segunda negociacao diz como resolver`(): Unit = runBlocking {
+        seed()
+        repository.open(NewNegotiation("e1", NegotiationType.SALE)).getOrThrow()
+
+        val second = repository.open(NewNegotiation("e1", NegotiationType.TRADE))
+
+        assertThat(second.isFailure).isTrue()
+        assertThat(second.exceptionOrNull()?.message)
+            .contains("Conclua ou cancele a negociação atual")
     }
 
     private suspend fun statusOf(exemplarId: String): ExemplarStatus =

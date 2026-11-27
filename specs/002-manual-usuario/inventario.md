@@ -22,7 +22,7 @@ Títulos são os textos exibidos; telas sem título próprio usam o identificado
 | 15 | `catalog/series` | Séries | SeriesScreen.kt | SeriesViewModel | «Séries» em Coleções | 19 |
 | 16 | `catalog/barcode` | Código de barras | BarcodeScanScreen.kt | RecognitionViewModel | «Código de barras» no catálogo | 20 |
 | 17 | `duplicates` | Duplicados | DuplicatesScreen.kt | DuplicatesViewModel | «Duplicados» no catálogo | 21 |
-| 18 | `duplicates/{exemplarId}/negotiation` | Negociação | NegotiationScreen.kt | NegotiationViewModel | «Negociar» em Duplicados | 22 |
+| 18 | `duplicates/{exemplarId}/negotiation` | Negociação | NegotiationScreen.kt | NegotiationViewModel | «Negociar» em Duplicados, na lista de exemplares ou na ficha do exemplar | 22 |
 | 19 | `wishlist` | Lista de desejos | WishlistScreen.kt | WishlistViewModel | aba Desejos | 23 |
 | 20 | `wishlist/form` | Novo desejo / Editar desejo | WishlistFormScreen.kt | WishlistFormViewModel | «Novo desejo»; item da lista | 24 |
 | 21 | `finance` | Financeiro | FinanceScreen.kt | FinanceViewModel | aba Financeiro | 25 |

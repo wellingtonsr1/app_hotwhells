@@ -68,6 +68,9 @@ public fun ExemplarListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val messageText = state.message?.text()
 
+    // Recriação da janela: o aviso pendente não volta (SC-505).
+    LaunchedEffect(Unit) { viewModel.onWindowRecreated() }
+
     // A navegação é da tela; o ViewModel só decide se ela acontece antes ou depois do aviso.
     LaunchedEffect(state.openNegotiationId) {
         state.openNegotiationId?.let { exemplarId ->
@@ -241,11 +244,12 @@ private fun ExemplarCard(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
-                val label = when {
-                    negotiating -> stringResource(R.string.duplicates_reserved)
-                    availability != null -> stringResource(availability.labelRes())
-                    else -> null
-                }
+                // Com negociação ativa o rótulo é dominante, mas a disponibilidade
+                // registrada continua visível ao lado (FR-511).
+                val label = listOfNotNull(
+                    availability?.let { stringResource(it.labelRes()) },
+                    if (negotiating) stringResource(R.string.duplicates_reserved) else null,
+                ).joinToString(" · ").takeIf { it.isNotEmpty() }
                 if (label != null) {
                     Text(
                         text = label,

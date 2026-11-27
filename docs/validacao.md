@@ -919,3 +919,90 @@ A recusa de segunda negociação continua provada no nível de dados por
   paisagem continuam sendo escopo de T523/T524.
 - A recriação de janela com o aviso aberto não foi testada (T525).
 - Nada de release foi gerado.
+
+## 13. Spec 007 — Fases 3 a 8 (T521–T531), execução de 2026-11-27
+
+Linux, JDK 17 (`.tools/jdk-17`), emulador `hw_test` (API 36, x86_64, `-gpu swiftshader_indirect`),
+build de debug. Logs em `build-logs/t531-*.log`.
+
+### 13.1 Comandos
+
+```bash
+export JAVA_HOME="$PWD/.tools/jdk-17"
+export ANDROID_SDK_ROOT="$PWD/.tools/android-sdk"
+
+./gradlew :app:connectedDebugAndroidTest --no-configuration-cache \
+  -Pandroid.testInstrumentationRunnerArguments.class=<classe>
+# a suíte inteira foi executada em blocos por pacote/classe; a configuração
+# cache do Gradle reaproveitava os argumentos do runner entre execuções, por isso
+# --no-configuration-cache em todas as rodadas
+```
+
+### 13.2 Testes novos da feature
+
+| Tarefa | Classe | Casos | Resultado |
+|---|---|---|---|
+| T521 | `feature.duplicates.DuplicatesUnchangedTest` | 1 | 1/1 verde |
+| T523 | `feature.catalog.ExemplarStateConsistencyTest` | 6 | 6/6 verdes |
+| T524 | `feature.catalog.ExemplarNegotiationResponsiveTest` | 3 (5 classes de janela cada) | 3/3 verdes |
+| T525 | `feature.catalog.ExemplarStabilityTest` | 1 | 1/1 verde |
+| T526 | `feature.catalog.ExemplarNegotiationLifecycleTest` | 1 | 1/1 verde |
+| T528 | `feature.catalog.ExemplarPerformanceTest` | 1 (10.000 exemplares) | 1/1 verde |
+| T527 | `core.data...NegotiationRepositoryTest` | 10 | 10/10 verdes |
+
+Os instrumentados de T515, T519 e T520 continuam verdes.
+
+### 13.3 Defeitos encontrados pelos testes e corrigidos
+
+1. **FR-511 na lista e na ficha** (T523): com negociação ativa, as duas superfícies escondiam a
+   disponibilidade registrada. Agora a lista mostra `Venda · Em negociação` e a ficha mostra
+   `Disponível: Venda` e `Em negociação`, como Duplicados já fazia.
+2. **Intenção pendente sobrevivia à recriação** (T525): o aviso voltava ao girar a janela, porque
+   o estado vivia no ViewModel. `onWindowRecreated()` limpa a intenção na recomposição; nada é
+   gravado e a folha reabre em **Venda**, sem valor.
+3. **Ficha não relia o exemplar** (T526): após concluir a negociação e voltar, as ações continuavam
+   habilitadas. `onScreenEntered()` recarrega o status do repositório e a ficha explica o bloqueio
+   (FR-506).
+
+### 13.4 Desempenho com 10.000 exemplares (T528)
+
+`ExemplarPerformanceTest`, segunda abertura (aquecimento antes), marcações no logcat:
+
+| Medida | Valor | Meta | Veredito |
+|---|---|---|---|
+| Abertura da lista de exemplares | **902 ms** | < 1.000 ms | **Cumprida** |
+| Abertura da ficha do exemplar | **1.104 ms** | < 1.000 ms | **Não cumprida** |
+| **Salvar** → rótulo atualizado na ficha | **1.896 ms** | < 300 ms | **Não cumprida** |
+
+A medição inclui composição e consulta reativa; o emulador usa renderização por software. Os
+números são honestos para este ambiente e **não** foram forçados a passar: o teste registra
+CUMPRIDA/NAO CUMPRIDA e só falha em degradação grosseira (> 3 s). A meta de 300 ms em NFR-505
+continua **não verificada em aparelho físico**.
+
+### 13.5 Regressão (T531)
+
+```text
+:core:domain:test          82 testes, 0 falhas
+:core:data:testDebugUnitTest 191 testes, 0 falhas
+:app:testDebugUnitTest     122 testes, 0 falhas
+:app:lintDebug             BUILD SUCCESSFUL
+Instrumentado               253 testes em blocos de pacote/classe
+```
+
+Falhas encontradas, todas **fora da feature**:
+
+| Teste | Situação | Prova |
+|---|---|---|
+| `feature.settings.SettingsScreenTest.ajustesAbreSobreEPrivacidade` | pré-existente | falha igual com `git stash` (HEAD sem as mudanças) |
+| `appearance.AppearanceSystemFollowTest` | pré-existente (limite de 2 s de troca de tema: 2.561/2.958 ms) | falha igual com `git stash` |
+| `feature.catalog.IncompleteEntriesTest.completarVarianteVoltaParaAListaComConfirmacao` | flake sob carga | 3/3 verde isolada |
+
+`git diff --stat 9aa318e` de `app/build.gradle.kts`, `gradle/libs.versions.toml`,
+`core/data/.../db/AppDatabase.kt` e `AndroidManifest.xml` está **vazio**.
+
+### 13.6 O que não foi executado
+
+- `am force-stop` com o aviso aberto, duas janelas/freeform e TalkBack (T530): **não verificados**;
+  a recriação de configuração está automatizada em T525.
+- Capturas manuais do `quickstart.md`.
+- Aparelho físico: as metas de NFR-504/NFR-505 seguem medidas só no emulador.

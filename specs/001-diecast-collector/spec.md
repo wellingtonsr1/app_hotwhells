@@ -313,8 +313,8 @@ Legenda: **MUST** = obrigatório e verificável; **MUST NOT** = proibido. Cada r
 
 **Módulo 6 — Duplicados e trocas**
 
-- **FR-065**: O sistema MUST listar os exemplares duplicados, agrupados por variante, com a quantidade em cada grupo.
-- **FR-066**: O sistema MUST permitir marcar cada exemplar duplicado como disponível para troca, para venda, para ambos ou indisponível.
+- **FR-065**: O sistema MUST listar os exemplares duplicados, agrupados por variante, com a quantidade em cada grupo. Duplicidade é um **recorte de consulta**, não pré-condição de negociação.
+- **FR-066**: O sistema MUST permitir marcar **qualquer exemplar do acervo** (`OWNED`) — duplicado ou único na variante — como disponível para troca, para venda, para ambos ou indisponível. O exemplar único que torna a variante negociável recebe o aviso de preservação da coleção antes da gravação (spec 007, FR-515).
 - **FR-067**: O sistema MUST registrar, para exemplar disponível, condição física, valor pretendido e observações de negociação.
 - **FR-068**: O sistema MUST permitir reservar exemplar para negociação, impedindo que ele seja comprometido em outra negociação ativa.
 - **FR-069**: O sistema MUST registrar negociação com contraparte, canal, data de início, valores discutidos e resultado.

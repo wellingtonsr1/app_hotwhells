@@ -472,6 +472,25 @@ public class ExemplarDetailViewModel @Inject constructor(
     }
 
     /**
+     * A janela foi recriada (rotação, redimensionamento): a intenção pendente é só
+     * memória e não pode ser restaurada (SC-505). O ViewModel sobrevive à recriação, então
+     * a tela limpa aqui o que estava à espera de confirmação; o estado do exemplar e da
+     * oferta continua vindo do repositório.
+     */
+    public fun onWindowRecreated() = _state.update {
+        it.copy(pendingOffer = null, uniqueWarning = false, pendingNegotiation = false)
+    }
+
+    /**
+     * Recarrega o exemplar ao entrar na tela. O `status` é a fonte do bloqueio (FR-506):
+     * ao voltar da negociação concluída, a ficha precisa refletir `SOLD`/`TRADED` sem
+     * depender de reabrir o app.
+     */
+    public fun onScreenEntered() {
+        if (!_state.value.loading) refresh(showLoading = false)
+    }
+
+    /**
      * Confirma a folha. O aviso de exemplar único vem **antes** da gravação e a contagem é
      * reconsultada no instante da ação, nunca reaproveitada da carga da tela (FR-511).
      */

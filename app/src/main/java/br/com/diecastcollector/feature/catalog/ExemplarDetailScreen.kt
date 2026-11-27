@@ -94,6 +94,13 @@ public fun ExemplarDetailScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
+    // Recriação da janela: o aviso pendente não volta (SC-505) e o exemplar é relido do
+    // repositório (FR-506), porque o status pode ter mudado na negociação.
+    LaunchedEffect(Unit) {
+        viewModel.onWindowRecreated()
+        viewModel.onScreenEntered()
+    }
+
     // Quem navega é a tela; o ViewModel decide se o aviso vem antes (FR-513, FR-515b).
     LaunchedEffect(state.negotiationRequested) {
         if (state.negotiationRequested) {
@@ -364,17 +371,20 @@ internal fun ExemplarDetailContent(
                     style = MaterialTheme.typography.titleMedium,
                 )
                 val availability = state.offer?.availability
-                when {
-                    state.activeNegotiation != null -> Text(
-                        text = stringResource(R.string.duplicates_reserved),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-
-                    availability != null -> Text(
+                // **Em negociação** domina, mas não esconde a disponibilidade registrada
+                // (FR-511): as duas linhas aparecem juntas.
+                if (availability != null) {
+                    Text(
                         text = stringResource(
                             R.string.exemplar_negotiation_offer_now,
                             stringResource(availability.labelRes()),
                         ),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                if (state.activeNegotiation != null) {
+                    Text(
+                        text = stringResource(R.string.duplicates_reserved),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }

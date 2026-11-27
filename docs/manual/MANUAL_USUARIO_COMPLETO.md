@@ -407,7 +407,7 @@ O diagrama `diagramas/dominio.svg` resume os relacionamentos.
 | **Avaliação** | data, valor, fonte, observações | pertence a um exemplar (histórico) |
 | **Coleção / item** | nome, descrição, coleção superior; item esperado | agrupa variantes ou modelos |
 | **Localização** | nome, tipo, localização superior | guarda exemplares e sublocalizações |
-| **Negociação** | tipo, status, contraparte, canal, valor | pertence a um exemplar duplicado |
+| **Negociação** | tipo, status, contraparte, canal, valor | pertence a um exemplar do acervo (duplicado ou único) |
 
 ### Como utilizar
 
@@ -1875,6 +1875,9 @@ manualmente**; a sugestão traz o próprio código em **Sugestões da leitura**.
 ### Finalidade
 
 Mostrar variantes com mais de um exemplar e abrir a negociação de cada unidade.
+Duplicidade aqui é um recorte de consulta: **não** é pré-condição para disponibilizar nem
+negociar. A mesma disponibilidade e a mesma negociação existem na lista de exemplares e na
+ficha do exemplar (capítulo 22).
 
 ### Como acessar
 
@@ -1912,6 +1915,9 @@ variante» e, por unidade, código, condição, disponibilidade e **Negociar**.
 
 - Duplicado = mesma **variante**; variantes diferentes do mesmo modelo não entram.
 - Unidade reservada por negociação ativa aparece «Em negociação» e não pode entrar em outra.
+- Quem tem uma só unidade da variante também pode disponibilizar ou negociar: a ficha e a
+  lista de exemplares mostram **Disponibilidade** e **Negociar**, com o aviso «Último
+  exemplar da variante» antes de gravar ou de abrir a negociação.
 
 ### Mensagens e situações especiais
 
@@ -1946,11 +1952,15 @@ variante» e, por unidade, código, condição, disponibilidade e **Negociar**.
 
 ### Finalidade
 
-Abrir, acompanhar e concluir a venda ou troca de um exemplar duplicado, com histórico.
+Abrir, acompanhar e concluir a venda ou troca de **qualquer exemplar do acervo**, com
+histórico. Duplicidade não é pré-condição: o exemplar único da variante também pode ser
+vendido ou trocado, com o aviso de preservação da coleção.
 
 ### Como acessar
 
-**Duplicados** → **Negociar** na unidade.
+**Duplicados** → **Negociar** na unidade, ou **Negociar** na lista de exemplares de uma
+variante, ou **Negociar** na seção **Negociação** da ficha do exemplar. As três origens
+levam à mesma tela.
 
 ### Identificação visual
 
@@ -1990,6 +2000,13 @@ concluída, a unidade sai do investido e aparece em **Vendas e trocas** no Finan
 ### Regras e validações
 
 - Abrir negociação reserva o exemplar; ele não pode entrar em outra enquanto ativa.
+- Quando a variante tem um único exemplar no acervo, o aviso «Último exemplar da variante»
+  aparece antes de abrir a negociação: **Cancelar** não navega nem grava, **Continuar** segue.
+  Com negociação já ativa o aviso não aparece.
+- O tipo (**Venda**/**Troca**) é pré-selecionado pela disponibilidade registrada do exemplar
+  (`Venda` → venda, `Troca` → troca, demais casos → venda) e continua editável.
+- Disponibilidade e negociação convivem: com negociação ativa, «Em negociação» aparece junto
+  do estado registrado, e a disponibilidade continua editável.
 - Concluir venda/troca altera o status do exemplar (vendido/trocado), retirando-o do acervo.
 - Cancelar mantém o registro no histórico e devolve a disponibilidade.
 - O custo histórico de aquisição não muda.

@@ -153,6 +153,16 @@ public class ExemplarListViewModel @Inject constructor(
 
     public fun onDismissSheet() = sheet.update { SheetState() }
 
+    /**
+     * A janela foi recriada (rotação, redimensionamento): a intenção pendente é só
+     * memória e não pode ser restaurada (SC-505). O ViewModel sobrevive à recriação, então
+     * a tela limpa aqui o que estava à espera de confirmação; a folha e o estado do
+     * repositório seguem como estão.
+     */
+    public fun onWindowRecreated() = sheet.update {
+        it.copy(pendingOffer = null, uniqueWarning = false, pendingNegotiationId = null)
+    }
+
     public fun onMessageShown() = sheet.update { it.copy(message = null) }
 
     /**
