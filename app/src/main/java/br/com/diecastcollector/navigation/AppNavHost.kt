@@ -591,6 +591,9 @@ public fun AppNavHost(
                         onOpenExemplar = { exemplarId ->
                             navController.navigate(Destination.ExemplarDetail.routeFor(exemplarId))
                         },
+                        onOpenNegotiation = { exemplarId ->
+                            navController.navigate(Destination.Negotiation.routeFor(exemplarId))
+                        },
                     )
                 }
                 composable(
@@ -599,6 +602,9 @@ public fun AppNavHost(
                 ) {
                     ExemplarDetailScreen(
                         onDone = { navController.popBackStack() },
+                        onOpenNegotiation = { exemplarId ->
+                            navController.navigate(Destination.Negotiation.routeFor(exemplarId))
+                        },
                     )
                 }
                 composable(Destination.Wishlist.route) {

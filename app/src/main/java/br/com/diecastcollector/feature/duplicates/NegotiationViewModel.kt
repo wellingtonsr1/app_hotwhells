@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.diecastcollector.R
+import br.com.diecastcollector.domain.model.DuplicateAvailability
 import br.com.diecastcollector.domain.model.Exemplar
 import br.com.diecastcollector.domain.model.IsoDate
 import br.com.diecastcollector.domain.model.MoneyCents
@@ -11,6 +12,7 @@ import br.com.diecastcollector.domain.model.Negotiation
 import br.com.diecastcollector.domain.model.NegotiationEvent
 import br.com.diecastcollector.domain.model.NegotiationStatus
 import br.com.diecastcollector.domain.model.NegotiationType
+import br.com.diecastcollector.domain.repository.DuplicateRepository
 import br.com.diecastcollector.domain.repository.ExemplarRepository
 import br.com.diecastcollector.domain.repository.NegotiationRepository
 import br.com.diecastcollector.domain.repository.NewNegotiation
@@ -25,6 +27,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -60,6 +63,7 @@ public data class NegotiationUiState(
 public class NegotiationViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val negotiations: NegotiationRepository,
+    private val duplicates: DuplicateRepository,
     exemplarRepository: ExemplarRepository,
     variantRepository: VariantRepository,
     private val closeSale: CloseSaleUseCase,
@@ -76,6 +80,9 @@ public class NegotiationViewModel @Inject constructor(
     public val state: StateFlow<NegotiationUiState> = _state.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            preselectType()
+        }
         viewModelScope.launch {
             val exemplar = exemplarRepository.findById(exemplarId)
             _state.update {
@@ -112,6 +119,26 @@ public class NegotiationViewModel @Inject constructor(
                 _state.update { it.copy(events = list) }
             }
         }
+    }
+
+    /**
+     * Tipo inicial pela oferta salva (T518, FR-514).
+     *
+     * `SALE` e `TRADE` explícitos mandam; **Troca e venda**, **Indisponível** e ausência de
+     * oferta continuam em **Venda**, que é o caminho mais comum. Com negociação ativa nada
+     * muda: o tipo não é oferecido de novo e a tela mostra o estado ativo.
+     */
+    private suspend fun preselectType() {
+        val hasNegotiation = negotiations.observeByExemplar(exemplarId).first().any {
+            it.status == NegotiationStatus.OPEN || it.status == NegotiationStatus.RESERVED
+        }
+        if (hasNegotiation) return
+        val availability = duplicates.offerFor(exemplarId)?.availability
+        val type = when (availability) {
+            DuplicateAvailability.TRADE -> NegotiationType.TRADE
+            else -> NegotiationType.SALE
+        }
+        _state.update { current -> if (current.active != null) current else current.copy(type = type) }
     }
 
     public fun onTypeChange(type: NegotiationType) = _state.update { it.copy(type = type) }

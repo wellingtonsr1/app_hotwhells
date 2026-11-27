@@ -532,6 +532,15 @@
     <string name="duplicates_sheet_save">Salvar</string>
     <string name="duplicates_sheet_cancel">Cancelar</string>
 
+    <!-- Disponibilidade e negociação a partir do exemplar (Spec 007). -->
+    <string name="exemplar_negotiation_section">Negociação</string>
+    <string name="exemplar_negotiation_blocked">Só exemplar no acervo pode ser disponibilizado ou negociado.</string>
+    <string name="exemplar_negotiation_offer_now">Disponível: %1$s</string>
+    <string name="unique_exemplar_warning_title">Último exemplar da variante</string>
+    <string name="unique_exemplar_warning_body">Este é o único exemplar desta variante no acervo. Concluída a venda ou a troca, ele deixa de fazer parte da coleção ativa. A disponibilidade não muda o acervo; a saída acontece só na conclusão.</string>
+    <string name="unique_exemplar_warning_continue">Continuar</string>
+    <string name="unique_exemplar_warning_cancel">Cancelar</string>
+
     <string name="negotiation_title">Negociação</string>
     <string name="negotiation_exemplar_unknown">Exemplar</string>
     <string name="negotiation_loading">Carregando negociação…</string>

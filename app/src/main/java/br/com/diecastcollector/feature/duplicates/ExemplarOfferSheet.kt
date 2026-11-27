@@ -27,36 +27,64 @@ import androidx.compose.ui.unit.dp
 import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.Condition
 import br.com.diecastcollector.domain.model.DuplicateAvailability
-import br.com.diecastcollector.domain.model.DuplicateExemplar
+import br.com.diecastcollector.domain.model.DuplicateOffer
 import br.com.diecastcollector.feature.catalog.labelRes
 import br.com.diecastcollector.ui.components.FlowChipGroup
 
 /**
- * Marcação de disponibilidade (T084, FR-066–FR-067).
+ * Assunto da folha de disponibilidade: só o que ela exibe.
+ *
+ * Não carrega `exemplarId` de propósito — a folha não grava nada, apenas devolve a intenção
+ * para quem a abriu (ficha, lista de exemplares ou Duplicados).
+ */
+public data class OfferSheetSubject(
+    val internalCode: String,
+    /** Linha secundária (modelo e cor). Vazia quando o chamador não tem esse dado. */
+    val title: String,
+    val condition: Condition,
+    val offer: DuplicateOffer?,
+)
+
+/**
+ * Intenção já validada da folha, à espera do aviso de exemplar único (FR-515a).
+ *
+ * O preço chega convertido porque a validação é do ViewModel: a folha só devolve texto.
+ */
+public data class PendingOffer(
+    val availability: DuplicateAvailability,
+    val condition: Condition?,
+    val askingPrice: br.com.diecastcollector.domain.model.MoneyCents?,
+    val notes: String,
+)
+
+/**
+ * Marcação de disponibilidade de **qualquer** exemplar do acervo (T084 e T508, FR-066–FR-067,
+ * FR-508).
  *
  * Troca, venda, ambos ou indisponível; a condição e o valor pretendido valem para a
- * proposta, não alteram o exemplar. A folha sempre parte da oferta atual do exemplar.
+ * proposta, não alteram o exemplar. A folha sempre parte da oferta atual do exemplar e só
+ * grava no **Salvar** explícito — é ela a confirmação exigida por RN-004.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-public fun DuplicateActionsSheet(
-    selected: DuplicateExemplar,
+public fun ExemplarOfferSheet(
+    subject: OfferSheetSubject,
     saving: Boolean,
     onDismiss: () -> Unit,
     onSave: (DuplicateAvailability, Condition?, String, String) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var availability by remember(selected.exemplar.id) {
-        mutableStateOf(selected.offer?.availability ?: DuplicateAvailability.SALE)
+    var availability by remember(subject.internalCode) {
+        mutableStateOf(subject.offer?.availability ?: DuplicateAvailability.SALE)
     }
-    var condition by remember(selected.exemplar.id) {
-        mutableStateOf(selected.offer?.condition ?: selected.exemplar.condition)
+    var condition by remember(subject.internalCode) {
+        mutableStateOf(subject.offer?.condition ?: subject.condition)
     }
-    var priceText by remember(selected.exemplar.id) {
-        mutableStateOf(selected.offer?.askingPrice?.formatPtBr().orEmpty())
+    var priceText by remember(subject.internalCode) {
+        mutableStateOf(subject.offer?.askingPrice?.formatPtBr().orEmpty())
     }
-    var notes by remember(selected.exemplar.id) {
-        mutableStateOf(selected.offer?.notes.orEmpty())
+    var notes by remember(subject.internalCode) {
+        mutableStateOf(subject.offer?.notes.orEmpty())
     }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
@@ -73,7 +101,10 @@ public fun DuplicateActionsSheet(
                 style = MaterialTheme.typography.titleLarge,
             )
             Text(
-                text = "${selected.exemplar.internalCode} · ${selected.modelName}",
+                text = listOfNotNull(
+                    subject.internalCode,
+                    subject.title.takeIf { it.isNotBlank() },
+                ).joinToString(" · "),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -158,4 +189,3 @@ internal fun DuplicateAvailability.labelRes(): Int = when (this) {
     DuplicateAvailability.BOTH -> R.string.duplicates_availability_both
     DuplicateAvailability.UNAVAILABLE -> R.string.duplicates_availability_unavailable
 }
-

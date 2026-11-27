@@ -81,6 +81,24 @@ public interface DuplicateDao {
     @Query("SELECT * FROM duplicate_offer WHERE exemplar_id = :exemplarId LIMIT 1")
     public suspend fun findOffer(exemplarId: String): DuplicateOfferEntity?
 
+    /** Oferta atual do exemplar, observável pela ficha (FR-505, NFR-503). */
+    @Query("SELECT * FROM duplicate_offer WHERE exemplar_id = :exemplarId LIMIT 1")
+    public fun observeOffer(exemplarId: String): Flow<DuplicateOfferEntity?>
+
+    /**
+     * Ofertas de todos os exemplares de uma variante em uma consulta só (NFR-503).
+     *
+     * É o que evita a lista de exemplares disparar uma consulta por linha.
+     */
+    @Query(
+        """
+        SELECT o.* FROM duplicate_offer o
+        JOIN exemplar e ON e.id = o.exemplar_id
+        WHERE e.variant_id = :variantId
+        """,
+    )
+    public fun observeOffersByVariant(variantId: String): Flow<List<DuplicateOfferEntity>>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun insertOffer(entity: DuplicateOfferEntity)
 

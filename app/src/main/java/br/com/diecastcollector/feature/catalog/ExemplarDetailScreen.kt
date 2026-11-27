@@ -49,6 +49,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.model.Acquisition
 import br.com.diecastcollector.domain.model.Condition
+import br.com.diecastcollector.domain.model.DuplicateAvailability
 import br.com.diecastcollector.domain.model.ExemplarStatus
 import br.com.diecastcollector.domain.model.IsoDate
 import br.com.diecastcollector.domain.model.Location
@@ -61,6 +62,10 @@ import br.com.diecastcollector.domain.model.PhotoAngle
 import br.com.diecastcollector.domain.model.PhotoEdit
 import br.com.diecastcollector.domain.model.Valuation
 import br.com.diecastcollector.domain.repository.ExemplarDependents
+import br.com.diecastcollector.feature.duplicates.ExemplarOfferSheet
+import br.com.diecastcollector.feature.duplicates.OfferSheetSubject
+import br.com.diecastcollector.feature.duplicates.UniqueExemplarDialog
+import br.com.diecastcollector.feature.duplicates.labelRes
 import br.com.diecastcollector.ui.components.AdaptiveFieldPair
 import br.com.diecastcollector.ui.components.FlowChipGroup
 import br.com.diecastcollector.ui.theme.DiecastTheme
@@ -84,9 +89,18 @@ import kotlinx.coroutines.launch
 public fun ExemplarDetailScreen(
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenNegotiation: (exemplarId: String) -> Unit = {},
     viewModel: ExemplarDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+
+    // Quem navega é a tela; o ViewModel decide se o aviso vem antes (FR-513, FR-515b).
+    LaunchedEffect(state.negotiationRequested) {
+        if (state.negotiationRequested) {
+            onOpenNegotiation(state.exemplarId)
+            viewModel.onNegotiationOpened()
+        }
+    }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val permissionDeniedMessage = stringResource(R.string.photo_permission_denied)
@@ -142,6 +156,12 @@ public fun ExemplarDetailScreen(
             onValuationSourceChange = viewModel::onValuationSourceChange,
             onValuationNotesChange = viewModel::onValuationNotesChange,
             onAddValuation = viewModel::onAddValuation,
+            onOpenOfferSheet = viewModel::onOpenOfferSheet,
+            onDismissOfferSheet = viewModel::onDismissOfferSheet,
+            onSaveOffer = viewModel::onSaveOffer,
+            onContinueUniqueWarning = viewModel::onContinueUniqueWarning,
+            onCancelUniqueWarning = viewModel::onCancelUniqueWarning,
+            onNegotiate = viewModel::onNegotiate,
         )
     }
 }
@@ -180,6 +200,12 @@ internal fun ExemplarDetailContent(
     onValuationSourceChange: (String) -> Unit = {},
     onValuationNotesChange: (String) -> Unit = {},
     onAddValuation: () -> Unit = {},
+    onOpenOfferSheet: () -> Unit = {},
+    onDismissOfferSheet: () -> Unit = {},
+    onSaveOffer: (DuplicateAvailability, Condition?, String, String) -> Unit = { _, _, _, _ -> },
+    onContinueUniqueWarning: () -> Unit = {},
+    onCancelUniqueWarning: () -> Unit = {},
+    onNegotiate: () -> Unit = {},
 ) {
     var showArchiveDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -328,6 +354,50 @@ internal fun ExemplarDetailContent(
                             onRestorePhotoOriginal(photo.id)
                         },
                     )
+                }
+
+                HorizontalDivider()
+
+                // ---- Disponibilidade e negociação ---------------------------------
+                Text(
+                    text = stringResource(R.string.exemplar_negotiation_section),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                val availability = state.offer?.availability
+                when {
+                    state.activeNegotiation != null -> Text(
+                        text = stringResource(R.string.duplicates_reserved),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+
+                    availability != null -> Text(
+                        text = stringResource(
+                            R.string.exemplar_negotiation_offer_now,
+                            stringResource(availability.labelRes()),
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                if (state.status != ExemplarStatus.OWNED) {
+                    Text(
+                        text = stringResource(R.string.exemplar_negotiation_blocked),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                OutlinedButton(
+                    onClick = onOpenOfferSheet,
+                    enabled = state.status == ExemplarStatus.OWNED && !state.savingOffer,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.duplicates_offer_action))
+                }
+                OutlinedButton(
+                    onClick = onNegotiate,
+                    enabled = state.status == ExemplarStatus.OWNED,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.duplicates_negotiate_action))
                 }
 
                 HorizontalDivider()
@@ -645,6 +715,25 @@ internal fun ExemplarDetailContent(
         }
     }
 
+    if (state.sheetOpen) {
+        ExemplarOfferSheet(
+            subject = OfferSheetSubject(
+                internalCode = state.internalCode,
+                title = "",
+                condition = state.condition,
+                offer = state.offer,
+            ),
+            saving = state.savingOffer,
+            onDismiss = onDismissOfferSheet,
+            onSave = onSaveOffer,
+        )
+    }
+    if (state.uniqueWarning) {
+        UniqueExemplarDialog(
+            onContinue = onContinueUniqueWarning,
+            onCancel = onCancelUniqueWarning,
+        )
+    }
     if (showArchiveDialog) {
         ArchiveExemplarDialog(
             onConfirm = {

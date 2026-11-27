@@ -141,6 +141,86 @@ public class DuplicateQueryTest {
         assertThat(group.exemplars.single { it.exemplar.id == "e1" }.activeNegotiation).isNull()
     }
 
+    @Test
+    public fun `oferta de um exemplar e observada isoladamente`(): Unit = runBlocking {
+        seed()
+
+        repository.setOffer("e1", DuplicateAvailability.SALE, Condition.SEALED, null, null)
+
+        assertThat(repository.observeOffer("e1").first()?.availability)
+            .isEqualTo(DuplicateAvailability.SALE)
+        assertThat(repository.observeOffer("e2").first()).isNull()
+    }
+
+    @Test
+    public fun `ofertas da variante vem indexadas por exemplar`(): Unit = runBlocking {
+        seed()
+
+        repository.setOffer("e1", DuplicateAvailability.SALE, null, null, null)
+        repository.setOffer("e2", DuplicateAvailability.TRADE, null, null, null)
+
+        val offers = repository.observeOffersByVariant("variant-a").first()
+        assertThat(offers.keys).containsExactly("e1", "e2")
+        assertThat(offers.getValue("e2").availability).isEqualTo(DuplicateAvailability.TRADE)
+    }
+
+    @Test
+    public fun `negociacao ativa da variante ignora encerradas`(): Unit = runBlocking {
+        seed()
+
+        val opened = negotiations.open(
+            NewNegotiation(exemplarId = "e3", type = NegotiationType.SALE),
+        ).getOrThrow()
+
+        assertThat(negotiations.observeActiveByVariant("variant-a").first().keys)
+            .containsExactly("e3")
+
+        negotiations.cancel(opened.id).getOrThrow()
+
+        assertThat(negotiations.observeActiveByVariant("variant-a").first()).isEmpty()
+    }
+
+    @Test
+    public fun `variante com uma unidade aceita disponibilidade`(): Unit = runBlocking {
+        seed()
+
+        val offer = repository.setOffer(
+            exemplarId = "e4",
+            availability = DuplicateAvailability.BOTH,
+            condition = Condition.LOOSE,
+            askingPrice = MoneyCents(2_900),
+            notes = null,
+        ).getOrThrow()
+
+        assertThat(offer.exemplarId).isEqualTo("e4")
+        assertThat(repository.observeOffersByVariant("variant-b").first().keys)
+            .containsExactly("e4")
+        // A oferta nao transforma a variante em duplicata (FR-504, BR-509).
+        assertThat(repository.observeGroups().first().single().variantId).isEqualTo("variant-a")
+    }
+
+    @Test
+    public fun `marcar indisponivel mantem a linha e os campos informados`(): Unit = runBlocking {
+        seed()
+
+        repository.setOffer("e1", DuplicateAvailability.SALE, Condition.SEALED, MoneyCents(7_000), "Na caixa")
+        val before = repository.offerFor("e1")!!
+        repository.setOffer(
+            "e1",
+            DuplicateAvailability.UNAVAILABLE,
+            Condition.SEALED,
+            MoneyCents(7_000),
+            "Na caixa",
+        )
+
+        val after = repository.offerFor("e1")!!
+        assertThat(after.id).isEqualTo(before.id)
+        assertThat(after.availability).isEqualTo(DuplicateAvailability.UNAVAILABLE)
+        assertThat(after.askingPrice).isEqualTo(MoneyCents(7_000))
+        assertThat(after.condition).isEqualTo(Condition.SEALED)
+        assertThat(after.notes).isEqualTo("Na caixa")
+    }
+
     private suspend fun seed() {
         val t = 0L
         database.manufacturerDao().insert(ManufacturerEntity("m1", "Mattel", null, null, t, t))

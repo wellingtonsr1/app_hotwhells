@@ -71,6 +71,16 @@ public class DuplicateRepositoryImpl @Inject constructor(
     override suspend fun offerFor(exemplarId: String): DuplicateOffer? =
         database.duplicateDao().findOffer(exemplarId)?.toDomain()
 
+    override fun observeOffer(exemplarId: String): Flow<DuplicateOffer?> =
+        database.duplicateDao().observeOffer(exemplarId).map { it?.toDomain() }
+
+    override fun observeOffersByVariant(
+        variantId: String,
+    ): Flow<Map<String, DuplicateOffer>> =
+        database.duplicateDao().observeOffersByVariant(variantId).map { rows ->
+            rows.map { it.toDomain() }.associateBy { it.exemplarId }
+        }
+
     override suspend fun setOffer(
         exemplarId: String,
         availability: DuplicateAvailability,
@@ -134,6 +144,12 @@ public class NegotiationRepositoryImpl @Inject constructor(
     override fun observeByExemplar(exemplarId: String): Flow<List<Negotiation>> =
         database.negotiationDao().observeByExemplar(exemplarId)
             .map { rows -> rows.map { it.toDomain() } }
+
+    override fun observeActiveByVariant(
+        variantId: String,
+    ): Flow<Map<String, Negotiation>> =
+        database.negotiationDao().observeActiveByVariant(variantId)
+            .map { rows -> rows.map { it.toDomain() }.associateBy { it.exemplarId } }
 
     override fun observeEventsForExemplar(exemplarId: String): Flow<List<NegotiationEvent>> =
         database.negotiationEventDao().observeByExemplar(exemplarId)

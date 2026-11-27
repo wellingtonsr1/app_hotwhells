@@ -754,3 +754,168 @@ revisão.
   comentário, e não recebe véu do tema.
 - O APK de **release** (arm64-v8a/armeabi-v7a) não foi executado: o emulador é x86_64.
 - Só o build de **debug** rodou os testes instrumentados.
+
+## 12. Spec 007 — Fases 1 e 2 (T501–T510), execução de 2026-11-27
+
+Git Bash no Windows, JDK 17, emulador `hw_test` sem janela. Logs em `build-logs/`.
+
+### 12.1 Baseline (T501)
+
+Medido em **HEAD**, com as alterações da feature guardadas por `git stash push -u`, porque a
+primeira tentativa usou `:core:domain:testDebugUnitTest`, tarefa que não existe no módulo JVM
+(`build-logs/t501-baseline.log`).
+
+```
+./gradlew :app:assembleDebug :core:domain:test :core:data:testDebugUnitTest
+BUILD FAILED in 1m 35s
+182 tests completed, 4 failed
+```
+
+- `:app:assembleDebug` e `:core:domain:test` passaram.
+- `:core:data:testDebugUnitTest` falha por **4 testes pré-existentes**, sem relação com esta
+  spec: `DataControlRepositoryTest` (3 — contagem após exclusão, remoção de fotos no disco,
+  reaproveitamento de fingerprint) e `RestorePerformanceTest` (1 — restauração de mil
+  exemplares). As causas são `DomainError.Storage` e `SQLiteConstraintException` no ambiente
+  Robolectric/sqlite4java.
+- As massas A–D **não** foram conferidas na tela Duplicados: a T501 fecha apenas em parte.
+
+### 12.2 Fases 1 e 2
+
+```
+./gradlew :core:domain:test --tests '*UniqueExemplarPolicyTest*' \
+          :core:data:testDebugUnitTest --tests '*DuplicateQueryTest*' \
+          :app:assembleDebug
+BUILD SUCCESSFUL in 2m 51s
+```
+
+- `UniqueExemplarPolicyTest`: 8 testes, 0 falhas.
+- `DuplicateQueryTest`: 9 testes, 0 falhas (4 anteriores + 5 novos).
+- `grep -r "DuplicateActionsSheet" app/src`: sem resultados; arquivo antigo removido.
+
+```
+./gradlew :app:connectedDebugAndroidTest \
+          -Pandroid.testInstrumentationRunnerArguments.package=br.com.diecastcollector.feature.duplicates
+Starting 4 tests on hw_test(AVD)
+BUILD SUCCESSFUL in 1m 34s
+```
+
+```
+./gradlew :app:lintDebug
+BUILD SUCCESSFUL in 2m 35s
+```
+
+Sem `HardcodedText` nas telas novas. `DuplicateModels.kt`: 9 inserções e 6 remoções, todas
+em KDoc (diff filtrado por linhas não-comentário vazio).
+
+### 12.3 Limites desta execução
+
+- Nenhum teste instrumentado **novo** rodou: T515, T519, T520, T521 e os seguintes ainda não
+  existem.
+- `UniqueExemplarDialog` compila e não toca repositório, mas sua aparência e comportamento só
+  são exercitados em T519/T520.
+- O APK de release não foi gerado; só o build de debug rodou.
+## 13. Spec 007 — Fase 3 (T511–T515), execução de 2026-11-27
+
+Mesmo ambiente da seção 12 (Git Bash, JDK 17, emulador `hw_test` sem janela). Logs em
+`build-logs/`.
+
+### 13.1 Compilação e unidade
+
+```
+./gradlew :app:assembleDebug
+BUILD SUCCESSFUL in 1m 32s
+
+./gradlew :app:testDebugUnitTest --tests '*ExemplarListNegotiationTest*' \
+                                 --tests '*ExemplarDetailNegotiationTest*'
+BUILD SUCCESSFUL
+ExemplarListNegotiationTest     9 testes, 0 falhas
+ExemplarDetailNegotiationTest   8 testes, 0 falhas
+
+./gradlew :app:testDebugUnitTest :app:lintDebug
+BUILD SUCCESSFUL in 2m 19s
+104 testes de unidade, 0 falhas  (suíte inteira do app)
+```
+
+Durante a execução, o caso «falha ao gravar mantém a folha aberta» reprovou por esperar a
+mensagem genérica: `DomainError.Storage` vira `error_storage` com o motivo, e foi a asserção
+que mudou — o comportamento (folha aberta, mensagem em pt-BR) já era o correto.
+
+### 13.2 Instrumentado (T515)
+
+```
+./gradlew :app:connectedDebugAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=br.com.diecastcollector.feature.catalog.ExemplarAvailabilityFlowTest
+Starting 1 tests on hw_test(AVD) - 16
+BUILD SUCCESSFUL in 1m 12s
+```
+
+O primeiro ciclo passou com as ações numa `Row`; a linha foi trocada por `FlowRow` para
+quebrar em 360 dp com fonte ampliada, e o teste foi reexecutado no código final (mesma
+saída verde).
+
+O teste usa o app real e banco real (massa semeada por segunda conexão): um modelo, uma
+variante, **um** exemplar. Percorre lista → folha → aviso → Continuar, abre a ficha e
+confere «Disponível: Venda», marca **Troca** pela ficha com o aviso, confere «Disponível:
+Troca», reabre a folha e vê «45,00» preservado, volta para a lista com «Troca» e termina em
+Duplicados com «Nenhum duplicado».
+
+### 13.3 Limites desta execução
+
+- 360 dp com fonte 200%, paisagem compacta e as três classes de janela **não** foram
+  verificadas nesta fase: são o escopo de T523/T524.
+- O teste instrumentado cobre o caminho de toque, não a recriação de janela (T525).
+- Nada de release foi gerado.
+## 14. Spec 007 — Fase 4 (T516–T520), execução de 2026-11-27
+
+Mesmo ambiente das seções 12 e 13 (Git Bash, JDK 17, emulador `hw_test` sem janela).
+
+### 14.1 Compilação, unidade e lint
+
+```
+./gradlew :app:assembleDebug
+BUILD SUCCESSFUL in 53s
+
+./gradlew :app:testDebugUnitTest --tests '*ExemplarListNegotiationTest*' \
+                                 --tests '*ExemplarDetailNegotiationTest*' \
+                                 --tests '*NegotiationTypePreselectTest*'
+BUILD SUCCESSFUL in 23s
+ExemplarListNegotiationTest      14 testes, 0 falhas
+ExemplarDetailNegotiationTest    14 testes, 0 falhas
+NegotiationTypePreselectTest      7 testes, 0 falhas
+
+./gradlew :app:testDebugUnitTest :app:lintDebug
+BUILD SUCCESSFUL in 1m 35s
+122 testes de unidade, 0 falhas  (suíte inteira do app)
+```
+
+### 14.2 Instrumentado (T519 e T520)
+
+```
+./gradlew :app:connectedDebugAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=br.com.diecastcollector.feature.duplicates.UniqueExemplarWarningTest
+Starting 1 tests on hw_test(AVD) - 16
+BUILD SUCCESSFUL in 1m 29s
+
+./gradlew :app:connectedDebugAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=br.com.diecastcollector.feature.catalog.ExemplarNegotiationFlowTest
+Starting 1 tests on hw_test(AVD) - 16
+BUILD SUCCESSFUL in 56s
+```
+
+T519: aviso só na unidade única (ficha), cancelar mantendo a ficha, continuar abrindo a
+negociação com «Venda» pré-selecionada pela oferta, nenhum aviso com dois exemplares e, com
+negociação ativa, «Negociação Reservada» sem aviso e sem oferecer segunda abertura.
+
+T520: negociação aberta pela ficha, venda concluída por R$ 45,00, histórico «Venda ·
+Concluída», exemplar vendido fora da lista e Duplicados de volta a «Nenhum duplicado».
+
+A recusa de segunda negociação continua provada no nível de dados por
+`NegotiationRepositoryTest`: 6 testes, 0 falhas em `:core:data`,
+`BUILD SUCCESSFUL in 15s`.
+
+### 14.3 Limites desta execução
+
+- Nenhuma janela diferente da padrão do emulador foi exercitada: C/M/E, fonte 200% e
+  paisagem continuam sendo escopo de T523/T524.
+- A recriação de janela com o aviso aberto não foi testada (T525).
+- Nada de release foi gerado.

@@ -24,6 +24,17 @@ public interface DuplicateRepository {
 
     public suspend fun offerFor(exemplarId: String): DuplicateOffer?
 
+    /** Oferta atual do exemplar, reativa; `null` quando nunca foi marcada (FR-505). */
+    public fun observeOffer(exemplarId: String): Flow<DuplicateOffer?>
+
+    /**
+     * Ofertas dos exemplares de uma variante, indexadas por `exemplar_id`.
+     *
+     * Uma consulta para a lista inteira: é o que impede a tela de exemplares de disparar
+     * uma consulta por linha (NFR-503).
+     */
+    public fun observeOffersByVariant(variantId: String): Flow<Map<String, DuplicateOffer>>
+
     public suspend fun setOffer(
         exemplarId: String,
         availability: DuplicateAvailability,
@@ -53,6 +64,14 @@ public data class NewNegotiation(
  */
 public interface NegotiationRepository {
     public fun observeByExemplar(exemplarId: String): Flow<List<Negotiation>>
+
+    /**
+     * Negociação ativa de cada exemplar da variante, indexada por `exemplar_id`.
+     *
+     * Serve ao indicador **Em negociação** da lista de exemplares em uma consulta só
+     * (FR-505, NFR-503).
+     */
+    public fun observeActiveByVariant(variantId: String): Flow<Map<String, Negotiation>>
 
     /** Eventos de todas as negociações do exemplar, em ordem cronológica (FR-073). */
     public fun observeEventsForExemplar(exemplarId: String): Flow<List<NegotiationEvent>>

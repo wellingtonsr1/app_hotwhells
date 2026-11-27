@@ -189,6 +189,19 @@ public interface NegotiationDao {
     @Query("SELECT * FROM negotiation WHERE exemplar_id = :exemplarId AND status IN ('OPEN', 'RESERVED')")
     public suspend fun findActiveForExemplar(exemplarId: String): List<NegotiationEntity>
 
+    /**
+     * Negociações ativas de todos os exemplares de uma variante, em uma consulta só
+     * (NFR-503): a lista de exemplares mostra **Em negociação** sem consulta por linha.
+     */
+    @Query(
+        """
+        SELECT n.* FROM negotiation n
+        JOIN exemplar e ON e.id = n.exemplar_id
+        WHERE e.variant_id = :variantId AND n.status IN ('OPEN', 'RESERVED')
+        """,
+    )
+    public fun observeActiveByVariant(variantId: String): Flow<List<NegotiationEntity>>
+
     @Query("SELECT * FROM negotiation WHERE id = :id")
     public suspend fun findById(id: String): NegotiationEntity?
 

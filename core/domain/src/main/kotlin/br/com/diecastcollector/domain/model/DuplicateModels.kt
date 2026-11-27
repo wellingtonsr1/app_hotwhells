@@ -3,18 +3,21 @@ package br.com.diecastcollector.domain.model
 import java.time.Instant
 
 /**
- * Disponibilidade de um exemplar repetido (FR-066).
+ * Disponibilidade de um exemplar do acervo (FR-066, FR-501).
  *
- * "Ambos" é valor próprio, e não a combinação de dois registros: a mesma unidade física
- * não pode estar em duas listas de oferta diferentes.
+ * Vale para **qualquer** exemplar `OWNED`, tenha a variante uma ou várias unidades: a
+ * quantidade de exemplares da variante não é pré-condição para negociar. "Ambos" é valor
+ * próprio, e não a combinação de dois registros: a mesma unidade física não pode estar em
+ * duas listas de oferta diferentes.
  */
 public enum class DuplicateAvailability { TRADE, SALE, BOTH, UNAVAILABLE }
 
 /**
- * Marcação de disponibilidade do exemplar (FR-066–FR-067).
+ * Marcação de disponibilidade de um exemplar da coleção (FR-066–FR-067).
  *
- * A condição e o valor pretendido ficam aqui, e não no exemplar: são a proposta da
- * negociação, não o estado físico permanente da peça.
+ * Uma linha por exemplar, qualquer que seja a quantidade de unidades da variante. A
+ * condição e o valor pretendido ficam aqui, e não no exemplar: são a proposta da negociação,
+ * não o estado físico permanente da peça.
  */
 public data class DuplicateOffer(
     val id: String,

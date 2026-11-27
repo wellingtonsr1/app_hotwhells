@@ -7,22 +7,30 @@ import br.com.diecastcollector.R
 import br.com.diecastcollector.domain.error.DomainError
 import br.com.diecastcollector.domain.model.Acquisition
 import br.com.diecastcollector.domain.model.Condition
+import br.com.diecastcollector.domain.model.DuplicateAvailability
+import br.com.diecastcollector.domain.model.DuplicateOffer
 import br.com.diecastcollector.domain.model.ExemplarStatus
 import br.com.diecastcollector.domain.model.IsoDate
 import br.com.diecastcollector.domain.model.Location
 import br.com.diecastcollector.domain.model.MoneyCents
 import br.com.diecastcollector.domain.model.Movement
+import br.com.diecastcollector.domain.model.Negotiation
+import br.com.diecastcollector.domain.model.NegotiationStatus
 import br.com.diecastcollector.domain.model.PackagingCondition
 import br.com.diecastcollector.domain.model.Photo
 import br.com.diecastcollector.domain.model.PhotoAngle
 import br.com.diecastcollector.domain.model.PhotoEdit
 import br.com.diecastcollector.domain.model.Valuation
 import br.com.diecastcollector.domain.repository.AcquisitionRepository
+import br.com.diecastcollector.domain.repository.DuplicateRepository
 import br.com.diecastcollector.domain.repository.ExemplarDependents
 import br.com.diecastcollector.domain.repository.ExemplarRepository
 import br.com.diecastcollector.domain.repository.LocationRepository
+import br.com.diecastcollector.domain.repository.NegotiationRepository
 import br.com.diecastcollector.domain.repository.PhotoRepository
 import br.com.diecastcollector.domain.repository.ValuationRepository
+import br.com.diecastcollector.domain.usecase.UniqueExemplarPolicy
+import br.com.diecastcollector.feature.duplicates.PendingOffer
 import br.com.diecastcollector.navigation.RouteArgs
 import br.com.diecastcollector.ui.UiMessage
 import br.com.diecastcollector.ui.toUiMessage
@@ -88,6 +96,19 @@ public data class ExemplarDetailUiState(
     val valuationSource: String = "",
     val valuationNotes: String = "",
     val savingValuation: Boolean = false,
+
+    // Disponibilidade e negociação do próprio exemplar (FR-507, FR-511, FR-515).
+    val variantId: String = "",
+    val offer: DuplicateOffer? = null,
+    val activeNegotiation: Negotiation? = null,
+    val sheetOpen: Boolean = false,
+    val pendingOffer: PendingOffer? = null,
+    val uniqueWarning: Boolean = false,
+    /** Exemplar à espera do **Continuar** do aviso de negociação (FR-515b). */
+    val pendingNegotiation: Boolean = false,
+    /** A tela deve navegar para a negociação; consumido por `onNegotiationOpened`. */
+    val negotiationRequested: Boolean = false,
+    val savingOffer: Boolean = false,
 ) {
     public val isArchived: Boolean get() = status == ExemplarStatus.ARCHIVED
 
@@ -106,6 +127,8 @@ public class ExemplarDetailViewModel @Inject constructor(
     private val acquisitionRepository: AcquisitionRepository,
     private val valuationRepository: ValuationRepository,
     private val photoRepository: PhotoRepository,
+    private val duplicates: DuplicateRepository,
+    private val negotiations: NegotiationRepository,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -142,6 +165,23 @@ public class ExemplarDetailViewModel @Inject constructor(
         viewModelScope.launch {
             photoRepository.observeByExemplar(exemplarId).collect { photos ->
                 _state.update { it.copy(photos = photos) }
+            }
+        }
+        viewModelScope.launch {
+            duplicates.observeOffer(exemplarId).collect { offer ->
+                _state.update { it.copy(offer = offer) }
+            }
+        }
+        viewModelScope.launch {
+            negotiations.observeByExemplar(exemplarId).collect { history ->
+                _state.update { current ->
+                    current.copy(
+                        activeNegotiation = history.firstOrNull {
+                            it.status == NegotiationStatus.OPEN ||
+                                it.status == NegotiationStatus.RESERVED
+                        },
+                    )
+                }
             }
         }
     }
@@ -409,6 +449,161 @@ public class ExemplarDetailViewModel @Inject constructor(
         }
     }
 
+    // ---- Disponibilidade e negociação ---------------------------------------------
+
+    /**
+     * Abre a folha de disponibilidade. Fora do acervo (`SOLD`, `TRADED`, `ARCHIVED`) a ação
+     * não existe: a tela explica em vez de gravar (FR-506).
+     */
+    public fun onOpenOfferSheet() {
+        val current = _state.value
+        if (current.loading || current.notFound) return
+        if (current.status != ExemplarStatus.OWNED) {
+            _state.update {
+                it.copy(message = UiMessage(R.string.exemplar_negotiation_blocked))
+            }
+            return
+        }
+        _state.update { it.copy(sheetOpen = true) }
+    }
+
+    public fun onDismissOfferSheet() = _state.update {
+        it.copy(sheetOpen = false, pendingOffer = null, uniqueWarning = false)
+    }
+
+    /**
+     * Confirma a folha. O aviso de exemplar único vem **antes** da gravação e a contagem é
+     * reconsultada no instante da ação, nunca reaproveitada da carga da tela (FR-511).
+     */
+    public fun onSaveOffer(
+        availability: DuplicateAvailability,
+        condition: Condition?,
+        priceText: String,
+        notes: String,
+    ) {
+        val current = _state.value
+        if (current.savingOffer || current.loading || current.notFound) return
+        val status = current.status ?: return
+
+        val askingPrice = if (priceText.isBlank()) {
+            null
+        } else {
+            MoneyCents.parsePtBrOrNull(priceText)
+                ?: return _state.update {
+                    it.copy(message = UiMessage(R.string.error_invalid_money))
+                }
+        }
+        val pending = PendingOffer(
+            availability = availability,
+            condition = condition,
+            askingPrice = askingPrice,
+            notes = notes,
+        )
+
+        viewModelScope.launch {
+            val owned = exemplarRepository.countByVariant(current.variantId)
+            val warns = UniqueExemplarPolicy.warnsOnAvailability(
+                ownedInVariant = owned,
+                status = status,
+                availability = availability,
+                hasActiveNegotiation = current.activeNegotiation != null,
+            )
+            if (warns) {
+                _state.update { it.copy(pendingOffer = pending, uniqueWarning = true) }
+            } else {
+                persistOffer(pending)
+            }
+        }
+    }
+
+    public fun onContinueUniqueWarning() {
+        val current = _state.value
+        if (current.pendingNegotiation) {
+            _state.update {
+                it.copy(
+                    negotiationRequested = true,
+                    pendingNegotiation = false,
+                    uniqueWarning = false,
+                )
+            }
+            return
+        }
+        val pending = current.pendingOffer ?: return
+        persistOffer(pending)
+    }
+
+    /** Cancelar não grava nem navega: mantém a folha aberta com os valores digitados. */
+    public fun onCancelUniqueWarning() = _state.update {
+        it.copy(pendingOffer = null, pendingNegotiation = false, uniqueWarning = false)
+    }
+
+    /**
+     * Intenção de negociar a partir da ficha (FR-513, FR-515b).
+     *
+     * O aviso só aparece na única unidade do acervo e sem negociação ativa; nesse caso a
+     * contagem é reconsultada no instante do toque.
+     */
+    public fun onNegotiate() {
+        val current = _state.value
+        if (current.loading || current.notFound) return
+        val status = current.status ?: return
+        if (status != ExemplarStatus.OWNED) {
+            _state.update {
+                it.copy(message = UiMessage(R.string.exemplar_negotiation_blocked))
+            }
+            return
+        }
+        if (current.activeNegotiation != null) {
+            _state.update { it.copy(negotiationRequested = true) }
+            return
+        }
+        viewModelScope.launch {
+            val owned = exemplarRepository.countByVariant(current.variantId)
+            if (UniqueExemplarPolicy.warnsOnNegotiation(owned, status, false)) {
+                _state.update { it.copy(pendingNegotiation = true, uniqueWarning = true) }
+            } else {
+                _state.update { it.copy(negotiationRequested = true) }
+            }
+        }
+    }
+
+    /** A tela já navegou: limpa o pedido para não reabrir na próxima composição. */
+    public fun onNegotiationOpened() = _state.update {
+        it.copy(negotiationRequested = false, pendingNegotiation = false, uniqueWarning = false)
+    }
+
+    private fun persistOffer(pending: PendingOffer) {
+        _state.update { it.copy(savingOffer = true, uniqueWarning = false, pendingOffer = null) }
+        viewModelScope.launch {
+            duplicates.setOffer(
+                exemplarId = exemplarId,
+                availability = pending.availability,
+                condition = pending.condition,
+                askingPrice = pending.askingPrice,
+                notes = pending.notes,
+            ).fold(
+                onSuccess = {
+                    _state.update {
+                        it.copy(
+                            savingOffer = false,
+                            sheetOpen = false,
+                            message = UiMessage(R.string.availability_updated),
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    // Falhou: a folha continua aberta e o texto digitado não é perdido.
+                    _state.update {
+                        it.copy(
+                            savingOffer = false,
+                            message = error.toUiMessage(R.string.duplicates_error_save),
+                        )
+                    }
+                },
+            )
+        }
+    }
+
     // ---- Exemplar, movimentação e arquivamento ------------------------------------
 
     public fun onSaveDetails() {
@@ -537,6 +732,7 @@ public class ExemplarDetailViewModel @Inject constructor(
             _state.update {
                 it.copy(
                     internalCode = exemplar.internalCode,
+                    variantId = exemplar.variantId,
                     status = exemplar.status,
                     condition = exemplar.condition,
                     packagingCondition = exemplar.packagingCondition,

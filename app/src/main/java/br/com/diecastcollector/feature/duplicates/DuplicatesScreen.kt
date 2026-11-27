@@ -156,8 +156,13 @@ internal fun DuplicatesContent(
     }
 
     state.selected?.let { selected ->
-        DuplicateActionsSheet(
-            selected = selected,
+        ExemplarOfferSheet(
+            subject = OfferSheetSubject(
+                internalCode = selected.exemplar.internalCode,
+                title = selected.modelName,
+                condition = selected.exemplar.condition,
+                offer = selected.offer,
+            ),
             saving = state.saving,
             onDismiss = onDismissSheet,
             onSave = onSaveOffer,
