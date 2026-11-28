@@ -2,13 +2,14 @@
 <h1>Diecast Collector</h1>
 <p class="subtitle">Manual do Usuário</p>
 <p class="meta">Versão 0.1.0 (versionCode 1)<br>
-Árvore de trabalho — 22/11/2026<br>
+Árvore de trabalho — 28/11/2026<br>
 Android 8.0 (API 26) ou superior<br>
 Português brasileiro</p>
 </div>
 **Versão documentada**: 0.1.0 (versionCode 1)
-**Referência**: árvore de trabalho em 2026-11-22, após a renomeação para **Diecast Collector**
-(capturas regeradas nessa data no emulador `diecast_test`)
+**Referência**: árvore de trabalho em 2026-11-28, após a renomeação para **Diecast Collector**
+(capturas regeradas em 22/11/2026 no emulador `diecast_test`; o texto acompanha as revisões
+posteriores, registradas no fim do capítulo 35)
 **Plataforma**: Android 8.0 (API 26) ou superior
 **Idioma**: português brasileiro
 
@@ -524,7 +525,8 @@ estimativa conta quantos exemplares ficaram de fora.
   não aparece.
 - O estimado usa a avaliação mais recente de cada exemplar; sem avaliação, o exemplar não
   entra na soma.
-- A data de avaliação aparece no formato `AAAA-MM-DD` neste cartão.
+- As datas do cartão e das listas aparecem no formato `dd/mm/aaaa` (`28/11/2026`); o banco
+guarda a data em ISO e o aplicativo só formata na tela.
 
 ### Mensagens e situações especiais
 
@@ -776,21 +778,25 @@ preenchido no formulário da variante.
 ### Identificação visual
 
 Título **Nova miniatura**. Texto de apoio: «Só fabricante e modelo são obrigatórios…».
-Três campos e o botão **Salvar miniatura**.
+Três campos e o botão **Salvar miniatura**. Os campos abrem **vazios**: nada do que foi
+digitado numa abertura anterior reaparece.
 
 ### Elementos da tela
 
 | Elemento | Tipo | Onde fica | O que faz | Resultado |
 |---|---|---|---|---|
 | **Fabricante** | campo de texto | corpo, 1º | informa o fabricante | cria ou reaproveita o fabricante |
+| **Sugestões de fabricante** | lista | sob o campo Fabricante | fabricantes já cadastrados que combinam com o texto digitado | preenche o campo |
 | **Modelo** | campo de texto | corpo, 2º | informa o modelo | cria o modelo |
+| **Sugestões de modelo** | lista | sob o campo Modelo | modelos já cadastrados que combinam com o texto digitado, com a escala | preenche o campo |
 | **Escala** | campo de texto | corpo, 3º | define a escala | padrão `1:64` |
 | **Salvar miniatura** | botão | corpo | grava e avança | tela **Cadastrar variante** |
 
 ### Como utilizar
 
-1. Preencha **Fabricante** (`Hot Wheels`).
-2. Preencha **Modelo** (`Nissan Skyline GT-R R34`).
+1. Toque em **Fabricante** e comece a digitar (`Hot`). Se a marca já existir, aparece a
+   sugestão; toque nela para reaproveitar o cadastro, ou continue digitando para criar uma nova.
+2. Toque em **Modelo** e digite (`Skyline`). Escolha a sugestão quando o modelo já existir.
 3. Confira a **Escala** (`1:64`).
 4. Toque em **Salvar miniatura**.
 5. Continue na tela **Cadastrar variante** (capítulo 9).
@@ -805,6 +811,11 @@ Captura `04-cadastro-preenchido.png`: fabricante `Hot Wheels`, modelo
 - **Fabricante** e **Modelo** são obrigatórios e limitados a 120 caracteres.
 - A escala deve estar no formato `1:N`, com N entre 1 e 999.
 - O aplicativo reaproveita fabricante já existente pelo nome.
+- A sugestão só aparece depois de tocar no campo e digitar ao menos duas letras; campo vazio
+  ou com uma letra não mostra lista.
+- Ao tocar numa sugestão, o campo recebe o nome e o cartão de sugestões fecha. Nomes
+  equivalentes ao digitado (mesma marca ou modelo, mesmo com outra caixa ou pontuação) não
+  são sugeridos, e a lista mostra no máximo 5 opções.
 - Se você sair antes de concluir a variante, o modelo fica em **Incompletos**.
 
 ### Mensagens e situações especiais
@@ -819,6 +830,8 @@ Captura `04-cadastro-preenchido.png`: fabricante `Hot Wheels`, modelo
 
 - Use o nome comercial completo do modelo; a cor e o ano ficam na variante.
 - Deixe a escala `1:64` para a maioria dos Hot Wheels.
+- Prefira escolher a sugestão em vez de redigitar o nome: isso evita fabricantes e modelos
+  repetidos com grafias diferentes.
 
 ### Problemas comuns
 
@@ -1233,6 +1246,8 @@ O catálogo passa a mostrar «2 exemplares».
 - O aviso «Esta variante já tem N exemplar(es).» é informativo, não bloqueia.
 - Sem localização cadastrada, o seletor mostra «Nenhuma localização cadastrada ainda.» e a
   unidade fica «Sem localização».
+- **Preço pago**, **Frete** e **Desconto** abrem teclado numérico com separador decimal, então
+  dá para digitar `19,90` sem trocar de teclado.
 - Data da compra inválida impede salvar.
 
 ### Mensagens e situações especiais
@@ -1408,6 +1423,8 @@ movimentação** e as ações de arquivar/excluir.
 | **Mover para** | seletor | corpo | escolhe o destino | — |
 | **Observação da movimentação (opcional)** | campo | corpo | nota da mudança | — |
 | **Mover** | botão | corpo | registra a movimentação | entrada no histórico |
+| **Disponibilidade** | botão | seção **Negociação** | define se a unidade está para venda, troca, ambas ou indisponível | estado mostrado na ficha e nas listas |
+| **Negociar** | botão | seção **Negociação** | abre a negociação desta unidade | tela **Negociação** (capítulo 22) |
 | **Arquivar exemplar** | ação | fim | tira do acervo sem apagar | badge «Arquivado — fora do acervo» |
 | **Excluir definitivamente** | ação | fim | exclui se não houver vínculos | mensagem de bloqueio quando há vínculos |
 
@@ -1419,7 +1436,9 @@ movimentação** e as ações de arquivar/excluir.
    **Salvar aquisição**. O app exibe o custo total.
 4. Em **Avaliações**, informe valor, data, fonte e observações; toque em **Registrar avaliação**.
 5. Em **Localização atual**, escolha o destino em **Mover para** e toque em **Mover**.
-6. Se precisar retirar do acervo, use **Arquivar exemplar**.
+6. Em **Negociação**, use **Disponibilidade** para marcar venda/troca e **Negociar** para
+   abrir a negociação (capítulo 22) — funciona mesmo quando esta é a única unidade da variante.
+7. Se precisar retirar do acervo, use **Arquivar exemplar**.
 
 ### Exemplos
 
@@ -1434,8 +1453,11 @@ fonte `colecionador` → «Valor estimado atual: R$ 45,00»; movimentação
 - Exclusão é bloqueada quando há vínculos: «Exclusão bloqueada: este exemplar tem vínculos.»
 - Arquivar preserva fotos, aquisição, avaliações e histórico.
 - A aquisição sem valor é registrada, mas não entra no investido.
+- **Preço pago**, **Frete** e **Desconto** abrem teclado numérico com separador decimal.
 - O detalhe **não** exibe as fotos anexadas no cadastro: elas ficam vinculadas ao exemplar,
   entram no backup e são contadas nele, mas não têm galeria nesta tela (Figura 15.6).
+- A seção **Negociação** mostra **Disponibilidade** e **Negociar** para qualquer unidade
+  possuída, inclusive a única da variante (Figura 22.2); nada aqui exige duplicata.
 
 ### Mensagens e situações especiais
 
@@ -1858,7 +1880,7 @@ manualmente**; a sugestão traz o próprio código em **Sugestões da leitura**.
 
 # 21. Duplicados
 
-> **Tela**: `duplicates` · **Arquivo**: `feature/duplicates/DuplicatesScreen.kt` · **Acesso**: **Duplicados** no Catálogo · **Capturas**: `capturas/21-duplicados.png`, `capturas/21b-duplicados-com-grupo.png`
+> **Tela**: `duplicates` · **Arquivo**: `feature/duplicates/DuplicatesScreen.kt` · **Acesso**: **Duplicados** no Catálogo · **Capturas**: `capturas/21-duplicados.png`, `capturas/21b-duplicados-com-grupo.png`, `capturas/21c-disponibilidade.png`
 
 <div class="fig-row">
 <figure>
@@ -1869,6 +1891,13 @@ manualmente**; a sugestão traz o próprio código em **Sugestões da leitura**.
 <figure>
 <img src="capturas/21b-duplicados-com-grupo.png" alt="Duplicados com grupo">
 <figcaption>Figura 21.2 — Duplicados com grupo</figcaption>
+</figure>
+</div>
+<div class="fig-row">
+<figure>
+<img src="capturas/21c-disponibilidade.png" alt="Disponibilidade do exemplar">
+<figcaption>Figura 21.3 — Folha «Disponibilidade do exemplar», com Troca, Venda,
+Troca e venda e Indisponível, condição, valor pretendido e observações</figcaption>
 </figure>
 </div>
 
@@ -1941,12 +1970,24 @@ variante» e, por unidade, código, condição, disponibilidade e **Negociar**.
 
 # 22. Negociação
 
-> **Tela**: `duplicates/{exemplarId}/negotiation` · **Arquivo**: `feature/duplicates/NegotiationScreen.kt` · **Acesso**: **Negociar** em Duplicados · **Capturas**: `capturas/22-negociacao.png`
+> **Tela**: `duplicates/{exemplarId}/negotiation` · **Arquivo**: `feature/duplicates/NegotiationScreen.kt` · **Acesso**: **Negociar** em Duplicados, na lista de exemplares ou na ficha · **Capturas**: `capturas/22-negociacao.png`, `capturas/22b-ultimo-exemplar.png`, `capturas/22c-negociar-na-ficha.png`
 
 <div class="fig-row">
 <figure>
-<img src="capturas/22-negociacao.png" alt="Negociacao">
-<figcaption>Figura 22.1 — Negociacao</figcaption>
+<img src="capturas/22-negociacao.png" alt="Negociação">
+<figcaption>Figura 22.1 — Negociação de uma unidade</figcaption>
+</figure>
+
+<figure>
+<img src="capturas/22c-negociar-na-ficha.png" alt="Seção Negociação na ficha do exemplar">
+<figcaption>Figura 22.2 — A seção Negociação na ficha da unidade, com Disponibilidade e
+Negociar mesmo quando ela é a única da variante</figcaption>
+</figure>
+</div>
+<div class="fig-row">
+<figure>
+<img src="capturas/22b-ultimo-exemplar.png" alt="Aviso Último exemplar da variante">
+<figcaption>Figura 22.3 — Aviso «Último exemplar da variante» antes de abrir a negociação</figcaption>
 </figure>
 </div>
 
@@ -1994,8 +2035,10 @@ Título **Negociação**, código e identificação da variante, seção **Nova 
 
 ### Exemplos
 
-Venda de `HW-000004` por `R$ 50,00`, contraparte `Colecionador Demo`, canal `WhatsApp`;
-concluída, a unidade sai do investido e aparece em **Vendas e trocas** no Financeiro.
+Venda de `HW-000001` por `R$ 50,00`, contraparte `Colecionador Demo`, canal `WhatsApp`;
+concluída, a unidade sai do investido e aparece em **Vendas e trocas** no Financeiro. O
+mesmo fluxo vale para o único exemplar de uma variante (Figuras 22.2 e 22.3): o aviso só
+explica a saída do acervo e não impede a venda nem a troca.
 
 ### Regras e validações
 
@@ -2432,12 +2475,17 @@ variante e «código · localização · condição» e **Voltar**.
 
 # 28. Ajustes
 
-> **Tela**: `settings` · **Arquivo**: `feature/settings/SettingsScreen.kt` · **Acesso**: aba **Ajustes** · **Capturas**: `capturas/28-ajustes.png`
+> **Tela**: `settings` · **Arquivo**: `feature/settings/SettingsScreen.kt` · **Acesso**: aba **Ajustes** · **Capturas**: `capturas/28-ajustes.png`, `capturas/28b-aparencia-escuro.png`
 
 <div class="fig-row">
 <figure>
-<img src="capturas/28-ajustes.png" alt="Ajustes">
-<figcaption>Figura 28.1 — Ajustes</figcaption>
+<img src="capturas/28-ajustes.png" alt="Ajustes em modo claro">
+<figcaption>Figura 28.1 — Ajustes em modo claro, com o cartão Aparência no topo</figcaption>
+</figure>
+
+<figure>
+<img src="capturas/28b-aparencia-escuro.png" alt="Ajustes em modo escuro">
+<figcaption>Figura 28.2 — Os mesmos Ajustes em modo escuro, com Escuro selecionado</figcaption>
 </figure>
 </div>
 
@@ -2489,6 +2537,10 @@ a nota de funcionamento offline.
 
 «A cada 30 dias · nenhum backup» indica lembrete ativo e nenhum pacote criado ainda.
 
+Com o Android no modo escuro e **Sistema** escolhido, o app fica escuro como o sistema; ao
+marcar **Claro**, ele volta à paleta clara mesmo com o Android escuro, como nas Figuras 28.1
+e 28.2 — o cartão **Aparência** mostra a opção marcada e a troca é imediata.
+
 ### Regras e validações
 
 - A aparência é uma preferência local (DataStore, fora do banco e fora do pacote de
@@ -2509,6 +2561,7 @@ a nota de funcionamento offline.
 ### Dicas
 
 - Faça o backup pelo cartão de lembrete quando ele indicar atraso.
+- Use **Escuro** à noite e **Claro** sob luz forte; **Sistema** evita ter de trocar à mão.
 
 ### Problemas comuns
 
@@ -3191,32 +3244,39 @@ O registro aparece como `Nissan Skyline GT-R R34` no catálogo, `HW-000001` no d
 | Valores diferentes | frete/desconto ou avaliação diferente | reconfira os campos |
 | Coleção em 0% | item não adicionado ou variante não possuída | adicione o item correto |
 
+## Revisões do manual
+
+| Data | O que mudou |
+|---|---|
+| 28/11/2026 | *5*: datas exibidas em `dd/mm/aaaa`; *8*: campos abrem vazios, sugestões só depois de digitar e o cartão de sugestões fecha ao escolher; *13* e *15*: teclado numérico decimal em preço, frete e desconto; *15*, *21*, *22* e *28*: capturas regeradas com a Aparência (claro/escuro) e a negociação de qualquer exemplar; *5*, *8*, *9*, *11*, *12*, *13*, *18*, *24* e *26*: capturas do Painel e dos formulários regeradas com o layout atual. |
+| 22/11/2026 | Capturas regeradas após a renomeação para **Diecast Collector**. |
+
 ## Apêndice A — Registro de evidências
 
 Todas as capturas abaixo foram feitas no emulador `diecast_test` (API 36), com o APK de
-debug da árvore de trabalho após a renomeação para **Diecast Collector** (22/11/2026),
-usando apenas dados fictícios.
+debug da árvore de trabalho após a renomeação para **Diecast Collector** (22/11/2026).
+O Painel e os formulários foram regerados em 28/11/2026. Todas usam apenas dados fictícios.
 
 | Arquivo | Tela / estado | Origem | Data | Commit | Dados fictícios |
 |---|---|---|---|---|---|
-| `01-painel-vazio.png` | Painel vazio | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `01-painel-vazio.png` | Painel vazio | emulador `diecast_test` | 28/11/2026 | `árvore local` | sim |
 | `02-catalogo-vazio.png` | Catálogo vazio | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `02b-catalogo-com-incompleto.png` | Catálogo com incompleto | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
-| `03-cadastro-inicial.png` | Cadastro inicial | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
-| `04-cadastro-preenchido.png` | Cadastro preenchido | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
-| `05-formulario-variante-vazio.png` | Formulario variante vazio | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
-| `05b-painel-com-dados.png` | Painel com dados | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
-| `06-formulario-variante-preenchido.png` | Formulario variante preenchido | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
-| `06b-seletor-de-fotos.png` | Seletor de fotos | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
-| `06c-variante-com-foto.png` | Variante com foto | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `03-cadastro-inicial.png` | Cadastro inicial | emulador `diecast_test` | 28/11/2026 | `árvore local` | sim |
+| `04-cadastro-preenchido.png` | Cadastro preenchido | emulador `diecast_test` | 28/11/2026 | `árvore local` | sim |
+| `05-formulario-variante-vazio.png` | Formulario variante vazio | emulador `diecast_test` | 28/11/2026 | `árvore local` | sim |
+| `05b-painel-com-dados.png` | Painel com dados | emulador `diecast_test` | 28/11/2026 | `árvore local` | sim |
+| `06-formulario-variante-preenchido.png` | Formulario variante preenchido | emulador `diecast_test` | 28/11/2026 | `árvore local` | sim |
+| `06b-seletor-de-fotos.png` | Seletor de fotos | emulador `diecast_test` | 28/11/2026 | `árvore local` | sim |
+| `06c-variante-com-foto.png` | Variante com foto | emulador `diecast_test` | 28/11/2026 | `árvore local` | sim |
 | `07-busca.png` | Busca | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `07-catalogo-com-miniatura.png` | Catálogo com miniatura | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `07b-catalogo-com-foto.png` | Catálogo com foto | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `10b-incompletos-com-item.png` | Incompletos com item | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `10c-incompletos-com-variante.png` | Incompletos com variante | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
-| `11-edicao-modelo.png` | Edição modelo | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
-| `12-edicao-variante.png` | Edição variante | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
-| `13-adicionar-exemplar.png` | Adicionar exemplar | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `11-edicao-modelo.png` | Edição modelo | emulador `diecast_test` | 28/11/2026 | `árvore local` | sim |
+| `12-edicao-variante.png` | Edição variante | emulador `diecast_test` | 28/11/2026 | `árvore local` | sim |
+| `13-adicionar-exemplar.png` | Adicionar exemplar | emulador `diecast_test` | 28/11/2026 | `árvore local` | sim |
 | `14-lista-exemplares.png` | Lista de exemplares | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `14b-lista-dois-exemplares.png` | Lista com dois exemplares | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `14c-lista-dois-exemplares.png` | Lista com dois exemplares | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
@@ -3231,21 +3291,25 @@ usando apenas dados fictícios.
 | `17-detalhe-colecao-vazio.png` | Detalhe da coleção vazio | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `17b-adicionar-item-colecao.png` | Adicionar item à coleção | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `17c-detalhe-colecao-com-item.png` | Detalhe da coleção com item | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
-| `18-formulario-colecao.png` | Formulário de coleção | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `18-formulario-colecao.png` | Formulário de coleção | emulador `diecast_test` | 28/11/2026 | `árvore local` | sim |
 | `19-series.png` | Séries | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `20-codigo-barras.png` | Código de barras | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `21-duplicados.png` | Duplicados | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `21b-duplicados-com-grupo.png` | Duplicados com grupo | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
-| `22-negociacao.png` | Negociação | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `21c-disponibilidade.png` | Folha Disponibilidade | emulador `hotwheels_test` | 28/11/2026 | `árvore local` | sim |
+| `22-negociacao.png` | Negociação | emulador `hotwheels_test` | 28/11/2026 | `árvore local` | sim |
+| `22b-ultimo-exemplar.png` | Aviso «Último exemplar da variante» | emulador `hotwheels_test` | 28/11/2026 | `árvore local` | sim |
+| `22c-negociar-na-ficha.png` | Seção Negociação da ficha | emulador `hotwheels_test` | 28/11/2026 | `árvore local` | sim |
 | `23-desejos-vazio.png` | Desejos vazio | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `23b-desejos-com-item.png` | Desejos com item | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
-| `24-formulario-desejo.png` | Formulário de desejo | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `24-formulario-desejo.png` | Formulário de desejo | emulador `diecast_test` | 28/11/2026 | `árvore local` | sim |
 | `25-financeiro.png` | Financeiro | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `26-localizacoes-vazio.png` | Localizações vazio | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
-| `26b-localizacao-nova.png` | Nova localização | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `26b-localizacao-nova.png` | Nova localização | emulador `diecast_test` | 28/11/2026 | `árvore local` | sim |
 | `26c-localizacoes-com-caixa.png` | Localizações com caixa | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `27-inventario-localizacao.png` | Inventário por localização | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
-| `28-ajustes.png` | Ajustes | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
+| `28-ajustes.png` | Ajustes (modo claro, cartão Aparência) | emulador `hotwheels_test` | 28/11/2026 | `árvore local` | sim |
+| `28b-aparencia-escuro.png` | Ajustes em modo escuro | emulador `hotwheels_test` | 28/11/2026 | `árvore local` | sim |
 | `29-backup.png` | Backup | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `29b-backup-criado.png` | Backup criado | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |
 | `29c-salvar-backup.png` | Salvar backup | emulador `diecast_test` | 22/11/2026 | `árvore local` | sim |

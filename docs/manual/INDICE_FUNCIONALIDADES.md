@@ -1,6 +1,6 @@
 # Índice de Funcionalidades — Manual do Usuário
 
-**Versão documentada**: 0.1.0 (versionCode 1) · **Commit**: `424e4fb`
+**Versão documentada**: 0.1.0 (versionCode 1) · **Commit**: `85564c8`
 **Documento principal**: [MANUAL_USUARIO_COMPLETO.md](./MANUAL_USUARIO_COMPLETO.md)
 
 Cada ligação aponta para a âncora do capítulo no documento principal.
@@ -56,7 +56,7 @@ Os elementos de cada tela estão na tabela «Elementos da tela» do capítulo co
 | Edição de variante | 7 | [12. Edição de variante](MANUAL_USUARIO_COMPLETO.md#12-edicao-de-variante) |
 | Adicionar exemplar | 9 | [13. Adicionar exemplar](MANUAL_USUARIO_COMPLETO.md#13-adicionar-exemplar) |
 | Lista de exemplares | 4 | [14. Lista de exemplares](MANUAL_USUARIO_COMPLETO.md#14-lista-de-exemplares) |
-| Detalhe do exemplar | 18 | [15. Detalhe do exemplar](MANUAL_USUARIO_COMPLETO.md#15-detalhe-do-exemplar) |
+| Detalhe do exemplar | 20 | [15. Detalhe do exemplar](MANUAL_USUARIO_COMPLETO.md#15-detalhe-do-exemplar) |
 | Coleções | 7 | [16. Coleções](MANUAL_USUARIO_COMPLETO.md#16-colecoes) |
 | Detalhe de coleção | 9 | [17. Detalhe de coleção](MANUAL_USUARIO_COMPLETO.md#17-detalhe-de-colecao) |
 | Formulário de coleção | 5 | [18. Formulário de coleção](MANUAL_USUARIO_COMPLETO.md#18-formulario-de-colecao) |
@@ -86,7 +86,7 @@ Os elementos de cada tela estão na tabela «Elementos da tela» do capítulo co
 | 3. Cadastrar miniatura | modelo + variante + primeiro exemplar | [8](MANUAL_USUARIO_COMPLETO.md#8-cadastro-inicial) · [9](MANUAL_USUARIO_COMPLETO.md#9-formulario-de-variante-e-primeiro-exemplar) |
 | 4. Registrar aquisição e avaliação | custo total e valor estimado | [15](MANUAL_USUARIO_COMPLETO.md#15-detalhe-do-exemplar) |
 | 5. Organizar e mover | localização e coleção | [17](MANUAL_USUARIO_COMPLETO.md#17-detalhe-de-colecao) · [26](MANUAL_USUARIO_COMPLETO.md#26-localizacoes) |
-| 6. Vender ou trocar duplicado | negociação concluída | [21](MANUAL_USUARIO_COMPLETO.md#21-duplicados) · [22](MANUAL_USUARIO_COMPLETO.md#22-negociacao) |
+| 6. Vender ou trocar qualquer exemplar | negociação concluída | [15](MANUAL_USUARIO_COMPLETO.md#15-detalhe-do-exemplar) · [21](MANUAL_USUARIO_COMPLETO.md#21-duplicados) · [22](MANUAL_USUARIO_COMPLETO.md#22-negociacao) |
 | 7. Exportar, importar e relatar | backup, CSV e inventário | [29](MANUAL_USUARIO_COMPLETO.md#29-backup-e-restauracao) · [30](MANUAL_USUARIO_COMPLETO.md#30-relatorios) · [31](MANUAL_USUARIO_COMPLETO.md#31-importacao) |
 | 8. Reproduzir o exemplo Skyline | registro completo e valores conferíveis | [35](MANUAL_USUARIO_COMPLETO.md#35-exemplo-completo-nissan-skyline-gt-r-r34) |
 

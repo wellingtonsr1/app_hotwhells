@@ -1,8 +1,8 @@
 # Matriz de Cobertura — Manual do Usuário
 
 **Versão documentada**: 0.1.0 (versionCode 1)
-**Commit**: `424e4fb` — 2026-11-21 19:52:50 −03:00
-**Conferência**: 22/11/2026 · 30 destinos · 0 órfãos
+**Commit**: `85564c8` — 2026-11-28
+**Conferência**: 28/11/2026 · 30 destinos · 0 órfãos
 
 Colunas conforme `specs/002-manual-usuario/contracts/coverage-contract.md`.
 `Elementos documentados` = `documentados / total` da tabela do capítulo.
@@ -19,7 +19,7 @@ Colunas conforme `specs/002-manual-usuario/contracts/coverage-contract.md`.
 | 8 | Edição de variante (`catalog/variant/{variantId}/edit`) | destino | [12. Edição de variante](MANUAL_USUARIO_COMPLETO.md#12-edicao-de-variante) | 7/7 | `capturas/12-edicao-variante.png` | DOCUMENTADO | acesso somente por **Incompletos** |
 | 9 | Adicionar exemplar (`exemplar/add/{variantId}`) | destino | [13. Adicionar exemplar](MANUAL_USUARIO_COMPLETO.md#13-adicionar-exemplar) | 9/9 | `capturas/` (Apêndice A) | DOCUMENTADO | — |
 | 10 | Lista de exemplares (`catalog/variant/{variantId}/exemplars`) | destino | [14. Lista de exemplares](MANUAL_USUARIO_COMPLETO.md#14-lista-de-exemplares) | 4/4 | `capturas/` (Apêndice A) | DOCUMENTADO | — |
-| 11 | Detalhe do exemplar (`exemplar/{exemplarId}`) | destino | [15. Detalhe do exemplar](MANUAL_USUARIO_COMPLETO.md#15-detalhe-do-exemplar) | 18/18 | `capturas/` (Apêndice A) | DOCUMENTADO | — |
+| 11 | Detalhe do exemplar (`exemplar/{exemplarId}`) | destino | [15. Detalhe do exemplar](MANUAL_USUARIO_COMPLETO.md#15-detalhe-do-exemplar) | 20/20 | `capturas/` (Apêndice A) | DOCUMENTADO | — |
 | 12 | Coleções (`catalog/collections`) | destino | [16. Coleções](MANUAL_USUARIO_COMPLETO.md#16-colecoes) | 7/7 | `capturas/` (Apêndice A) | DOCUMENTADO | — |
 | 13 | Detalhe de coleção (`collections/{collectionId}`) | destino | [17. Detalhe de coleção](MANUAL_USUARIO_COMPLETO.md#17-detalhe-de-colecao) | 9/9 | `capturas/` (Apêndice A) | DOCUMENTADO | — |
 | 14 | Formulário de coleção (`collections/form`) | destino | [18. Formulário de coleção](MANUAL_USUARIO_COMPLETO.md#18-formulario-de-colecao) | 5/5 | `capturas/` (Apêndice A) | DOCUMENTADO | — |
@@ -32,7 +32,7 @@ Colunas conforme `specs/002-manual-usuario/contracts/coverage-contract.md`.
 | 21 | Financeiro (`finance`) | destino | [25. Financeiro](MANUAL_USUARIO_COMPLETO.md#25-financeiro) | 10/10 | `capturas/` (Apêndice A) | DOCUMENTADO | — |
 | 22 | Localizações (`locations`) | destino | [26. Localizações](MANUAL_USUARIO_COMPLETO.md#26-localizacoes) | 9/9 | `capturas/` (Apêndice A) | DOCUMENTADO | — |
 | 23 | Conteúdo da localização (`locations/{locationId}`) | destino | [27. Conteúdo da localização](MANUAL_USUARIO_COMPLETO.md#27-conteudo-da-localizacao) | 3/3 | `capturas/` (Apêndice A) | DOCUMENTADO | — |
-| 24 | Ajustes (`settings`) | destino | [28. Ajustes](MANUAL_USUARIO_COMPLETO.md#28-ajustes) | 12/12 | `capturas/` (Apêndice A) | DOCUMENTADO | — |
+| 24 | Ajustes (`settings`) | destino | [28. Ajustes](MANUAL_USUARIO_COMPLETO.md#28-ajustes) | 16/16 | `capturas/` (Apêndice A) | DOCUMENTADO | — |
 | 25 | Backup e restauração (`settings/backup`) | destino | [29. Backup e restauração](MANUAL_USUARIO_COMPLETO.md#29-backup-e-restauracao) | 8/8 | `capturas/` (Apêndice A) | DOCUMENTADO | — |
 | 26 | Relatórios (`settings/reports`) | destino | [30. Relatórios](MANUAL_USUARIO_COMPLETO.md#30-relatorios) | 5/5 | `capturas/` (Apêndice A) | DOCUMENTADO | — |
 | 27 | Importação (`settings/import`) | destino | [31. Importação](MANUAL_USUARIO_COMPLETO.md#31-importacao) | 6/6 | `capturas/` (Apêndice A) | DOCUMENTADO | — |
