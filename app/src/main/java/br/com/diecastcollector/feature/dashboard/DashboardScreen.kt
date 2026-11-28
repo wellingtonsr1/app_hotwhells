@@ -44,6 +44,7 @@ import br.com.diecastcollector.ui.components.MetricCard
 import br.com.diecastcollector.ui.components.ProgressBar
 import br.com.diecastcollector.ui.components.isExpanded
 import br.com.diecastcollector.ui.components.isMediumOrWider
+import br.com.diecastcollector.ui.format.formatIsoDatePtBr
 import br.com.diecastcollector.ui.format.formatCentsPtBr
 import kotlin.math.abs
 
@@ -226,7 +227,7 @@ private fun EstimateCard(snapshot: DashboardSnapshot) {
             )
             snapshot.latestValuationDate?.let { date ->
                 Text(
-                    text = stringResource(R.string.dashboard_estimate_until, date),
+                    text = stringResource(R.string.dashboard_estimate_until, formatIsoDatePtBr(date)),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
@@ -272,7 +273,7 @@ private fun Section(title: String, entries: List<DashboardEntry>) {
                                 )
                             }
                             Text(
-                                text = entry.date,
+                                text = formatIsoDatePtBr(entry.date),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

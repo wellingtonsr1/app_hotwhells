@@ -213,6 +213,9 @@ internal fun AddExemplarContent(
                         onValueChange = onShippingChange,
                         label = { Text(stringResource(R.string.add_exemplar_shipping)) },
                         singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal,
+                        ),
                         modifier = fieldModifier,
                     )
                 },
@@ -222,6 +225,9 @@ internal fun AddExemplarContent(
                         onValueChange = onDiscountChange,
                         label = { Text(stringResource(R.string.add_exemplar_discount)) },
                         singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal,
+                        ),
                         modifier = fieldModifier,
                     )
                 },

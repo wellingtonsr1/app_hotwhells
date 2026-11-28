@@ -1,5 +1,6 @@
 package br.com.diecastcollector.feature.catalog
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.diecastcollector.R
@@ -47,6 +48,7 @@ public class CreateCatalogEntryViewModel @Inject constructor(
     private val carModelRepository: CarModelRepository,
     private val manufacturerRepository: ManufacturerRepository,
     private val draftRepository: DraftRepository,
+    private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(CreateCatalogEntryUiState())
@@ -65,12 +67,20 @@ public class CreateCatalogEntryViewModel @Inject constructor(
             }
         }
 
-        // Recupera rascunho anterior se houver (FR-023)
-        viewModelScope.launch {
-            val draft = draftRepository.getDraft(DRAFT_KEY)
-            if (draft != null) {
-                parseDraft(draft)
+        // Rascunho (FR-023) só volta quando a tela é recriada após interrupção do processo:
+        // nesse caso o `SavedStateHandle` traz a marca gravada na sessão anterior. Abrir pelo
+        // «+ Mini» é começo limpo — senão sobras de um cadastro abandonado reaparecem nos
+        // campos e as sugestões surgem antes de o usuário tocar em qualquer coisa.
+        if (savedStateHandle.get<Boolean>(KEY_SESSION_RESTORED) == true) {
+            viewModelScope.launch {
+                val draft = draftRepository.getDraft(DRAFT_KEY)
+                if (draft != null) {
+                    parseDraft(draft)
+                }
             }
+        } else {
+            savedStateHandle[KEY_SESSION_RESTORED] = true
+            viewModelScope.launch { draftRepository.clearDraft(DRAFT_KEY) }
         }
     }
 
@@ -161,5 +171,8 @@ public class CreateCatalogEntryViewModel @Inject constructor(
 
     private companion object {
         const val DRAFT_KEY = "catalog_entry"
+
+        /** Presente só no `SavedStateHandle` restaurado depois de o processo ser morto. */
+        const val KEY_SESSION_RESTORED = "draftSessionRestored"
     }
 }

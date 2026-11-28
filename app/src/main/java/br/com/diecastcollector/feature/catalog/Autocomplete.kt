@@ -48,6 +48,28 @@ private fun normalizeForSearch(value: String): String =
     value.lowercase().filter { it.isLetterOrDigit() }
 
 /**
+ * Modelos já cadastrados que combinam com o que está sendo digitado.
+ *
+ * Mesma regra do fabricante: o nome equivalente ao digitado não vira sugestão. Ao escolher
+ * um modelo o campo recebe exatamente o nome dele, e sem essa exclusão a lista continuava
+ * aberta embaixo do campo já preenchido. Uma variação de caixa ou pontuação também não
+ * gera sugestão se for o mesmo nome — só o que ainda falta digitar importa.
+ */
+internal fun modelSuggestions(
+    query: String,
+    models: List<CarModel>,
+): List<CarModel> {
+    val needle = normalizeForSearch(query)
+    if (needle.length < 2) return emptyList()
+    return models
+        .filter { model ->
+            val candidate = normalizeForSearch(model.name)
+            candidate.contains(needle) && candidate != needle
+        }
+        .take(MAX_SUGGESTIONS)
+}
+
+/**
  * Busca-assistida e sugestão de modelo ao digitar (T049 - US2, FR-024).
  *
  * Exibe modelos já cadastrados cujo nome coincide parcialmente com o que está
@@ -61,14 +83,7 @@ public fun ModelAutocomplete(
     modifier: Modifier = Modifier,
 ) {
     val suggestions = remember(query, availableModels) {
-        val trimmed = query.trim()
-        if (trimmed.length < 2) {
-            emptyList()
-        } else {
-            availableModels.filter {
-                it.name.contains(trimmed, ignoreCase = true)
-            }.take(MAX_SUGGESTIONS)
-        }
+        modelSuggestions(query, availableModels)
     }
 
     SuggestionCard(

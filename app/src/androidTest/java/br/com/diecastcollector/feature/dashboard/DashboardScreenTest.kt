@@ -49,7 +49,7 @@ class DashboardScreenTest {
         // Estimado menor que investido continua legível: o sinal fica no texto.
         composeRule.onNodeWithText("-R$ 334,56").assertIsDisplayed()
         composeRule.onNodeWithText("Estimativa").assertIsDisplayed()
-        composeRule.onNodeWithText("Avaliações até 2026-06-01.").assertIsDisplayed()
+        composeRule.onNodeWithText("Avaliações até 01/06/2026.").assertIsDisplayed()
         composeRule.onNodeWithText(
             "2 exemplar(es) sem avaliação ficam de fora da estimativa.",
         ).assertIsDisplayed()
